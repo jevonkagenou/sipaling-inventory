@@ -20,7 +20,6 @@ Buka terminal (atau Git Bash) di direktori tempat Anda ingin menyimpan proyek, l
 git clone https://github.com/USERNAME/sipaling-inventory.git
 cd sipaling-inventory
 ```
-*(Catatan: Ganti `USERNAME` dengan tautan repositori tim Anda).*
 
 **2. Instalasi Dependensi Backend (PHP)**
 Unduh semua pustaka Laravel yang dibutuhkan oleh sistem:
