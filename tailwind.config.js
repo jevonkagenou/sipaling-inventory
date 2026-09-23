@@ -16,6 +16,7 @@ export default {
     		fontFamily: {
     			sans: [
     				'"Plus Jakarta Sans"',
+    				'Inter',
     				'Figtree',
                     ...defaultTheme.fontFamily.sans
                 ],

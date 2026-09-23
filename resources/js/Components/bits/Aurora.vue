@@ -133,8 +133,6 @@ let animateId = 0;
 let renderer: InstanceType<typeof Renderer> | null = null;
 let program: InstanceType<typeof Program> | null = null;
 let resizeHandler: (() => void) | null = null;
-let observer: IntersectionObserver | null = null;
-let isVisible = true;
 
 onMounted(() => {
   const ctn = ctnDom.value;
@@ -190,7 +188,6 @@ onMounted(() => {
   ctn.appendChild(gl.canvas);
 
   const update = (t: number) => {
-    if (!isVisible) return;
     animateId = requestAnimationFrame(update);
     const time = props.time ?? t * 0.01;
     const speed = props.speed ?? 1.0;
@@ -209,23 +206,12 @@ onMounted(() => {
     }
   };
 
-  observer = new IntersectionObserver(([entry]) => {
-    isVisible = entry.isIntersecting;
-    if (isVisible && !animateId) {
-      animateId = requestAnimationFrame(update);
-    }
-  }, { threshold: 0.05 });
-
-  observer.observe(ctn);
   animateId = requestAnimationFrame(update);
   resizeHandler();
 });
 
 onUnmounted(() => {
   cancelAnimationFrame(animateId);
-  if (observer) {
-    observer.disconnect();
-  }
   if (resizeHandler) {
     window.removeEventListener('resize', resizeHandler);
   }
@@ -244,14 +230,8 @@ onUnmounted(() => {
 .aurora-container {
   width: 100%;
   height: 100%;
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
 }
 .aurora-container :deep(canvas) {
   display: block;
-  width: 100% !important;
-  height: 100% !important;
 }
 </style>
