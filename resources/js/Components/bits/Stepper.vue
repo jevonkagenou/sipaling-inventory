@@ -121,7 +121,7 @@
           <button
             @click="isLastStep ? handleComplete() : handleNext()"
             :class="[
-              'flex justify-center items-center px-4 py-2 rounded-lg font-semibold text-xs tracking-tight transition-all duration-300 cursor-pointer shadow-sm bg-emerald-600 dark:bg-emerald-500 text-white dark:text-zinc-950'
+              'flex justify-center items-center px-4 py-2 rounded-lg font-semibold text-xs tracking-tight transition-all duration-300 cursor-pointer shadow-sm bg-blue-600 hover:bg-blue-700 text-white'
             ]"
             v-bind="nextButtonProps"
           >
@@ -316,14 +316,14 @@ const indicatorVariants = computed(() => {
     : (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
   return {
     inactive: { scale: 1, backgroundColor: isDarkMode ? '#27272a' : '#e4e4e7', color: isDarkMode ? '#a1a1aa' : '#71717a' },
-    active: { scale: 1, backgroundColor: '#10b981', color: isDarkMode ? '#09090b' : '#ffffff', boxShadow: '0 0 16px rgba(16,185,129,0.35)' },
-    complete: { scale: 1, backgroundColor: '#10b981', color: isDarkMode ? '#09090b' : '#ffffff' }
+    active: { scale: 1, backgroundColor: '#2563EB', color: '#ffffff', boxShadow: '0 0 16px rgba(37,99,235,0.35)' },
+    complete: { scale: 1, backgroundColor: '#2563EB', color: '#ffffff' }
   };
 });
 
 const lineVariants = {
   incomplete: { width: 0, backgroundColor: 'transparent' },
-  complete: { width: '100%', backgroundColor: '#10b981' }
+  complete: { width: '100%', backgroundColor: '#2563EB' }
 };
 
 defineExpose({

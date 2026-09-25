@@ -1,9 +1,29 @@
 <script setup>
-import { Input } from '@/Components/ui/input'
-import { Label } from '@/Components/ui/label'
-import { Button } from '@/Components/ui/button'
-import { Head, useForm, router } from '@inertiajs/vue3'
-import { Package2, ShieldCheck, TrendingUp } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Button } from '@/Components/ui/button';
+import { Card, CardContent } from '@/Components/ui/card';
+import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
+import {
+    Boxes,
+    Eye,
+    EyeOff,
+    Sun,
+    Moon,
+    CheckCircle2
+} from 'lucide-vue-next';
+
+defineProps({
+    canResetPassword: {
+        type: Boolean,
+        default: false,
+    },
+    status: {
+        type: String,
+        default: null,
+    },
+});
 
 const form = useForm({
     email: '',
@@ -11,113 +31,200 @@ const form = useForm({
     remember: false,
 });
 
+const showPassword = ref(false);
+
+// Theme State (persisted in localStorage)
+const isDark = ref(true);
+
+function toggleTheme() {
+    isDark.value = !isDark.value;
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('sipaling-theme', isDark.value ? 'dark' : 'light');
+        if (isDark.value) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }
+}
+
+onMounted(() => {
+    const savedTheme = localStorage.getItem('sipaling-theme');
+    if (savedTheme) {
+        isDark.value = savedTheme === 'dark';
+    } else {
+        isDark.value = true;
+    }
+    if (isDark.value) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+});
+
 const submit = () => {
-    form.processing = true;
-    setTimeout(() => {
-        router.get(route('inventory.index'));
-    }, 800);
+    form.post(route('login'), {
+        onFinish: () => form.reset('password'),
+    });
 };
 </script>
 
 <template>
+    <Head title="Masuk" />
 
-    <Head title="Login - SIPALING" />
+    <div class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-zinc-50 dark:bg-[#0F172A] text-slate-900 dark:text-slate-100 transition-colors duration-200">
+        
+        <!-- Namecard Container -->
+        <div class="relative w-full max-w-[400px] pt-12">
+            
+            <!-- Circular Medallion Logo at Top (Clean without inner blue circle) -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 z-20">
+                <div class="h-20 w-20 rounded-full border-4 border-zinc-50 dark:border-[#0F172A] bg-white dark:bg-slate-900 shadow-xl flex items-center justify-center transition-transform hover:scale-105 text-blue-600 dark:text-blue-400">
+                    <Boxes class="h-9 w-9" />
+                </div>
+            </div>
 
-    <div class="w-full lg:grid lg:grid-cols-2 min-h-screen">
-        <!-- Bagian Kiri: Form Login -->
-        <div class="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-white">
-            <div class="mx-auto w-full max-w-[400px] space-y-8">
-                <div class="text-center">
-                    <div class="flex justify-center mb-4">
-                        <div class="bg-zinc-900 p-3 rounded-xl shadow-lg">
-                            <Package2 class="w-8 h-8 text-white" />
-                        </div>
-                    </div>
-                    <h1 class="text-3xl font-bold tracking-tight text-zinc-900">Masuk ke SIPALING</h1>
-                    <p class="mt-2 text-sm text-zinc-500">
-                        Sistem Inventaris Prediktif & Audit Log Terintegrasi
+            <!-- Main Namecard Body (Shadcn Card) -->
+            <Card class="relative z-10 rounded-2xl border border-zinc-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/95 shadow-xl shadow-slate-950/5 dark:shadow-black/60 pt-16 pb-7 px-6 sm:px-8 gap-0">
+                
+                <!-- Formal Header with Plus Jakarta Sans -->
+                <div class="text-center space-y-1 mb-6">
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-sans">
+                        Masuk ke SIPALING
+                    </h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        Sistem Inventaris & Audit Log Terintegrasi
                     </p>
                 </div>
 
-                <form @submit.prevent="submit" class="space-y-6">
-                    <div class="space-y-4">
-                        <div class="space-y-2">
-                            <Label for="email">Email Operasional</Label>
-                            <Input id="email" type="email" v-model="form.email" placeholder="nama@perusahaan.com"
-                                required autofocus
-                                :class="{ 'border-red-500 focus-visible:ring-red-500': form.errors.email }" />
-                            <span v-if="form.errors.email" class="text-sm text-red-500">{{ form.errors.email }}</span>
+                <!-- Flash Status Alert if Available (Tertiary Emerald #10B981) -->
+                <div
+                    v-if="status"
+                    class="mb-4 p-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-2"
+                >
+                    <CheckCircle2 class="w-4 h-4 shrink-0 text-emerald-500" />
+                    <span>{{ status }}</span>
+                </div>
+
+                <CardContent class="p-0">
+                    <form @submit.prevent="submit" class="space-y-4">
+                        <!-- Email Input -->
+                        <div class="space-y-1.5">
+                            <Label for="email" class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                Email Operasional
+                            </Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                v-model="form.email"
+                                placeholder="nama@perusahaan.com"
+                                required
+                                autofocus
+                                autocomplete="username"
+                                class="h-10 text-sm bg-transparent border-slate-300 dark:border-slate-700 focus-visible:ring-1 focus-visible:ring-[#2563EB] focus-visible:border-[#2563EB] rounded-lg"
+                                :class="{ 'border-red-500 focus-visible:ring-red-500': form.errors.email }"
+                            />
+                            <p v-if="form.errors.email" class="text-[11px] text-red-500 font-medium">
+                                {{ form.errors.email }}
+                            </p>
                         </div>
 
-                        <div class="space-y-2">
+                        <!-- Password Input -->
+                        <div class="space-y-1.5">
                             <div class="flex items-center justify-between">
-                                <Label for="password">Kata Sandi</Label>
+                                <Label for="password" class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                    Kata Sandi
+                                </Label>
+                                <Link
+                                    v-if="canResetPassword"
+                                    :href="route('password.request')"
+                                    class="text-xs text-slate-500 dark:text-slate-400 hover:text-[#2563EB] dark:hover:text-[#4F46E5] hover:underline transition-colors"
+                                >
+                                    Lupa kata sandi?
+                                </Link>
                             </div>
-                            <Input id="password" type="password" v-model="form.password" required
-                                :class="{ 'border-red-500 focus-visible:ring-red-500': form.errors.password }" />
-                            <span v-if="form.errors.password" class="text-sm text-red-500">{{ form.errors.password
-                            }}</span>
+                            <div class="relative">
+                                <Input
+                                    id="password"
+                                    :type="showPassword ? 'text' : 'password'"
+                                    v-model="form.password"
+                                    required
+                                    autocomplete="current-password"
+                                    placeholder="••••••••"
+                                    class="h-10 pr-10 text-sm bg-transparent border-slate-300 dark:border-slate-700 focus-visible:ring-1 focus-visible:ring-[#2563EB] focus-visible:border-[#2563EB] rounded-lg"
+                                    :class="{ 'border-red-500 focus-visible:ring-red-500': form.errors.password }"
+                                />
+                                <button
+                                    type="button"
+                                    @click="showPassword = !showPassword"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                                    tabindex="-1"
+                                >
+                                    <EyeOff v-if="showPassword" class="w-3.5 h-3.5" />
+                                    <Eye v-else class="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                            <p v-if="form.errors.password" class="text-[11px] text-red-500 font-medium">
+                                {{ form.errors.password }}
+                            </p>
                         </div>
 
-                        <div class="flex items-center gap-2 pt-2">
-                            <input type="checkbox" id="remember" v-model="form.remember"
-                                class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900" />
-                            <Label for="remember" class="font-normal text-zinc-600 cursor-pointer">Ingat sesi
-                                saya</Label>
+                        <!-- Remember Device -->
+                        <div class="flex items-center gap-2 pt-0.5">
+                            <input
+                                type="checkbox"
+                                id="remember"
+                                v-model="form.remember"
+                                class="h-3.5 w-3.5 rounded border-slate-300 dark:border-slate-700 text-[#2563EB] focus:ring-[#2563EB] focus:ring-offset-0 cursor-pointer"
+                            />
+                            <Label
+                                for="remember"
+                                class="text-xs text-slate-600 dark:text-slate-400 font-normal cursor-pointer select-none"
+                            >
+                                Ingat saya
+                            </Label>
                         </div>
+
+                        <!-- Button Masuk (Stitch AI Primary #2563EB with robust height h-11) -->
+                        <Button
+                            type="submit"
+                            class="w-full h-11 text-sm font-semibold rounded-lg bg-[#2563EB] hover:bg-blue-700 text-white shadow-sm transition-colors mt-2 disabled:opacity-50 cursor-pointer"
+                            :disabled="form.processing"
+                        >
+                            <span v-if="form.processing" class="flex items-center justify-center gap-2">
+                                <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                                <span>Memproses...</span>
+                            </span>
+                            <span v-else>
+                                Masuk
+                            </span>
+                        </Button>
+                    </form>
+
+                    <!-- Navigasi Bersih ke Beranda -->
+                    <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+                        <Link
+                            href="/"
+                            class="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                        >
+                            &larr; Kembali ke Beranda
+                        </Link>
                     </div>
-
-                    <Button type="submit"
-                        class="w-full h-11 text-base bg-zinc-900 text-white transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-lg hover:shadow-zinc-900/20 hover:bg-zinc-800 hover:text-white active:scale-95"
-                        :disabled="form.processing">
-                        <span v-if="form.processing" class="flex items-center gap-2">
-                            <span
-                                class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-                            Mengautentikasi...
-                        </span>
-                        <span v-else class="transition-transform duration-300">Masuk ke Dasbor</span>
-                    </Button>
-                </form>
-            </div>
+                </CardContent>
+            </Card>
         </div>
 
-        <!-- Bagian Kanan: Branding & Proposisi Nilai -->
-        <div class="hidden bg-zinc-900 lg:flex flex-col justify-between p-12 text-white border-l border-zinc-800">
-            <div class="flex items-center gap-2 font-semibold text-lg">
-                <Package2 class="w-6 h-6" />
-                <span>SIPALING Enterprise</span>
-            </div>
-
-            <div class="space-y-6 max-w-lg">
-                <blockquote class="space-y-2">
-                    <p class="text-2xl font-medium leading-relaxed">
-                        "Mengubah manajemen inventaris dari reaktif menjadi proaktif. Melindungi aset bisnis dengan
-                        rekam jejak yang absolut."
-                    </p>
-                    <footer class="text-sm text-zinc-400 pt-4">Dikembangkan untuk PBL Kelompok 1 - SIB 3C</footer>
-                </blockquote>
-
-                <div class="grid grid-cols-2 gap-4 border-t border-zinc-800 pt-8 mt-8">
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 bg-zinc-800 rounded-lg shadow-inner">
-                            <TrendingUp class="w-6 h-6 text-zinc-300" />
-                        </div>
-                        <div class="text-sm">
-                            <p class="font-medium text-zinc-200">Analitik Prediktif</p>
-                            <p class="text-zinc-500">Forecasting DES</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 bg-zinc-800 rounded-lg shadow-inner">
-                            <ShieldCheck class="w-6 h-6 text-zinc-300" />
-                        </div>
-                        <div class="text-sm">
-                            <p class="font-medium text-zinc-200">Audit Trail</p>
-                            <p class="text-zinc-500">Keamanan Log Immutable</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Floating Theme Toggle (Bottom Right Corner) -->
+        <div class="fixed bottom-6 right-6 z-50">
+            <button
+                type="button"
+                @click="toggleTheme"
+                :title="isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'"
+                class="h-9 w-9 rounded-full border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white shadow-sm flex items-center justify-center transition-colors cursor-pointer"
+            >
+                <Sun v-if="isDark" class="h-4 w-4 text-amber-400" />
+                <Moon v-else class="h-4 w-4 text-slate-400" />
+            </button>
         </div>
     </div>
 </template>
