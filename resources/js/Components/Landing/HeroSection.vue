@@ -1,36 +1,49 @@
 <script setup>
 import { Link } from "@inertiajs/vue3";
 import { Button } from "@/Components/ui/button";
-import Aurora from "@/Components/bits/Aurora.vue";
+import Antigravity from "@/Components/bits/Antigravity.vue";
 import { ArrowRight, Boxes } from "lucide-vue-next";
 
 defineProps({
     isDark: {
         type: Boolean,
-        default: true,
+        default: false,
     },
 });
 </script>
 
 <template>
     <!-- HERO SECTION -->
-    <section class="relative min-h-screen w-full overflow-hidden border-b border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-[#0F172A] flex items-center justify-center transition-colors">
-        <!-- Official Vue Bits Aurora WebGL Background (Active in Dark Mode: Blue & Indigo Stitch AI) -->
-        <div v-if="isDark" class="absolute inset-0 pointer-events-none overflow-hidden z-0">
-            <Aurora :color-stops="['#0F172A', '#2563EB', '#4F46E5']" :blend="0.5" :amplitude="1.0" :speed="0.5" />
+    <section class="relative min-h-screen w-full overflow-hidden bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center transition-colors">
+        
+        <!-- Interactive Background Particles (Antigravity Dots: Dark in Light Mode, Bright Blue in Dark Mode) -->
+        <div class="absolute inset-0 pointer-events-auto overflow-hidden z-0">
+            <Antigravity
+                :count="480"
+                :magnet-radius="5"
+                :ring-radius="6"
+                :wave-speed="0.3"
+                :wave-amplitude="0.8"
+                :particle-size="0.6"
+                :lerp-speed="0.05"
+                :color="isDark ? '#60A5FA' : '#1E293B'"
+                particle-shape="sphere"
+                :auto-animate="true"
+                :particle-variance="0.8"
+                :depth-factor="0.8"
+            />
         </div>
-        <!-- Clean Enterprise Ambient Glow (Active in Light Mode) -->
-        <div v-else class="absolute inset-0 pointer-events-none overflow-hidden z-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(37,99,235,0.12),rgba(255,255,255,0))]" />
 
-        <!-- Subtle Gradient Overlay to blend with dark/light page background -->
+        <!-- Ambient Glow to blend with dark/light page background -->
         <div
-            class="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-transparent via-transparent to-zinc-50/50 dark:to-[#0F172A]" />
+            class="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-transparent via-transparent to-zinc-50/90 dark:to-zinc-950" 
+        />
 
         <!-- Hero Header Content -->
-        <div class="relative z-20 mx-auto max-w-5xl px-4 py-32 sm:py-36 text-center space-y-7 w-full flex flex-col items-center justify-center">
+        <div class="relative z-20 mx-auto max-w-5xl px-4 py-32 sm:py-36 text-center space-y-7 w-full flex flex-col items-center justify-center pointer-events-none">
 
             <!-- Headline -->
-            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-900 dark:text-white leading-tight">
+            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-900 dark:text-white leading-tight font-sans">
                 Pengelolaan Inventaris Proaktif <br class="hidden sm:inline" />
                 dengan Rekam Jejak Audit Permanen
             </h1>
@@ -41,7 +54,7 @@ defineProps({
             </p>
 
             <!-- Professional Action Buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 pt-2 w-full sm:w-auto">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 pt-2 w-full sm:w-auto pointer-events-auto">
                 <Link :href="route('login')" class="w-full sm:w-auto">
                     <Button size="lg"
                         class="group w-full sm:w-auto h-12 px-7 text-sm font-semibold rounded-full cursor-pointer transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 border border-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]">

@@ -2,21 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\StockTransaction;
+use App\Models\StockTransactionDetail;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class InventoryController extends Controller
 {
-    public function index()
+    /**
+     * Display a listing of the inventory products.
+     */
+    public function index(Request $request): Response
     {
-        $dataBarang = [
-            ['id' => 'ITM-001', 'nama' => 'Laptop ThinkPad T14', 'stok' => 45, 'status' => 'Aman'],
-            ['id' => 'ITM-002', 'nama' => 'Monitor Dell 24 Inch', 'stok' => 12, 'status' => 'Reorder'],
-            ['id' => 'ITM-003', 'nama' => 'Mouse Wireless Logitech', 'stok' => 150, 'status' => 'Aman'],
-        ];
+        $search = $request->input('search');
+
+        $query = Product::query()
+            ->with('category:id,name,slug')
+            ->withCount('transactionDetails');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('sku', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%");
+            });
+        }
+
+        $products = $query->orderBy('name')->get();
 
         return Inertia::render('Inventory/Index', [
-            'barang' => $dataBarang
+            'products' => $products,
+            'filters' => [
+                'search' => $search ?? '',
+            ],
+            'stats' => [
+                'total_products'     => Product::count(),
+                'total_categories'   => Category::count(),
+                'total_transactions' => StockTransaction::count(),
+                'total_details'      => StockTransactionDetail::count(),
+                'reorder_count'      => Product::whereColumn('current_stock', '<=', 'minimum_stock')->count(),
+                'aman_count'         => Product::whereColumn('current_stock', '>', 'minimum_stock')->count(),
+            ],
         ]);
     }
 }

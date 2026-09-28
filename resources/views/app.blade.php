@@ -6,8 +6,20 @@
 
         <title inertia>{{ config('app.name', 'SIPALING') }}</title>
 
-        <!-- Favicon (Vector SVG Boxes Medallion) -->
-        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=3">
+        <!-- Favicon (Official SIPALING 3D Transparent Logo) -->
+        <link rel="icon" type="image/png" href="{{ asset('logo-sipaling-transparent.png') }}?v=6">
+
+        <!-- Theme Initialization: Default is Light Mode unless explicitly set to dark -->
+        <script>
+            (function() {
+                var saved = localStorage.getItem('sipaling-theme');
+                if (saved === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            })();
+        </script>
 
         <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
         <link rel="preconnect" href="https://fonts.googleapis.com">

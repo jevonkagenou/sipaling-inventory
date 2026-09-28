@@ -33,8 +33,8 @@ const form = useForm({
 
 const showPassword = ref(false);
 
-// Theme State (persisted in localStorage)
-const isDark = ref(true);
+// Theme State (persisted in localStorage, defaults to Light)
+const isDark = ref(false);
 
 function toggleTheme() {
     isDark.value = !isDark.value;
@@ -53,7 +53,7 @@ onMounted(() => {
     if (savedTheme) {
         isDark.value = savedTheme === 'dark';
     } else {
-        isDark.value = true;
+        isDark.value = false;
     }
     if (isDark.value) {
         document.documentElement.classList.add('dark');
@@ -77,10 +77,10 @@ const submit = () => {
         <!-- Namecard Container -->
         <div class="relative w-full max-w-[400px] pt-12">
             
-            <!-- Circular Medallion Logo at Top (Clean without inner blue circle) -->
+            <!-- Circular Medallion Logo at Top (Blends with Light/Dark Theme) -->
             <div class="absolute top-0 left-1/2 -translate-x-1/2 z-20">
-                <div class="h-20 w-20 rounded-full border-4 border-zinc-50 dark:border-[#0F172A] bg-white dark:bg-slate-900 shadow-xl flex items-center justify-center transition-transform hover:scale-105 text-blue-600 dark:text-blue-400">
-                    <Boxes class="h-9 w-9" />
+                <div class="h-20 w-20 rounded-full border-4 border-zinc-50 dark:border-[#0F172A] bg-white dark:bg-slate-900 shadow-xl flex items-center justify-center p-3 transition-transform hover:scale-105">
+                    <img src="/logo-sipaling-transparent.png" alt="SIPALING Logo" class="h-12 w-12 object-contain select-none" />
                 </div>
             </div>
 

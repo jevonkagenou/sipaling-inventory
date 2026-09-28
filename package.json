@@ -26,13 +26,15 @@
     },
     "dependencies": {
         "@lucide/vue": "^1.47.0",
+        "@tanstack/vue-table": "^9.2.4",
+        "@types/three": "^0.186.0",
         "@vueuse/core": "^15.0.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "lucide-vue-next": "^1.0.0",
         "motion-v": "^2.4.4",
-        "ogl": "^1.0.11",
         "reka-ui": "^2.10.4",
-        "tailwind-merge": "^3.7.0"
+        "tailwind-merge": "^3.7.0",
+        "three": "^0.186.1"
     }
 }

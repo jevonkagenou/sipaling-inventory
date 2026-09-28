@@ -37,8 +37,8 @@ function scrollToSection(id) {
     }
 }
 
-// Theme Management (Light / Dark Mode persisted in localStorage)
-const isDark = ref(true);
+// Theme Management (Light / Dark Mode persisted in localStorage, defaults to Light)
+const isDark = ref(false);
 
 function toggleTheme() {
     isDark.value = !isDark.value;
@@ -68,7 +68,7 @@ onMounted(() => {
     if (savedTheme) {
         isDark.value = savedTheme === "dark";
     } else {
-        isDark.value = true;
+        isDark.value = false;
     }
     if (isDark.value) {
         document.documentElement.classList.add("dark");
@@ -96,9 +96,11 @@ onUnmounted(() => {
         <header class="fixed top-4 sm:top-5 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
             <nav
                 class="pointer-events-auto flex items-center justify-between w-full max-w-4xl px-3 sm:px-4 py-2 rounded-full border border-zinc-200/80 dark:border-zinc-800/90 bg-white/90 dark:bg-zinc-950/85 backdrop-blur-md shadow-lg shadow-zinc-950/5 dark:shadow-black/40 transition-all duration-200">
-                <!-- Logo -->
-                <Link href="/" class="flex items-center gap-2 font-semibold text-zinc-900 dark:text-white pl-1 sm:pl-2">
-                    <Boxes class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <!-- Logo with rounded medallion blending with theme -->
+                <Link href="/" class="flex items-center gap-2.5 font-semibold text-zinc-900 dark:text-white pl-1 sm:pl-2 group">
+                    <div class="h-8 w-8 rounded-full border border-zinc-200/90 dark:border-zinc-800 bg-zinc-100/90 dark:bg-zinc-900/90 shadow-xs flex items-center justify-center p-1 transition-transform group-hover:scale-105">
+                        <img src="/logo-sipaling-transparent.png" alt="SIPALING Logo" class="h-5 w-5 object-contain select-none" />
+                    </div>
                     <span class="text-sm font-bold tracking-tight">SIPALING</span>
                 </Link>
 
@@ -199,8 +201,10 @@ onUnmounted(() => {
         <!-- FOOTER -->
         <footer class="border-t border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 py-8 text-xs text-zinc-500 dark:text-zinc-400 transition-colors">
             <div class="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-2">
-                    <Boxes class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <div class="flex items-center gap-2.5">
+                    <div class="h-6 w-6 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center p-0.5">
+                        <img src="/logo-sipaling-transparent.png" alt="SIPALING Logo" class="h-4 w-4 object-contain select-none" />
+                    </div>
                     <span class="font-semibold text-zinc-800 dark:text-zinc-300">SIPALING</span>
                     <span>• Sistem Informasi Manajemen Inventaris & Audit</span>
                 </div>

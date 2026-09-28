@@ -13,12 +13,12 @@ const engineeringTeam = [
         initials: "SSU",
     },
     {
-        name: "Alvina Nur Fadilah",
+        name: "Meutia Arafah Hidayat",
         role: "Pengembang",
-        initials: "ANF",
+        initials: "MAH",
     },
     {
-        name: "Nadila Kholifatus Sa'adah",
+        name: "Najwa Kus Sayafira",
         role: "Pengembang",
         initials: "NKS",
     },
