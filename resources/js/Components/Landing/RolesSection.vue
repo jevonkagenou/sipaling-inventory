@@ -138,10 +138,10 @@ const roles = [
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 <SpotlightCard v-for="(role, idx) in roles" :key="role.title"
                     :spotlightColor="role.spotlightColor" @click="activeRoleIndex = idx" :class="[
-                        'cursor-pointer transition-all duration-200 text-left flex flex-col justify-between p-5 rounded-2xl border',
+                        'cursor-pointer transition-[border-color,box-shadow,transform] duration-200 text-left flex flex-col justify-between p-5 rounded-2xl border backdrop-blur-md',
                         activeRoleIndex === idx
-                            ? ['bg-white dark:bg-zinc-900 shadow-xl border-blue-600', role.activeOutline]
-                            : 'bg-white dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900 shadow-xs'
+                            ? ['bg-white/90 dark:bg-zinc-900/90 shadow-lg border-blue-600 dark:border-blue-500', role.activeOutline]
+                            : 'bg-white/80 dark:bg-zinc-900/80 border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-white/95 dark:hover:bg-zinc-900/95 shadow-xs'
                     ]">
                     <!-- Card Header -->
                     <div class="space-y-3">

@@ -137,7 +137,7 @@ const filteredAuditLogs = computed(() => {
             </div>
 
             <!-- Operational Console Frame -->
-            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-2xl overflow-hidden">
+            <div class="rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-xl overflow-hidden">
                 <!-- Console Header Bar -->
                 <div
                     class="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100/90 dark:bg-zinc-950/80 px-4 py-3">

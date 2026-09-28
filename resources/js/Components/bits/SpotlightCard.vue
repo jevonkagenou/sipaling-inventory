@@ -42,7 +42,7 @@ function handleMouseLeave() {
   <div
     :class="
       cn(
-        'relative overflow-hidden rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md backdrop-blur-xs',
+        'relative overflow-hidden rounded-2xl p-6 shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:shadow-md backdrop-blur-md',
         props.class
       )
     "

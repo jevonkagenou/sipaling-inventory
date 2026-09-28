@@ -6,7 +6,7 @@ import ScrollReveal from "@/Components/bits/ScrollReveal.vue";
     <!-- SECTION: PPT TRANSFORMATION MATRIX -->
     <ScrollReveal :delay="100">
         <section id="arsitektur"
-            class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/70 p-6 sm:p-10 space-y-8 shadow-xs">
+            class="rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md p-6 sm:p-10 space-y-8 shadow-xs">
             <div class="max-w-2xl space-y-2">
                 <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-600/20 mb-1">
                     Kerangka Kerja

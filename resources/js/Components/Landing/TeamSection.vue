@@ -48,7 +48,7 @@ const engineeringTeam = [
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div v-for="member in engineeringTeam" :key="member.name"
-                    class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-5 text-center space-y-4 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors flex flex-col justify-between items-center shadow-xs">
+                    class="rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md p-5 text-center space-y-4 hover:border-zinc-300 dark:hover:border-zinc-700 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between items-center shadow-xs">
                     <div class="space-y-3">
                         <div
                             class="mx-auto h-12 w-12 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center font-bold text-xs text-zinc-700 dark:text-zinc-200 shadow-sm">

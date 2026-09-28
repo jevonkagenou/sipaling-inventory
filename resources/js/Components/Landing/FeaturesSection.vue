@@ -7,7 +7,10 @@ import { TrendingUp, ShieldCheck, FileCheck } from "lucide-vue-next";
 <template>
     <!-- SECTION: 3 CORE SYSTEM PILLARS -->
     <ScrollReveal :delay="100">
-        <section id="fitur" class="scroll-mt-24 space-y-8">
+        <section id="fitur" class="relative scroll-mt-24 space-y-8">
+            <!-- Soft Ambient Header Glow Bloom -->
+            <div class="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 w-[500px] h-[180px] bg-blue-500/5 dark:bg-blue-600/10 blur-[110px] rounded-full -z-10" />
+
             <div class="text-center max-w-2xl mx-auto space-y-2">
                 <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 mb-1">
                     Keunggulan Fungsional
@@ -23,7 +26,7 @@ import { TrendingUp, ShieldCheck, FileCheck } from "lucide-vue-next";
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Card 1: Peramalan Proaktif -->
                 <SpotlightCard spotlightColor="rgba(37, 99, 235, 0.12)"
-                    class="bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-left hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-md transition-all">
+                    class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 text-left hover:border-zinc-300 dark:hover:border-zinc-700 shadow-xs hover:shadow-md transition-[border-color,box-shadow,transform] duration-200">
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
                             <div
@@ -31,7 +34,7 @@ import { TrendingUp, ShieldCheck, FileCheck } from "lucide-vue-next";
                                 <TrendingUp class="h-5 w-5" />
                             </div>
                             <span
-                                class="text-xs font-sans font-medium px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-950">
+                                class="text-xs font-sans font-medium px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 bg-zinc-100/80 dark:bg-zinc-950/80">
                                 Akurasi 93.18%
                             </span>
                         </div>
@@ -47,7 +50,7 @@ import { TrendingUp, ShieldCheck, FileCheck } from "lucide-vue-next";
 
                 <!-- Card 2: Audit Trail Terintegrasi (Unified to Royal Blue #2563EB to eliminate purplish tint) -->
                 <SpotlightCard spotlightColor="rgba(37, 99, 235, 0.12)"
-                    class="bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-left hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-md transition-all">
+                    class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 text-left hover:border-zinc-300 dark:hover:border-zinc-700 shadow-xs hover:shadow-md transition-[border-color,box-shadow,transform] duration-200">
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
                             <div
@@ -55,7 +58,7 @@ import { TrendingUp, ShieldCheck, FileCheck } from "lucide-vue-next";
                                 <ShieldCheck class="h-5 w-5" />
                             </div>
                             <span
-                                class="text-xs font-sans font-medium px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-950">
+                                class="text-xs font-sans font-medium px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 bg-zinc-100/80 dark:bg-zinc-950/80">
                                 SHA-256 Ledger
                             </span>
                         </div>
@@ -71,7 +74,7 @@ import { TrendingUp, ShieldCheck, FileCheck } from "lucide-vue-next";
 
                 <!-- Card 3: Alur Otorisasi Bertingkat -->
                 <SpotlightCard spotlightColor="rgba(37, 99, 235, 0.12)"
-                    class="bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-left hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-md transition-all">
+                    class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 text-left hover:border-zinc-300 dark:hover:border-zinc-700 shadow-xs hover:shadow-md transition-[border-color,box-shadow,transform] duration-200">
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
                             <div
@@ -79,7 +82,7 @@ import { TrendingUp, ShieldCheck, FileCheck } from "lucide-vue-next";
                                 <FileCheck class="h-5 w-5" />
                             </div>
                             <span
-                                class="text-xs font-sans font-medium px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-950">
+                                class="text-xs font-sans font-medium px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 bg-zinc-100/80 dark:bg-zinc-950/80">
                                 Segregation of Duties
                             </span>
                         </div>

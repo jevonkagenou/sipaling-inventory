@@ -41,14 +41,26 @@ function scrollToSection(id) {
 const isDark = ref(false);
 
 function toggleTheme() {
-    isDark.value = !isDark.value;
-    if (typeof window !== "undefined") {
-        localStorage.setItem("sipaling-theme", isDark.value ? "dark" : "light");
-        if (isDark.value) {
-            document.documentElement.classList.add("dark");
-        } else {
-            document.documentElement.classList.remove("dark");
+    const nextDark = !isDark.value;
+    
+    const applyTheme = () => {
+        isDark.value = nextDark;
+        if (typeof window !== "undefined") {
+            localStorage.setItem("sipaling-theme", nextDark ? "dark" : "light");
+            if (nextDark) {
+                document.documentElement.classList.add("dark");
+            } else {
+                document.documentElement.classList.remove("dark");
+            }
         }
+    };
+
+    if (typeof document !== "undefined" && "startViewTransition" in document) {
+        document.startViewTransition(() => {
+            applyTheme();
+        });
+    } else {
+        applyTheme();
     }
 }
 
@@ -61,6 +73,21 @@ function handleScroll() {
 
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Global Ambient Cursor Spotlight Tracking
+const mouseX = ref(720);
+const mouseY = ref(380);
+const isMouseActive = ref(false);
+
+function handleGlobalMouseMove(e) {
+    mouseX.value = e.clientX;
+    mouseY.value = e.clientY;
+    isMouseActive.value = true;
+}
+
+function handleGlobalMouseLeave() {
+    isMouseActive.value = false;
 }
 
 onMounted(() => {
@@ -78,10 +105,15 @@ onMounted(() => {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
+
+    window.addEventListener("mousemove", handleGlobalMouseMove, { passive: true });
+    document.addEventListener("mouseleave", handleGlobalMouseLeave);
 });
 
 onUnmounted(() => {
     window.removeEventListener("scroll", handleScroll);
+    window.removeEventListener("mousemove", handleGlobalMouseMove);
+    document.removeEventListener("mouseleave", handleGlobalMouseLeave);
 });
 </script>
 
@@ -90,8 +122,22 @@ onUnmounted(() => {
 
     <div
         :class="{ dark: isDark }"
-        class="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans antialiased selection:bg-blue-600/20 selection:text-blue-900 dark:selection:bg-zinc-800 dark:selection:text-white transition-colors duration-200">
+        class="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans antialiased selection:bg-blue-600/20 selection:text-blue-900 dark:selection:bg-zinc-800 dark:selection:text-white overflow-x-hidden">
         
+        <!-- Continuous Technical Dot Grid (Runs seamlessly across entire landing page, eliminating 'belang') -->
+        <div class="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:26px_26px] opacity-35 dark:opacity-20" />
+
+        <!-- Seamless Full-Page Ambient Cursor Glow (Moves across all sections, zero boundary clipping) -->
+        <div
+            class="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
+            :style="{
+                opacity: isMouseActive ? 1 : 0.5,
+                background: isDark
+                    ? `radial-gradient(580px circle at ${mouseX}px ${mouseY}px, rgba(56, 189, 248, 0.12), transparent 80%)`
+                    : `radial-gradient(580px circle at ${mouseX}px ${mouseY}px, rgba(37, 99, 235, 0.08), transparent 80%)`
+            }"
+        />
+
         <!-- FLOATING PILL TOP NAVIGATION (STICKY / FIXED OVER HERO & CONTENT) -->
         <header class="fixed top-4 sm:top-5 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
             <nav
@@ -145,8 +191,8 @@ onUnmounted(() => {
         <!-- 1. HERO SECTION -->
         <HeroSection :is-dark="isDark" />
 
-        <!-- MAIN CONTENT CONTAINER -->
-        <main class="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24 space-y-24 sm:space-y-32">
+        <!-- MAIN CONTENT CONTAINER (Separated cleanly below the fold) -->
+        <main class="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 pt-16 sm:pt-24 pb-24 sm:pb-32 space-y-20 sm:space-y-28">
             <!-- 2. FEATURES / 3 CORE PILLARS SECTION -->
             <FeaturesSection />
 
@@ -165,7 +211,7 @@ onUnmounted(() => {
             <!-- BOTTOM BANNER -->
             <ScrollReveal :delay="100">
                 <section
-                    class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-zinc-100 via-white to-zinc-50 dark:from-zinc-900 dark:via-zinc-900/90 dark:to-zinc-950 p-8 sm:p-12 space-y-6 text-left relative overflow-hidden shadow-sm">
+                    class="rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-gradient-to-br from-zinc-100/90 via-white/80 to-zinc-50/90 dark:from-zinc-900/90 dark:via-zinc-900/80 dark:to-zinc-950/90 backdrop-blur-md p-8 sm:p-12 space-y-6 text-left relative overflow-hidden shadow-xs">
                     <div class="max-w-xl space-y-3 relative z-10">
                         <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-600/20 mb-1">
                             Akses Sistem
@@ -199,7 +245,7 @@ onUnmounted(() => {
         </main>
 
         <!-- FOOTER -->
-        <footer class="border-t border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 py-8 text-xs text-zinc-500 dark:text-zinc-400 transition-colors">
+        <footer class="relative z-10 border-t border-zinc-200 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-sm py-8 text-xs text-zinc-500 dark:text-zinc-400 transition-colors">
             <div class="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-2.5">
                     <div class="h-6 w-6 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center p-0.5">
