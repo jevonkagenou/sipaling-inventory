@@ -17,12 +17,13 @@ class InventoryCsvSeeder extends Seeder
     {
         $csvPath = database_path('data/subset_online_retail_predictive.csv');
 
-        if (!file_exists($csvPath)) {
+        if (! file_exists($csvPath)) {
             $csvPath = base_path('subset_online_retail_predictive.csv');
         }
 
-        if (!file_exists($csvPath)) {
+        if (! file_exists($csvPath)) {
             $this->command->error("CSV file not found at: {$csvPath}");
+
             return;
         }
 
@@ -37,7 +38,7 @@ class InventoryCsvSeeder extends Seeder
             ['slug' => 'home-decor'],
             [
                 'name' => 'Home & Living Decor',
-                'description' => 'Peralatan dekorasi rumah, pencahayaan, dan ornamen ruang.'
+                'description' => 'Peralatan dekorasi rumah, pencahayaan, dan ornamen ruang.',
             ]
         );
 
@@ -45,71 +46,71 @@ class InventoryCsvSeeder extends Seeder
             ['slug' => 'gifts-novelties'],
             [
                 'name' => 'Gifts & Novelties',
-                'description' => 'Produk suvenir, tas serbaguna, dan perlengkapan pesta.'
+                'description' => 'Produk suvenir, tas serbaguna, dan perlengkapan pesta.',
             ]
         );
 
         // Profil master produk dan ambang batas minimum stock (Safety Stock / ROP)
         $productProfile = [
             '85099B' => [
-                'category_id'   => $categoryGift->id,
+                'category_id' => $categoryGift->id,
                 'current_stock' => 350,
                 'minimum_stock' => 100,
-                'unit'          => 'pcs',
+                'unit' => 'pcs',
             ],
             '85123A' => [
-                'category_id'   => $categoryHome->id,
+                'category_id' => $categoryHome->id,
                 'current_stock' => 42,
                 'minimum_stock' => 80,
-                'unit'          => 'pcs',
+                'unit' => 'pcs',
             ],
-            '23084'  => [
-                'category_id'   => $categoryHome->id,
+            '23084' => [
+                'category_id' => $categoryHome->id,
                 'current_stock' => 180,
                 'minimum_stock' => 75,
-                'unit'          => 'pcs',
+                'unit' => 'pcs',
             ],
-            '22197'  => [
-                'category_id'   => $categoryGift->id,
+            '22197' => [
+                'category_id' => $categoryGift->id,
                 'current_stock' => 520,
                 'minimum_stock' => 120,
-                'unit'          => 'pcs',
+                'unit' => 'pcs',
             ],
-            '84879'  => [
-                'category_id'   => $categoryHome->id,
+            '84879' => [
+                'category_id' => $categoryHome->id,
                 'current_stock' => 30,
                 'minimum_stock' => 60,
-                'unit'          => 'pcs',
+                'unit' => 'pcs',
             ],
-            '21212'  => [
-                'category_id'   => $categoryGift->id,
+            '21212' => [
+                'category_id' => $categoryGift->id,
                 'current_stock' => 210,
                 'minimum_stock' => 90,
-                'unit'          => 'pcs',
+                'unit' => 'pcs',
             ],
-            '84077'  => [
-                'category_id'   => $categoryGift->id,
+            '84077' => [
+                'category_id' => $categoryGift->id,
                 'current_stock' => 15,
                 'minimum_stock' => 50,
-                'unit'          => 'pcs',
+                'unit' => 'pcs',
             ],
-            '22616'  => [
-                'category_id'   => $categoryGift->id,
+            '22616' => [
+                'category_id' => $categoryGift->id,
                 'current_stock' => 95,
                 'minimum_stock' => 40,
-                'unit'          => 'pcs',
+                'unit' => 'pcs',
             ],
-            '23166'  => [
-                'category_id'   => $categoryHome->id,
+            '23166' => [
+                'category_id' => $categoryHome->id,
                 'current_stock' => 110,
                 'minimum_stock' => 50,
-                'unit'          => 'pcs',
+                'unit' => 'pcs',
             ],
-            '23843'  => [
-                'category_id'   => $categoryGift->id,
+            '23843' => [
+                'category_id' => $categoryGift->id,
                 'current_stock' => 8,
                 'minimum_stock' => 25,
-                'unit'          => 'pcs',
+                'unit' => 'pcs',
             ],
         ];
 
@@ -133,24 +134,24 @@ class InventoryCsvSeeder extends Seeder
                 $country = isset($colIndex['Country']) ? trim($row[$colIndex['Country']]) : null;
 
                 // 2. Simpan Master Product (UUID)
-                if (!isset($productsMap[$sku])) {
+                if (! isset($productsMap[$sku])) {
                     $profile = $productProfile[$sku] ?? [
-                        'category_id'   => $categoryGift->id,
+                        'category_id' => $categoryGift->id,
                         'current_stock' => 100,
                         'minimum_stock' => 50,
-                        'unit'          => 'pcs',
+                        'unit' => 'pcs',
                     ];
 
                     $product = Product::firstOrCreate(
                         ['sku' => $sku],
                         [
-                            'category_id'   => $profile['category_id'],
-                            'name'          => $description,
-                            'unit'          => $profile['unit'],
-                            'unit_price'    => $price,
+                            'category_id' => $profile['category_id'],
+                            'name' => $description,
+                            'unit' => $profile['unit'],
+                            'unit_price' => $price,
                             'current_stock' => $profile['current_stock'],
                             'minimum_stock' => $profile['minimum_stock'],
-                            'description'   => "Komoditas ritel berkode SKU {$sku}",
+                            'description' => "Komoditas ritel berkode SKU {$sku}",
                         ]
                     );
 
@@ -158,7 +159,7 @@ class InventoryCsvSeeder extends Seeder
                 }
 
                 // 3. Catat Transaksi Header unik (Invoice)
-                if (!isset($invoiceMap[$invoice])) {
+                if (! isset($invoiceMap[$invoice])) {
                     $trxId = (string) Str::uuid();
                     $invoiceMap[$invoice] = $trxId;
 
@@ -171,28 +172,28 @@ class InventoryCsvSeeder extends Seeder
                     }
 
                     $transactions[] = [
-                        'id'               => $trxId,
-                        'reference_no'     => $invoice,
-                        'type'             => 'outbound',
+                        'id' => $trxId,
+                        'reference_no' => $invoice,
+                        'type' => 'outbound',
                         'transaction_date' => $invoiceDate,
-                        'party_name'       => !empty($partyName) ? implode(' - ', $partyName) : 'General Retail',
-                        'notes'            => 'Penjualan riil Online Retail Dataset II',
-                        'created_by'       => null,
-                        'created_at'       => $now,
-                        'updated_at'       => $now,
+                        'party_name' => ! empty($partyName) ? implode(' - ', $partyName) : 'General Retail',
+                        'notes' => 'Penjualan riil Online Retail Dataset II',
+                        'created_by' => null,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ];
                 }
 
                 // 4. Catat Transaksi Detail (Item)
                 $details[] = [
-                    'id'                   => (string) Str::uuid(),
+                    'id' => (string) Str::uuid(),
                     'stock_transaction_id' => $invoiceMap[$invoice],
-                    'product_id'           => $productsMap[$sku],
-                    'quantity'             => $quantity,
-                    'unit_price'           => $price,
-                    'notes'                => "Outbound order {$invoice}",
-                    'created_at'           => $now,
-                    'updated_at'           => $now,
+                    'product_id' => $productsMap[$sku],
+                    'quantity' => $quantity,
+                    'unit_price' => $price,
+                    'notes' => "Outbound order {$invoice}",
+                    'created_at' => $now,
+                    'updated_at' => $now,
                 ];
             }
 
@@ -210,16 +211,16 @@ class InventoryCsvSeeder extends Seeder
 
             DB::commit();
 
-            $this->command->info("Seeding berhasil dan 100% selaras dengan implementation_plan.md:");
-            $this->command->info("- " . count($productsMap) . " master produk (UUID) ke tabel 'products'");
-            $this->command->info("- " . count($transactions) . " header transaksi (UUID) ke tabel 'stock_transactions'");
-            $this->command->info("- " . count($details) . " detail item transaksi (UUID) ke tabel 'stock_transaction_details'");
+            $this->command->info('Seeding berhasil dan 100% selaras dengan implementation_plan.md:');
+            $this->command->info('- '.count($productsMap)." master produk (UUID) ke tabel 'products'");
+            $this->command->info('- '.count($transactions)." header transaksi (UUID) ke tabel 'stock_transactions'");
+            $this->command->info('- '.count($details)." detail item transaksi (UUID) ke tabel 'stock_transaction_details'");
         } catch (\Exception $e) {
             DB::rollBack();
             if (is_resource($handle)) {
                 fclose($handle);
             }
-            $this->command->error("Terjadi kesalahan saat seeding: " . $e->getMessage());
+            $this->command->error('Terjadi kesalahan saat seeding: '.$e->getMessage());
             throw $e;
         }
     }

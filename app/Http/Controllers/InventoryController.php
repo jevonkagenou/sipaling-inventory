@@ -26,7 +26,7 @@ class InventoryController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('sku', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%");
+                    ->orWhere('name', 'like', "%{$search}%");
             });
         }
 
@@ -38,12 +38,12 @@ class InventoryController extends Controller
                 'search' => $search ?? '',
             ],
             'stats' => [
-                'total_products'     => Product::count(),
-                'total_categories'   => Category::count(),
+                'total_products' => Product::count(),
+                'total_categories' => Category::count(),
                 'total_transactions' => StockTransaction::count(),
-                'total_details'      => StockTransactionDetail::count(),
-                'reorder_count'      => Product::whereColumn('current_stock', '<=', 'minimum_stock')->count(),
-                'aman_count'         => Product::whereColumn('current_stock', '>', 'minimum_stock')->count(),
+                'total_details' => StockTransactionDetail::count(),
+                'reorder_count' => Product::whereColumn('current_stock', '<=', 'minimum_stock')->count(),
+                'aman_count' => Product::whereColumn('current_stock', '>', 'minimum_stock')->count(),
             ],
         ]);
     }
