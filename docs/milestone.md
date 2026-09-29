@@ -23,6 +23,7 @@ Dokumen Perencanaan Teknis dan Pembagian Kerja Tim (Minggu 6 s.d. Minggu 16)
 | Mesin Peramalan | Algoritma Double Exponential Smoothing (DES) Holt's Linear dieksekusi native di backend PHP tanpa service ML eksternal |
 | Mekanisme Jejak Audit | Perekaman otomatis melalui Eloquent Model Observers dan Spatie Activitylog dengan sifat append-only (anti-manipulasi) |
 | Cakupan Pergudangan | Berfokus pada sistem persediaan distributor tunggal terpusat tanpa kompleksitas multi-rak fisik |
+| Pemulihan Sandi & 2FA | Alur lupa kata sandi diamankan dengan verifikasi dua langkah (2-Step FA OTP 6 digit) berbatas waktu sebelum penggantian sandi diizinkan |
 
 ---
 
@@ -30,7 +31,7 @@ Dokumen Perencanaan Teknis dan Pembagian Kerja Tim (Minggu 6 s.d. Minggu 16)
 
 | Minggu Ke- | Target Rilis | Modul Utama | Fokus Deliverable |
 | :---: | :---: | :--- | :--- |
-| **6** | v0.1.1-alpha | Modul 1: Autentikasi & RBAC | Skema database UUID 13 tabel, instalasi Spatie Permission & Activitylog, konfigurasi 4 peran dan proteksi rute |
+| **6** | v0.1.1-alpha | Modul 1: Autentikasi & RBAC | Skema database UUID 14 tabel, Spatie Permission & Activitylog, 4 peran statis, proteksi rute, dan pemulihan sandi 2-Step FA |
 | **7** | v0.2.0-alpha | Modul 2: Master Data Inventaris | CRUD Master Kategori dan Produk, seeder dataset retail Kaggle, TanStack Table dengan status ketersediaan stok |
 | **8** | v0.2.5-alpha | Modul 3: Transaksi Stok (Backend) | Skema header dan detail mutasi, transaksi atomik DB transaction, row-level locking, validasi stok keluar |
 | **9** | v0.3.0-alpha | Modul 3: Transaksi Stok (Frontend) | Antarmuka transaksi Inbound dan Outbound, formulir multi-item dinamis, visualisasi riwayat mutasi stok |
@@ -46,20 +47,24 @@ Dokumen Perencanaan Teknis dan Pembagian Kerja Tim (Minggu 6 s.d. Minggu 16)
 
 ## 3. Rincian Pekerjaan Teknis Berdasarkan Modul dan Lapisan Arsitektur
 
-### Modul 1: Autentikasi, Profil & RBAC (Spatie Permission)
+### Modul 1: Autentikasi, Profil, RBAC & Pemulihan Kredensial 2-Step FA
 Target Penyelesaian: Minggu ke-6
 
 | ID | Lapisan | Rincian Tugas Teknis | Target Output / Deliverable | PIC | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: |
 | M1-BE-01 | Backend / Skema | Mengubah migrasi users agar id bertipe UUID, menambah kolom phone dan is_active | Migrasi `users` dengan primary key UUID | Meutia | [x] |
-| M1-BE-02 | Backend / Skema | Menyesuaikan migrasi Spatie Permission agar kolom model_id mendukung tipe UUID | Skema tabel Spatie Permission dengan UUID | Felix | [ ] |
-| M1-BE-03 | Backend / Model | Menambahkan trait HasRoles dan HasUuids pada model User.php | Model `User.php` terintegrasi UUID dan Spatie | Felix | [ ] |
-| M1-LC-01 | Logika / Seeder | Membuat RoleAndPermissionSeeder.php untuk 4 peran statis dan akun bawaan | Seeder peran dan user default siap pakai | Felix | [ ] |
-| M1-LC-02 | Logika / Middleware | Menerapkan middleware pembatasan hak akses berbasis peran pada routes/web.php | Rute terlindungi berdasarkan hak akses | Felix | [ ] |
-| M1-LC-03 | Logika / Middleware | Mengonfigurasi HandleInertiaRequests.php untuk membagikan data peran ke Vue | State `auth.roles` tersedia di seluruh halaman Vue | Felix | [ ] |
+| M1-BE-02 | Backend / Skema | Menyesuaikan migrasi Spatie Permission agar kolom model_id mendukung tipe UUID | Skema tabel Spatie Permission dengan UUID | Felix | [x] |
+| M1-BE-03 | Backend / Model | Menambahkan trait HasRoles dan HasUuids pada model User.php | Model `User.php` terintegrasi UUID dan Spatie | Felix | [x] |
+| M1-BE-04 | Backend / Skema | Membuat migrasi tabel password_reset_otps untuk verifikasi 2-Step FA | Skema tabel kode OTP 2FA dengan UUID dan batas kedaluwarsa | Sultan | [ ] |
+| M1-LC-01 | Logika / Seeder | Membuat RoleAndPermissionSeeder.php untuk 4 peran statis dan akun bawaan | Seeder peran dan user default siap pakai | Felix | [x] |
+| M1-LC-02 | Logika / Middleware | Menerapkan middleware pembatasan hak akses berbasis peran pada routes/web.php | Rute terlindungi berdasarkan hak akses | Felix | [x] |
+| M1-LC-03 | Logika / Middleware | Mengonfigurasi HandleInertiaRequests.php untuk membagikan data peran ke Vue | State `auth.roles` tersedia di seluruh halaman Vue | Felix | [x] |
+| M1-LC-04 | Logika / Service | Membangun TwoFactorResetService untuk generate OTP 6-digit dan rate limiting | Service verifikasi OTP 2-Step FA anti-bruteforce | Sultan | [ ] |
+| M1-LC-05 | Logika / Controller | Menghubungkan alur lupa password dengan challenge verifikasi 2-Step FA | Controller penanganan alur OTP, verifikasi kode & token reset | Sultan | [ ] |
 | M1-FE-01 | Frontend / UI | Memperbarui antarmuka Login.vue dengan pesan validasi akun non-aktif | Form login terintegrasi validasi status akun | Najwa | [ ] |
-| M1-FE-02 | Frontend / UI | Membangun navigasi dinamis di AuthenticatedLayout.vue berbasis peran pengguna | Menu sidebar/navbar adaptif sesuai peran aktif | Desy | [ ] |
+| M1-FE-02 | Frontend / UI | Membangun navigasi dinamis di AuthenticatedLayout.vue berbasis peran pengguna | Menu sidebar/navbar adaptif sesuai peran aktif | Desy | [x] |
 | M1-FE-03 | Frontend / UI | Menyusun halaman manajemen pengguna untuk pengaturan aktivasi akun | Halaman kelola user dengan badge role | Desy | [ ] |
+| M1-FE-04 | Frontend / UI | Membangun antarmuka verifikasi 2-Step FA (Auth/VerifyOtp.vue) dengan timer OTP | Halaman input 6-digit kode OTP terintegrasi form lupa password | Sultan | [ ] |
 
 ---
 
@@ -179,7 +184,7 @@ Target Penyelesaian: Minggu ke-14
 | Personil | Posisi / Spesialisasi | Cakupan Utama Modul | Tanggung Jawab Deliverable |
 | :--- | :--- | :--- | :--- |
 | **Felix Alberta Jevon (Felix)** | Project Manager, System Architect & Algorithm Lead | Modul 1 (Auth & RBAC), Modul 2 & 3 (Skema UUID MVP), Modul 4 (Engine DES Holt's Linear), & Modul 6 (Audit Trail) | Memimpin arsitektur sistem, memegang mesin peramalan Double Exponential Smoothing (DES Holt's Linear), metrik akurasi MAPE/RMSE, Grid Search parameter, otentikasi & RBAC Spatie, pengawasan audit trail append-only & observer, serta pengujian keamanan sistem. |
-| **Sultan Syarif Ubaidillah A. N. (Sultan)** | Main Developer (Fullstack Backend & Concurrency) | Modul 2 (Validasi & Controller Produk), Modul 3 (Atomic Mutasi & Concurrency), & Modul 5 (Restock Approval Backend) | Mengembangkan logika transaksi atomik (`DB::transaction` & `lockForUpdate`), penomoran mutasi unik, proteksi integritas restrict delete produk, backend alur persetujuan pengadaan (migrasi, model, policy & service approval), simulasi uji konkurensi 50 transaksi, dan optimasi build. |
+| **Sultan Syarif Ubaidillah A. N. (Sultan)** | Main Developer (Fullstack Backend & Concurrency) | Modul 1 (Pemulihan Kredensial & 2-Step FA OTP), Modul 2 (Validasi & Controller Produk), Modul 3 (Atomic Mutasi & Concurrency), & Modul 5 (Restock Approval Backend) | Mengembangkan alur pemulihan akun lupa sandi terlindungi 2-Step FA OTP (migrasi tabel OTP, TwoFactorResetService, controller & verifikasi UI), logika transaksi atomik (`DB::transaction` & `lockForUpdate`), penomoran mutasi unik, proteksi integritas restrict delete produk, backend alur persetujuan pengadaan (migrasi, model, policy & service approval), simulasi uji konkurensi 50 transaksi, dan optimasi build. |
 | **Desy Dwi Puspita (Desy)** | QA & Frontend Developer (Operasional Pergudangan) | Modul 1 (Navigasi Peran & Kelola User), Modul 3 (Form Mutasi Masuk/Keluar & Riwayat), Modul 5 (List Approval), & QA Testing | Membangun antarmuka operasional pergudangan harian: formulir transaksi Inbound & Outbound, riwayat mutasi stok, halaman monitoring pengajuan restock, navigasi peran di AuthenticatedLayout, halaman manajemen pengguna, serta pengujian fungsional mutasi & isolasi peran. |
 | **Najwa Kus Syafira (Najwa)** | UI/UX Designer & Frontend Component Specialist | Komponen Modal/Dialog Interaktif (Modul 2, 3, 5, 6), Visualisasi Grafik DES (Modul 4), & Desain Konsistensi | Mengembangkan seluruh komponen interaktif visual (Dialog/Modal form produk, dialog cetak bukti mutasi, dialog persetujuan/penolakan restock, modal visual diff viewer), visualisasi kurva peramalan Chart, kartu metrik akurasi DES, serta konsistensi desain tema gelap/terang & mobile. |
 | **Meutia Arafah Hidayat (Meutia)** | Frontend Developer, Dokumentator & QA (Governance & Analitik) | Modul 4 (Dasbor Analitik & Rekomendasi Restock), Modul 5 (Dasbor Otorisasi Komisaris), Modul 6 (Portal Audit Trail & Ekspor), & Dokumentasi | Membangun antarmuka tata kelola & analitik: Dasbor Analitik Manajer Operasional, tabel rekomendasi stok menipis, Dasbor Evaluasi Otorisasi Komisaris, portal investigasi audit log beserta filter multi-parameter, fitur ekspor berkas CSV/PDF log audit, penyusunan Dokumen Teknis Arsitektur, User Manual, logbook PBL, dan pelaksanaan UAT. |
