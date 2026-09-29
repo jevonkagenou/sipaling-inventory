@@ -51,7 +51,7 @@ Target Penyelesaian: Minggu ke-6
 
 | ID | Lapisan | Rincian Tugas Teknis | Target Output / Deliverable | PIC | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| M1-BE-01 | Backend / Skema | Mengubah migrasi users agar id bertipe UUID, menambah kolom phone dan is_active | Migrasi `users` dengan primary key UUID | Felix | [ ] |
+| M1-BE-01 | Backend / Skema | Mengubah migrasi users agar id bertipe UUID, menambah kolom phone dan is_active | Migrasi `users` dengan primary key UUID | Meutia | [ ] |
 | M1-BE-02 | Backend / Skema | Menyesuaikan migrasi Spatie Permission agar kolom model_id mendukung tipe UUID | Skema tabel Spatie Permission dengan UUID | Felix | [ ] |
 | M1-BE-03 | Backend / Model | Menambahkan trait HasRoles dan HasUuids pada model User.php | Model `User.php` terintegrasi UUID dan Spatie | Felix | [ ] |
 | M1-LC-01 | Logika / Seeder | Membuat RoleAndPermissionSeeder.php untuk 4 peran statis dan akun bawaan | Seeder peran dan user default siap pakai | Felix | [ ] |
