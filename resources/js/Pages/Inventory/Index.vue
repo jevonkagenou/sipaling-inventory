@@ -391,17 +391,68 @@ const table = useTable({
   columns,
 })
 
-// Status Filter Tabs
+// Status Filter Tabs + Kartu Statistik Interaktif
+type CardKey = 'total' | 'mutasi' | 'aman' | 'reorder'
+
 const activeStatusFilter = ref<'all' | 'Aman' | 'Reorder'>('all')
+const activeCard = ref<CardKey | null>(null)
+const tableSection = ref<HTMLElement | null>(null)
 
 function setStatusFilter(status: 'all' | 'Aman' | 'Reorder') {
   activeStatusFilter.value = status
+  activeCard.value = null
   if (status === 'all') {
     table.getColumn('status')?.setFilterValue(undefined)
   } else {
     table.getColumn('status')?.setFilterValue(status)
   }
 }
+
+function onCardClick(key: CardKey) {
+  // Klik kartu yang sama lagi = reset
+  if (activeCard.value === key) {
+    setStatusFilter('all')
+    table.resetSorting(true)
+    return
+  }
+  table.resetSorting(true)
+  setStatusFilter(key === 'aman' ? 'Aman' : key === 'reorder' ? 'Reorder' : 'all')
+  if (key === 'mutasi') {
+    table.getColumn('transaction_details_count')?.toggleSorting(true) // terbanyak dulu
+  }
+  activeCard.value = key
+  tableSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// Angka statistik beranimasi dari 0
+const animated = ref({ total_products: 0, total_details: 0, aman_count: 0, reorder_count: 0 })
+
+onMounted(() => {
+  const target = {
+    total_products: props.stats.total_products,
+    total_details: props.stats.total_details,
+    aman_count: props.stats.aman_count,
+    reorder_count: props.stats.reorder_count,
+  }
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    animated.value = target
+    return
+  }
+  const duration = 900
+  const start = performance.now()
+  const tick = (now: number) => {
+    const p = Math.min((now - start) / duration, 1)
+    const e = 1 - Math.pow(1 - p, 3) // easeOutCubic
+    animated.value = {
+      total_products: Math.round(target.total_products * e),
+      total_details: Math.round(target.total_details * e),
+      aman_count: Math.round(target.aman_count * e),
+      reorder_count: Math.round(target.reorder_count * e),
+    }
+    if (p < 1) requestAnimationFrame(tick)
+  }
+  requestAnimationFrame(tick)
+})
 </script>
 
 <template>
@@ -480,25 +531,32 @@ function setStatusFilter(status: 'all' | 'Aman' | 'Reorder') {
         </div>
       </div>
 
-      <!-- Ringkasan Statistik Inventaris (Card Shadcn Rapi dengan CardAction) -->
+      <!-- Ringkasan Statistik Inventaris (Interaktif: hover, animasi angka, klik untuk filter) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         <!-- Total Barang -->
-        <Card class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+        <Card
+          role="button" tabindex="0" title="Klik untuk menampilkan semua barang"
+          @click="onCardClick('total')" @keydown.enter="onCardClick('total')"
+          :class="activeCard === 'total'
+            ? 'ring-2 ring-[#2563EB] border-[#2563EB]'
+            : 'border-slate-200 dark:border-slate-800 hover:border-[#2563EB]/50'"
+          class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+        >
           <CardHeader class="pb-1.5">
             <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
               Total Barang
             </CardTitle>
             <CardAction>
-              <div class="p-2 rounded-lg bg-[#2563EB]/10 text-[#2563EB] dark:text-blue-400">
+              <div class="p-2 rounded-lg bg-[#2563EB]/10 text-[#2563EB] dark:text-blue-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6">
                 <Boxes class="w-4 h-4" />
               </div>
             </CardAction>
           </CardHeader>
           <CardContent class="pt-0">
             <div class="flex items-baseline gap-1.5">
-              <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {{ stats.total_products }}
+              <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                {{ animated.total_products }}
               </span>
               <span class="text-xs text-slate-500">item</span>
             </div>
@@ -509,21 +567,28 @@ function setStatusFilter(status: 'all' | 'Aman' | 'Reorder') {
         </Card>
 
         <!-- Total Mutasi Transaksi -->
-        <Card class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+        <Card
+          role="button" tabindex="0" title="Klik untuk mengurutkan barang berdasarkan mutasi terbanyak"
+          @click="onCardClick('mutasi')" @keydown.enter="onCardClick('mutasi')"
+          :class="activeCard === 'mutasi'
+            ? 'ring-2 ring-[#4F46E5] border-[#4F46E5]'
+            : 'border-slate-200 dark:border-slate-800 hover:border-[#4F46E5]/50'"
+          class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]"
+        >
           <CardHeader class="pb-1.5">
             <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
               Riwayat Transaksi
             </CardTitle>
             <CardAction>
-              <div class="p-2 rounded-lg bg-[#4F46E5]/10 text-[#4F46E5] dark:text-indigo-400">
+              <div class="p-2 rounded-lg bg-[#4F46E5]/10 text-[#4F46E5] dark:text-indigo-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6">
                 <Database class="w-4 h-4" />
               </div>
             </CardAction>
           </CardHeader>
           <CardContent class="pt-0">
             <div class="flex items-baseline gap-1.5">
-              <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {{ stats.total_details.toLocaleString() }}
+              <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                {{ animated.total_details.toLocaleString() }}
               </span>
               <span class="text-xs text-slate-500">mutasi</span>
             </div>
@@ -534,21 +599,28 @@ function setStatusFilter(status: 'all' | 'Aman' | 'Reorder') {
         </Card>
 
         <!-- Stok Aman -->
-        <Card class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+        <Card
+          role="button" tabindex="0" title="Klik untuk menampilkan barang berstatus Aman"
+          @click="onCardClick('aman')" @keydown.enter="onCardClick('aman')"
+          :class="activeCard === 'aman'
+            ? 'ring-2 ring-[#10B981] border-[#10B981]'
+            : 'border-slate-200 dark:border-slate-800 hover:border-[#10B981]/50'"
+          class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10B981]"
+        >
           <CardHeader class="pb-1.5">
             <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
               Stok Aman
             </CardTitle>
             <CardAction>
-              <div class="p-2 rounded-lg bg-[#10B981]/10 text-[#10B981] dark:text-emerald-400">
+              <div class="p-2 rounded-lg bg-[#10B981]/10 text-[#10B981] dark:text-emerald-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6">
                 <CheckCircle2 class="w-4 h-4" />
               </div>
             </CardAction>
           </CardHeader>
           <CardContent class="pt-0">
             <div class="flex items-baseline gap-1.5">
-              <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400">
-                {{ stats.aman_count }}
+              <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
+                {{ animated.aman_count }}
               </span>
               <span class="text-xs text-slate-500">barang</span>
             </div>
@@ -559,21 +631,28 @@ function setStatusFilter(status: 'all' | 'Aman' | 'Reorder') {
         </Card>
 
         <!-- Perlu Restock -->
-        <Card class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+        <Card
+          role="button" tabindex="0" title="Klik untuk menampilkan barang yang perlu restock"
+          @click="onCardClick('reorder')" @keydown.enter="onCardClick('reorder')"
+          :class="activeCard === 'reorder'
+            ? 'ring-2 ring-amber-500 border-amber-500'
+            : 'border-slate-200 dark:border-slate-800 hover:border-amber-500/50'"
+          class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+        >
           <CardHeader class="pb-1.5">
             <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
               Perlu Pengadaan
             </CardTitle>
             <CardAction>
-              <div class="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <div class="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6">
                 <AlertTriangle class="w-4 h-4" />
               </div>
             </CardAction>
           </CardHeader>
           <CardContent class="pt-0">
             <div class="flex items-baseline gap-1.5">
-              <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">
-                {{ stats.reorder_count }}
+              <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
+                {{ animated.reorder_count }}
               </span>
               <span class="text-xs text-slate-500">barang</span>
             </div>
@@ -651,7 +730,7 @@ function setStatusFilter(status: 'all' | 'Aman' | 'Reorder') {
       </div>
 
       <!-- Tabel Inventaris Shadcn -->
-      <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
+      <div ref="tableSection" class="scroll-mt-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow
