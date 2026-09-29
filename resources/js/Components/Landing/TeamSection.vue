@@ -18,7 +18,7 @@ const engineeringTeam = [
         initials: "MAH",
     },
     {
-        name: "Najwa Kus Sayafira",
+        name: "Najwa Kus Syafira",
         role: "Pengembang",
         initials: "NKS",
     },
