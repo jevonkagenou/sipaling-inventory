@@ -56,7 +56,7 @@ Target Penyelesaian: Minggu ke-6
 | M1-BE-03 | Backend / Model | Menambahkan trait HasRoles dan HasUuids pada model User.php | Model `User.php` terintegrasi UUID dan Spatie | Felix | [ ] |
 | M1-LC-01 | Logika / Seeder | Membuat RoleAndPermissionSeeder.php untuk 4 peran statis dan akun bawaan | Seeder peran dan user default siap pakai | Felix | [ ] |
 | M1-LC-02 | Logika / Middleware | Menerapkan middleware pembatasan hak akses berbasis peran pada routes/web.php | Rute terlindungi berdasarkan hak akses | Felix | [ ] |
-| M1-LC-03 | Logika / Middleware | Mengonfigurasi HandleInertiaRequests.php untuk membagikan data peran ke Vue | State `auth.roles` tersedia di seluruh halaman Vue | Sultan | [ ] |
+| M1-LC-03 | Logika / Middleware | Mengonfigurasi HandleInertiaRequests.php untuk membagikan data peran ke Vue | State `auth.roles` tersedia di seluruh halaman Vue | Felix | [ ] |
 | M1-FE-01 | Frontend / UI | Memperbarui antarmuka Login.vue dengan pesan validasi akun non-aktif | Form login terintegrasi validasi status akun | Najwa | [ ] |
 | M1-FE-02 | Frontend / UI | Membangun navigasi dinamis di AuthenticatedLayout.vue berbasis peran pengguna | Menu sidebar/navbar adaptif sesuai peran aktif | Desy | [ ] |
 | M1-FE-03 | Frontend / UI | Menyusun halaman manajemen pengguna untuk pengaturan aktivasi akun | Halaman kelola user dengan badge role | Desy | [ ] |
@@ -71,8 +71,8 @@ Target Penyelesaian: Minggu ke-7
 | M2-BE-01 | Backend / Skema | Membuat migrasi tabel categories dengan kolom id (UUID), name, slug, description | Skema tabel `categories` | Felix | [x] |
 | M2-BE-02 | Backend / Skema | Membuat migrasi tabel products dengan category_id (UUID), sku, name, unit, stok | Skema tabel `products` dengan safety stock | Felix | [x] |
 | M2-BE-03 | Backend / Model | Membangun relasi Eloquent one-to-many antara Category dan Product | Model `Category.php` dan `Product.php` aktif | Felix | [x] |
-| M2-LC-01 | Logika / Validasi | Membuat Form Request StoreProductRequest dan UpdateProductRequest | Validasi keunikan SKU dan kuantitas numerik | Felix | [ ] |
-| M2-LC-02 | Logika / Controller | Membuat ProductController.php dengan proteksi restrict delete jika berelasi transaksi | Controller master barang dengan proteksi integritas | Felix | [ ] |
+| M2-LC-01 | Logika / Validasi | Membuat Form Request StoreProductRequest dan UpdateProductRequest | Validasi keunikan SKU dan kuantitas numerik | Sultan | [ ] |
+| M2-LC-02 | Logika / Controller | Membuat ProductController.php dengan proteksi restrict delete jika berelasi transaksi | Controller master barang dengan proteksi integritas | Sultan | [ ] |
 | M2-LC-03 | Logika / Seeder | Mengimpor dataset Kaggle retail ke database melalui seeder InventoryCsvSeeder | 5.000 data produk dan kategori terisi di database | Felix | [x] |
 | M2-FE-01 | Frontend / UI | Menyempurnakan Inventory/Index.vue dengan TanStack Table dan pagination | Tabel katalog inventaris interaktif dan cepat | Felix | [x] |
 | M2-FE-02 | Frontend / UI | Membuat Dialog Modal shadcn-vue untuk form Tambah dan Edit Produk | Form popup modal tambah/edit barang | Najwa | [ ] |
@@ -103,14 +103,14 @@ Target Penyelesaian: Minggu ke-10 s.d. Minggu ke-11
 
 | ID | Lapisan | Rincian Tugas Teknis | Target Output / Deliverable | PIC | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| M4-BE-01 | Backend / Skema | Membuat migrasi forecasting_logs untuk menyimpan histori parameter dan hasil DES | Skema tabel `forecasting_logs` | Sultan | [ ] |
-| M4-BE-02 | Backend / Model | Membuat Model ForecastingLog.php dengan relasi ke model Product | Model Eloquent log peramalan terintegrasi | Sultan | [ ] |
-| M4-LC-01 | Logika / Algoritma | Menyusun DoubleExponentialSmoothingService dengan rumus Holt's Linear (Level & Tren) | Service murni PHP penghitung proyeksi tren | Sultan | [ ] |
-| M4-LC-02 | Logika / Akurasi | Mengimplementasikan fungsi kalkulasi metrik error MAPE dan RMSE | Kalkulator tingkat akurasi dan deviasi peramalan | Sultan | [ ] |
-| M4-LC-03 | Logika / Optimasi | Membangun fungsi Grid Search untuk menemukan pasangan nilai alpha-beta terbaik | Pencarian otomatis parameter error terendah | Sultan | [ ] |
-| M4-LC-04 | Logika / Kalkulasi | Menghitung rekomendasi kuantitas restock: Max(0, Forecast + Safety Stock - Current Stock) | Formula output saran kuantitas pengadaan | Sultan | [ ] |
+| M4-BE-01 | Backend / Skema | Membuat migrasi forecasting_logs untuk menyimpan histori parameter dan hasil DES | Skema tabel `forecasting_logs` | Felix | [ ] |
+| M4-BE-02 | Backend / Model | Membuat Model ForecastingLog.php dengan relasi ke model Product | Model Eloquent log peramalan terintegrasi | Felix | [ ] |
+| M4-LC-01 | Logika / Algoritma | Menyusun DoubleExponentialSmoothingService dengan rumus Holt's Linear (Level & Tren) | Service murni PHP penghitung proyeksi tren | Felix | [ ] |
+| M4-LC-02 | Logika / Akurasi | Mengimplementasikan fungsi kalkulasi metrik error MAPE dan RMSE | Kalkulator tingkat akurasi dan deviasi peramalan | Felix | [ ] |
+| M4-LC-03 | Logika / Optimasi | Membangun fungsi Grid Search untuk menemukan pasangan nilai alpha-beta terbaik | Pencarian otomatis parameter error terendah | Felix | [ ] |
+| M4-LC-04 | Logika / Kalkulasi | Menghitung rekomendasi kuantitas restock: Max(0, Forecast + Safety Stock - Current Stock) | Formula output saran kuantitas pengadaan | Felix | [ ] |
 | M4-FE-01 | Frontend / UI | Membangun Dasbor Analitik Manajer Operasional (Analytics/Index.vue) | Halaman dasbor analitik dan statistik stok | Meutia | [ ] |
-| M4-FE-02 | Frontend / UI | Mengintegrasikan visualisasi kurva aktual vs proyeksi peramalan menggunakan Chart | Komponen visual kurva pergerakan kebutuhan barang | Sultan | [ ] |
+| M4-FE-02 | Frontend / UI | Mengintegrasikan visualisasi kurva aktual vs proyeksi peramalan menggunakan Chart | Komponen visual kurva pergerakan kebutuhan barang | Najwa | [ ] |
 | M4-FE-03 | Frontend / UI | Menyediakan kartu informasi akurasi (Nilai Alpha, Nilai Beta, Persentase MAPE) | Kartu visual ringkasan performa algoritma | Najwa | [ ] |
 | M4-FE-04 | Frontend / UI | Membuat tabel rekomendasi stok menipis dengan tombol aksi cepat ajukan restock | Tabel prioritas pengadaan barang kritis | Meutia | [ ] |
 
@@ -121,14 +121,14 @@ Target Penyelesaian: Minggu ke-12 s.d. Minggu ke-13
 
 | ID | Lapisan | Rincian Tugas Teknis | Target Output / Deliverable | PIC | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| M5-BE-01 | Backend / Skema | Membuat migrasi restock_requests dengan status enum (pending, approved, rejected) | Skema tabel alur pengajuan `restock_requests` | Felix | [ ] |
-| M5-BE-02 | Backend / Model | Membuat Model RestockRequest.php dengan relasi requester dan reviewer | Model alur persetujuan dengan relasi pengguna | Felix | [ ] |
+| M5-BE-01 | Backend / Skema | Membuat migrasi restock_requests dengan status enum (pending, approved, rejected) | Skema tabel alur pengajuan `restock_requests` | Sultan | [ ] |
+| M5-BE-02 | Backend / Model | Membuat Model RestockRequest.php dengan relasi requester dan reviewer | Model alur persetujuan dengan relasi pengguna | Sultan | [ ] |
 | M5-LC-01 | Logika / Policy | Membuat RestockRequestPolicy untuk otorisasi hak ajukan (Manajer) dan setujui (Komisaris) | Kebijakan otorisasi alur kerja approval | Sultan | [ ] |
 | M5-LC-02 | Logika / Service | Membangun RestockRequestService untuk mengelola transisi status dokumen pengadaan | Service alur kerja approval anti-bypass | Sultan | [ ] |
 | M5-LC-03 | Logika / Event | Mengaitkan persetujuan dokumen dengan opsi pembuatan draf transaksi Inbound | Integrasi otomatis restock ke transaksi masuk | Sultan | [ ] |
 | M5-FE-01 | Frontend / UI | Membangun halaman daftar pengajuan Restock/Index.vue dengan tab status | Monitoring pengajuan restock multi-status | Desy | [ ] |
 | M5-FE-02 | Frontend / UI | Membuat formulir dialog pengajuan restock terisi otomatis dari rekomendasi DES | Form pengajuan cepat bagi Manajer Operasional | Najwa | [ ] |
-| M5-FE-03 | Frontend / UI | Membangun Dasbor Otorisasi Komisaris (Restock/Approval.vue) dengan kartu evaluasi | Halaman tinjauan khusus Komisaris | Desy | [ ] |
+| M5-FE-03 | Frontend / UI | Membangun Dasbor Otorisasi Komisaris (Restock/Approval.vue) dengan kartu evaluasi | Halaman tinjauan khusus Komisaris | Meutia | [ ] |
 | M5-FE-04 | Frontend / UI | Membuat dialog persetujuan (approve) dan penolakan (reject wajib mengisi alasan) | Modal aksi keputusan Komisaris | Najwa | [ ] |
 
 ---
@@ -139,10 +139,10 @@ Target Penyelesaian: Minggu ke-14
 | ID | Lapisan | Rincian Tugas Teknis | Target Output / Deliverable | PIC | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: |
 | M6-BE-01 | Backend / Skema | Menyesuaikan migrasi Spatie Activitylog agar kolom causer_id dan subject_id UUID | Skema tabel `activity_log` kompatibel UUID | Felix | [ ] |
-| M6-BE-02 | Backend / Model | Menimpa model ActivityLog dengan menonaktifkan delete() dan update() di Eloquent | Jaminan log bersifat append-only permanen | Sultan | [ ] |
-| M6-LC-01 | Logika / Observer | Mendaftarkan ProductObserver dan StockTransactionObserver untuk merekam histori | Perekaman otomatis data lama dan data baru | Sultan | [ ] |
-| M6-LC-02 | Logika / Security | Menangkap metadata keamanan (Alamat IP Klien dan User Agent) ke properties log | Jejak audit forensik lengkap dengan IP pengguna | Sultan | [ ] |
-| M6-LC-03 | Logika / Service | Membangun AuditLogQueryService dengan filter rentang tanggal, modul, dan aktor | Service penelusuran histori berkecepatan tinggi | Sultan | [ ] |
+| M6-BE-02 | Backend / Model | Menimpa model ActivityLog dengan menonaktifkan delete() dan update() di Eloquent | Jaminan log bersifat append-only permanen | Felix | [ ] |
+| M6-LC-01 | Logika / Observer | Mendaftarkan ProductObserver dan StockTransactionObserver untuk merekam histori | Perekaman otomatis data lama dan data baru | Felix | [ ] |
+| M6-LC-02 | Logika / Security | Menangkap metadata keamanan (Alamat IP Klien dan User Agent) ke properties log | Jejak audit forensik lengkap dengan IP pengguna | Felix | [ ] |
+| M6-LC-03 | Logika / Service | Membangun AuditLogQueryService dengan filter rentang tanggal, modul, dan aktor | Service penelusuran histori berkecepatan tinggi | Felix | [ ] |
 | M6-FE-01 | Frontend / UI | Membangun portal investigasi log khusus Auditor Internal (Audit/Index.vue) | Halaman investigasi riwayat sistem | Meutia | [ ] |
 | M6-FE-02 | Frontend / UI | Membuat komponen Visual Diff Viewer untuk perbandingan data lama vs data baru | Dialog perbandingan nilai perubahan atribut | Najwa | [ ] |
 | M6-FE-03 | Frontend / UI | Menyediakan filter pencarian histori multi-parameter (Tanggal, Pengguna, Modul) | Filter data log interaktif | Meutia | [ ] |
@@ -155,12 +155,13 @@ Target Penyelesaian: Minggu ke-14
 ### A. Rincian Pengujian Sistem (Minggu ke-15)
 | Kategori Pengujian | Fokus Pengujian dan Skenario Validasi | Standar Keberhasilan | PIC | Status |
 | :--- | :--- | :--- | :---: | :---: |
-| Unit Testing | Akurasi formula DES Holt's Linear dibandingkan dengan perhitungan Excel | Selisih nilai proyeksi < 0.001 | Sultan | [ ] |
+| Unit Testing | Akurasi formula DES Holt's Linear dibandingkan dengan perhitungan Excel | Selisih nilai proyeksi < 0.001 | Felix | [ ] |
 | Unit Testing | Validasi mutasi stok dengan kuantitas 0 atau bernilai minus | Sistem otomatis menolak input tidak valid | Desy | [ ] |
 | Integration Testing | Pengujian alur isolasi peran (Staf Gudang dilarang approve, dsb) | Respon otorisasi HTTP 403 Forbidden | Desy | [ ] |
 | Integration Testing | Pengujian integritas atomik (simulasi kegagalan koneksi di tengah transaksi) | Rollback database berhasil tanpa selisih stok | Sultan | [ ] |
-| Concurrency Testing | Simulasi 50 transaksi mutasi simultan pada produk yang sama | Terhindar dari race condition dan stok minus | Felix | [ ] |
+| Concurrency Testing | Simulasi 50 transaksi mutasi simultan pada produk yang sama | Terhindar dari race condition dan stok minus | Sultan | [ ] |
 | Security Testing | Percobaan eksekusi manipulasi penghapusan paksa tabel activity_log | Eksekusi diblokir oleh model guard | Felix | [ ] |
+| Usability Testing | Uji kelancaran navigasi, validasi input form, dan integritas berkas ekspor CSV/PDF | Seluruh form responsif dan berkas terunduh utuh | Meutia | [ ] |
 
 ### B. Finalisasi dan Handover (Minggu ke-16)
 | Kategori Kegiatan | Rincian Kegiatan Finalisasi | Target Output | PIC | Status |
@@ -177,11 +178,11 @@ Target Penyelesaian: Minggu ke-14
 
 | Personil | Posisi / Spesialisasi | Cakupan Utama Modul | Tanggung Jawab Deliverable |
 | :--- | :--- | :--- | :--- |
-| **Felix Alberta Jevon (Felix)** | Project Manager & System Architect (Fullstack Lead) | Arsitektur Sistem, Modul 1 (Auth/RBAC Schema), Modul 2 (Master Data Inventaris), Modul 3 (Skema Mutasi), & Hardening | Memimpin perencanaan arsitektur, skema migrasi database UUID 13 tabel, master data inventaris, relasi Eloquent, seeder dataset retail Kaggle 5.000 SKU, integrasi Spatie dasar, pengujian konkurensi & keamanan, serta koordinasi rilis mingguan. |
-| **Sultan Syarif Ubaidillah A. N. (Sultan)** | Main Developer (Fullstack & Algorithm Engineer) | Modul 3 (Atomic Mutasi), Modul 4 (Engine DES Holt's Linear), Modul 5 (Approval Logic), & Modul 6 (Audit Trail) | Mengembangkan mesin peramalan Holt's Linear Double Exponential Smoothing (DES), kalkulasi error MAPE/RMSE, optimasi Grid Search, engine transaksi atomik (`DB::transaction` & `lockForUpdate`), model observer audit trail anti-manipulasi (append-only), visualisasi Chart analitik, dan optimasi build. |
-| **Desy Dwi Puspita (Desy)** | QA & Frontend Developer | Modul 1 (Navigasi Peran & Kelola User), Modul 3 (Form Mutasi Masuk/Keluar & Riwayat), Modul 5 (UI Approval), & Testing | Membangun antarmuka form mutasi stok masuk/keluar (Inbound & Outbound), halaman riwayat transaksi mutasi, navigasi peran di AuthenticatedLayout, halaman manajemen pengguna, halaman daftar & otorisasi restock approval, serta pengujian fungsional/blackbox mutasi stok dan alur peran. |
-| **Najwa Kus Syafira (Najwa)** | UI/UX Designer & Frontend Developer | Desain UI/UX, Komponen Modal/Dialog Interaktif (Modul 2, 3, 4, 5, 6), & Desain Konsistensi | Mengembangkan komponen antarmuka visual (Dialog/Modal shadcn-vue), formulir popup tambah/edit produk, dialog rincian bukti transaksi cetak, kartu indikator akurasi DES (MAPE/RMSE), modal persetujuan/penolakan restock dengan alasan, visual diff viewer audit log, serta konsistensi responsivitas tema gelap/terang. |
-| **Meutia Arafah Hidayat (Meutia)** | Sekretaris, Dokumentator & QA | Modul 4 (Tabel Rekomendasi), Modul 6 (Portal Audit Trail & Ekspor), Dokumentasi Sistem, & UAT | Membangun antarmuka portal audit trail & log investigasi, filter pencarian multi-parameter, fitur ekspor berkas CSV/PDF log audit, dasbor dasar analitik & tabel rekomendasi stok menipis, penyusunan Dokumen Teknis Arsitektur, User Manual, logbook PBL, dan pelaksanaan pengujian UAT. |
+| **Felix Alberta Jevon (Felix)** | Project Manager, System Architect & Algorithm Lead | Modul 1 (Auth & RBAC), Modul 2 & 3 (Skema UUID MVP), Modul 4 (Engine DES Holt's Linear), & Modul 6 (Audit Trail) | Memimpin arsitektur sistem, memegang mesin peramalan Double Exponential Smoothing (DES Holt's Linear), metrik akurasi MAPE/RMSE, Grid Search parameter, otentikasi & RBAC Spatie, pengawasan audit trail append-only & observer, serta pengujian keamanan sistem. |
+| **Sultan Syarif Ubaidillah A. N. (Sultan)** | Main Developer (Fullstack Backend & Concurrency) | Modul 2 (Validasi & Controller Produk), Modul 3 (Atomic Mutasi & Concurrency), & Modul 5 (Restock Approval Backend) | Mengembangkan logika transaksi atomik (`DB::transaction` & `lockForUpdate`), penomoran mutasi unik, proteksi integritas restrict delete produk, backend alur persetujuan pengadaan (migrasi, model, policy & service approval), simulasi uji konkurensi 50 transaksi, dan optimasi build. |
+| **Desy Dwi Puspita (Desy)** | QA & Frontend Developer (Operasional Pergudangan) | Modul 1 (Navigasi Peran & Kelola User), Modul 3 (Form Mutasi Masuk/Keluar & Riwayat), Modul 5 (List Approval), & QA Testing | Membangun antarmuka operasional pergudangan harian: formulir transaksi Inbound & Outbound, riwayat mutasi stok, halaman monitoring pengajuan restock, navigasi peran di AuthenticatedLayout, halaman manajemen pengguna, serta pengujian fungsional mutasi & isolasi peran. |
+| **Najwa Kus Syafira (Najwa)** | UI/UX Designer & Frontend Component Specialist | Komponen Modal/Dialog Interaktif (Modul 2, 3, 5, 6), Visualisasi Grafik DES (Modul 4), & Desain Konsistensi | Mengembangkan seluruh komponen interaktif visual (Dialog/Modal form produk, dialog cetak bukti mutasi, dialog persetujuan/penolakan restock, modal visual diff viewer), visualisasi kurva peramalan Chart, kartu metrik akurasi DES, serta konsistensi desain tema gelap/terang & mobile. |
+| **Meutia Arafah Hidayat (Meutia)** | Frontend Developer, Dokumentator & QA (Governance & Analitik) | Modul 4 (Dasbor Analitik & Rekomendasi Restock), Modul 5 (Dasbor Otorisasi Komisaris), Modul 6 (Portal Audit Trail & Ekspor), & Dokumentasi | Membangun antarmuka tata kelola & analitik: Dasbor Analitik Manajer Operasional, tabel rekomendasi stok menipis, Dasbor Evaluasi Otorisasi Komisaris, portal investigasi audit log beserta filter multi-parameter, fitur ekspor berkas CSV/PDF log audit, penyusunan Dokumen Teknis Arsitektur, User Manual, logbook PBL, dan pelaksanaan UAT. |
 
 ---
 
