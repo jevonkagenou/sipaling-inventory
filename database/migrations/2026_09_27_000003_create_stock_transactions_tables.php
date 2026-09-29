@@ -18,7 +18,7 @@ return new class extends Migration
             $table->dateTime('transaction_date')->index();
             $table->string('party_name', 150)->nullable();
             $table->text('notes')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
 
