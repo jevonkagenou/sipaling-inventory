@@ -55,7 +55,7 @@ Target Penyelesaian: Minggu ke-6
 | M1-BE-01 | Backend / Skema | Mengubah migrasi users agar id bertipe UUID, menambah kolom phone dan is_active | Migrasi `users` dengan primary key UUID | Meutia | [x] |
 | M1-BE-02 | Backend / Skema | Menyesuaikan migrasi Spatie Permission agar kolom model_id mendukung tipe UUID | Skema tabel Spatie Permission dengan UUID | Felix | [x] |
 | M1-BE-03 | Backend / Model | Menambahkan trait HasRoles dan HasUuids pada model User.php | Model `User.php` terintegrasi UUID dan Spatie | Felix | [x] |
-| M1-BE-04 | Backend / Skema | Membuat migrasi tabel password_reset_otps untuk verifikasi 2-Step FA | Skema tabel kode OTP 2FA dengan UUID dan batas kedaluwarsa | Desy | [x] |
+| M1-BE-04 | Backend / Skema | Membuat migrasi tabel password_reset_otps untuk verifikasi 2-Step FA | Skema tabel kode OTP 2FA dengan UUID dan batas kedaluwarsa | Sultan | [ ] |
 | M1-LC-01 | Logika / Seeder | Membuat RoleAndPermissionSeeder.php untuk 4 peran statis dan akun bawaan | Seeder peran dan user default siap pakai | Felix | [x] |
 | M1-LC-02 | Logika / Middleware | Menerapkan middleware pembatasan hak akses berbasis peran pada routes/web.php | Rute terlindungi berdasarkan hak akses | Felix | [x] |
 | M1-LC-03 | Logika / Middleware | Mengonfigurasi HandleInertiaRequests.php untuk membagikan data peran ke Vue | State `auth.roles` tersedia di seluruh halaman Vue | Felix | [x] |
@@ -64,7 +64,7 @@ Target Penyelesaian: Minggu ke-6
 | M1-FE-01 | Frontend / UI | Memperbarui antarmuka Login.vue dengan pesan validasi akun non-aktif | Form login terintegrasi validasi status akun | Najwa | [ ] |
 | M1-FE-02 | Frontend / UI | Membangun navigasi dinamis di AuthenticatedLayout.vue berbasis peran pengguna | Menu sidebar/navbar adaptif sesuai peran aktif | Desy | [x] |
 | M1-FE-03 | Frontend / UI | Menyusun halaman manajemen pengguna untuk pengaturan aktivasi akun | Halaman kelola user dengan badge role | Desy | [ ] |
-| M1-FE-04 | Frontend / UI | Membangun antarmuka verifikasi 2-Step FA (Auth/VerifyOtp.vue) dengan timer OTP | Halaman input 6-digit kode OTP terintegrasi form lupa password | Sultan | [ ] |
+| M1-FE-04 | Frontend / UI | Membangun antarmuka verifikasi 2-Step FA (Auth/VerifyOtp.vue) dengan timer OTP | Halaman input 6-digit kode OTP terintegrasi form lupa password | Desy | [x] |
 
 ---
 
