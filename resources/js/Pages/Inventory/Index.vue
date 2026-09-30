@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, ref, computed, onMounted } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import {
   columnFilteringFeature,
   columnVisibilityFeature,
@@ -106,6 +106,9 @@ const props = defineProps<{
     aman_count: number
   }
 }>()
+
+const page = usePage()
+const isAuthenticated = computed(() => !!page.props.auth?.user)
 
 // Single Theme Toggle (Synchronized with localStorage & HTML root, defaults to Light)
 const isDark = ref(false)
@@ -498,11 +501,11 @@ onMounted(() => {
           <Copy v-else class="mr-2 h-3.5 w-3.5 text-slate-400" />
           <span>{{ copiedId === product.id ? 'Tersalin' : 'Salin Kode UUID' }}</span>
         </DropdownMenuItem>
-        <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800" />
-          <DropdownMenuItem @click="openEditDialog(product)" class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs">
+        <DropdownMenuSeparator v-if="isAuthenticated" class="bg-slate-100 dark:bg-slate-800" />
+        <DropdownMenuItem v-if="isAuthenticated" @click="openEditDialog(product)" class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs">
           <Pencil class="mr-2 h-3.5 w-3.5 text-slate-400" /> Edit Barang
-          </DropdownMenuItem>
-        <DropdownMenuItem class="cursor-pointer text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/50 text-xs">
+        </DropdownMenuItem>
+        <DropdownMenuItem v-if="isAuthenticated" class="cursor-pointer text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/50 text-xs">
           <Trash2 class="mr-2 h-3.5 w-3.5" /> Hapus Barang
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -546,7 +549,19 @@ onMounted(() => {
             <span class="text-xs font-medium">{{ isDark ? 'Terang' : 'Gelap' }}</span>
           </Button>
 
-            <Button @click="openCreateDialog" class="bg-[#2563EB] hover:bg-blue-700 text-white font-medium shadow-sm transition-all text-xs h-9 px-3.5 cursor-pointer">
+          <Link
+            v-if="!isAuthenticated"
+            :href="route('login')"
+            class="inline-flex items-center justify-center rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 h-9 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-xs hover:border-[#2563EB]/40 hover:text-[#2563EB] dark:hover:text-[#4F46E5] transition-colors"
+          >
+            Masuk
+          </Link>
+
+          <Button
+            v-if="isAuthenticated"
+            @click="openCreateDialog"
+            class="bg-[#2563EB] hover:bg-blue-700 text-white font-medium shadow-sm transition-all text-xs h-9 px-3.5 cursor-pointer"
+          >
             <Plus class="w-4 h-4 mr-1.5" /> Tambah Barang
           </Button>
         </div>
