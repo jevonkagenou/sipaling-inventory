@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, ref, computed, onMounted } from 'vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import {
   columnFilteringFeature,
   columnVisibilityFeature,
@@ -43,6 +43,7 @@ import {
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu'
 import { Input } from '@/Components/ui/input'
+import ProductFormDialog from '@/Components/Inventory/ProductFormDialog.vue'
 import {
   Table,
   TableBody,
@@ -94,6 +95,7 @@ export interface ProductItem {
 
 const props = defineProps<{
   products: ProductItem[]
+  categories: { id: string; name: string }[]
   filters: { search?: string }
   stats: {
     total_products: number
@@ -453,6 +455,25 @@ onMounted(() => {
   }
   requestAnimationFrame(tick)
 })
+  const isDialogOpen = ref(false)
+  const dialogMode = ref<'create' | 'edit'>('create')
+  const selectedProduct = ref<ProductItem | null>(null)
+
+  function openCreateDialog() {
+    dialogMode.value = 'create'
+    selectedProduct.value = null
+    isDialogOpen.value = true
+  }
+
+  function openEditDialog(product: ProductItem) {
+    dialogMode.value = 'edit'
+    selectedProduct.value = product
+    isDialogOpen.value = true
+  }
+
+  function onSaved() {
+    router.reload({ only: ['products', 'stats'] })
+  }
 </script>
 
 <template>
@@ -478,9 +499,9 @@ onMounted(() => {
           <span>{{ copiedId === product.id ? 'Tersalin' : 'Salin Kode UUID' }}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800" />
-        <DropdownMenuItem class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs">
-          <Pencil class="mr-2 h-3.5 w-3.5 text-slate-400" /> Edit Batas Minimum
-        </DropdownMenuItem>
+          <DropdownMenuItem @click="openEditDialog(product)" class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs">
+          <Pencil class="mr-2 h-3.5 w-3.5 text-slate-400" /> Edit Barang
+          </DropdownMenuItem>
         <DropdownMenuItem class="cursor-pointer text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/50 text-xs">
           <Trash2 class="mr-2 h-3.5 w-3.5" /> Hapus Barang
         </DropdownMenuItem>
@@ -525,7 +546,7 @@ onMounted(() => {
             <span class="text-xs font-medium">{{ isDark ? 'Terang' : 'Gelap' }}</span>
           </Button>
 
-          <Button class="bg-[#2563EB] hover:bg-blue-700 text-white font-medium shadow-sm transition-all text-xs h-9 px-3.5 cursor-pointer">
+            <Button @click="openCreateDialog" class="bg-[#2563EB] hover:bg-blue-700 text-white font-medium shadow-sm transition-all text-xs h-9 px-3.5 cursor-pointer">
             <Plus class="w-4 h-4 mr-1.5" /> Tambah Barang
           </Button>
         </div>
@@ -803,6 +824,14 @@ onMounted(() => {
         </div>
       </div>
 
+      </div>
     </div>
-  </div>
-</template>
+
+    <ProductFormDialog
+      v-model:open="isDialogOpen"
+      :mode="dialogMode"
+      :product="selectedProduct"
+      :categories="categories"
+      @saved="onSaved"
+    />
+  </template>
