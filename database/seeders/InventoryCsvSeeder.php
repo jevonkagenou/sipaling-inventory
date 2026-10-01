@@ -211,7 +211,6 @@ class InventoryCsvSeeder extends Seeder
 
             DB::commit();
 
-            $this->command->info('Seeding berhasil dan 100% selaras dengan implementation_plan.md:');
             $this->command->info('- '.count($productsMap)." master produk (UUID) ke tabel 'products'");
             $this->command->info('- '.count($transactions)." header transaksi (UUID) ke tabel 'stock_transactions'");
             $this->command->info('- '.count($details)." detail item transaksi (UUID) ke tabel 'stock_transaction_details'");

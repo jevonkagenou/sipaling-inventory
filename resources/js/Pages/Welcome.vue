@@ -166,7 +166,7 @@ onUnmounted(() => {
 
                 <!-- Auth Navigation -->
                 <div class="flex items-center gap-2 sm:gap-2.5">
-                    <Link :href="route('inventory.index')"
+                    <Link v-if="$page.props.auth?.user" :href="route('inventory.index')"
                         class="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/80 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">
                         <Boxes class="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
                         Katalog
@@ -233,7 +233,7 @@ onUnmounted(() => {
                                 <ArrowRight class="h-4 w-4 ml-1.5" />
                             </Button>
                         </Link>
-                        <Link :href="route('inventory.index')">
+                        <Link v-if="$page.props.auth?.user" :href="route('inventory.index')">
                             <Button size="lg" variant="outline"
                                 class="border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 font-medium px-5 h-10 text-xs cursor-pointer">
                                 Katalog Inventaris

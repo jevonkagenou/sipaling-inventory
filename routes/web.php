@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -12,9 +13,11 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Katalog Master Inventaris & Simulasi Prediksi
+    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::match(['get', 'post'], '/analytics/simulate/{productId}', [AnalyticsController::class, 'simulate'])->name('analytics.simulate');
+
     // Dasbor Utama & Pengaturan Profil
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
@@ -36,11 +39,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('outbound.create');
     });
 
-    // 2. Modul Analitik & Mesin Peramalan DES (Manajer Operasional & Komisaris)
-    Route::middleware(['role:manajer-operasional|komisaris'])->prefix('analytics')->name('analytics.')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('Analytics/Index');
-        })->name('index');
+    // 2. Modul Analitik & Mesin Peramalan DES (Mode Referensi & Pengujian Terbuka untuk Seluruh Tim)
+    Route::middleware(['role:manajer-operasional|komisaris|staf-gudang|auditor-internal'])->prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/', [AnalyticsController::class, 'index'])->name('index');
     });
 
     // 3. Modul Alur Persetujuan Pengadaan (Restock Approval Workflow)

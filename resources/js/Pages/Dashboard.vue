@@ -95,9 +95,9 @@ const modules = computed(() => [
         name: 'Mesin Analitik DES Holt\'s Linear',
         desc: 'Visualisasi kurva aktual vs proyeksi peramalan, parameter alpha/beta, dan kalkulasi MAPE & RMSE.',
         url: '/analytics',
-        allowedRoles: ['Manajer Operasional', 'Komisaris'],
+        allowedRoles: ['Semua Peran (Mode Referensi Tim)'],
         icon: BarChart3,
-        isAllowed: roles.value.some(r => ['manajer-operasional', 'komisaris'].includes(r)),
+        isAllowed: true,
         actionLabel: 'Buka Analitik',
     },
     {
@@ -142,13 +142,24 @@ const testAccounts = [
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div class="space-y-1">
-                    <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-slate-400">Pusat Kendali</span>
+                <span class="text-slate-300 dark:text-slate-700">/</span>
+                <h1 class="text-sm font-bold text-slate-900 dark:text-white truncate">
+                    Ringkasan &amp; Pengujian RBAC
+                </h1>
+            </div>
+        </template>
+
+        <div class="space-y-6 max-w-7xl mx-auto">
+            <!-- Page Banner with Role Badge in body instead of top navbar -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+                <div class="space-y-0.5">
+                    <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                         Pusat Kendali Sistem SIPALING
                     </h2>
-                    <p class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                        Sistem Inventaris Prediktif & Audit Log Terintegrasi • Sesi Aktif Pengguna
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        Sistem Inventaris Prediktif &amp; Audit Log Terintegrasi &bull; Sesi Aktif Pengguna
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
@@ -156,16 +167,14 @@ const testAccounts = [
                         <component :is="currentRoleInfo.icon" class="h-3.5 w-3.5" />
                         {{ currentRoleInfo.label }}
                     </span>
-                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                         Sesi Aktif
                     </span>
                 </div>
             </div>
-        </template>
 
-        <div class="py-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+            <div class="space-y-6">
 
                 <!-- SECTION 1: PROFIL IDENTITAS PENGGUNA & STATUS SPATIE -->
                 <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-xs">

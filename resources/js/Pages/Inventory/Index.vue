@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { h, ref, computed, onMounted } from 'vue'
-import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { h, ref, computed } from 'vue'
+import { Head, router } from '@inertiajs/vue3'
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import {
   columnFilteringFeature,
   columnVisibilityFeature,
@@ -26,24 +27,13 @@ import { cn } from '@/lib/utils'
 // Shadcn UI Components
 import { Button } from '@/Components/ui/button'
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/Components/ui/card'
-import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu'
-import { Input } from '@/Components/ui/input'
-import ProductFormDialog from '@/Components/Inventory/ProductFormDialog.vue'
 import {
   Table,
   TableBody,
@@ -53,25 +43,24 @@ import {
   TableRow,
 } from '@/Components/ui/table'
 
+// Modular Inventory Components
+import InventoryStatsCards, { type CardKey } from '@/Components/Inventory/InventoryStatsCards.vue'
+import InventoryToolbar from '@/Components/Inventory/InventoryToolbar.vue'
+import InventoryToast, { type ToastState } from '@/Components/Inventory/InventoryToast.vue'
+import ProductFormDialog from '@/Components/Inventory/ProductFormDialog.vue'
+import ProductForecastDialog from '@/Components/Inventory/ProductForecastDialog.vue'
+
 // Lucide Icons
 import {
   ArrowUpDown,
-  ChevronDown,
   MoreHorizontal,
   Boxes,
-  Plus,
-  ArrowLeft,
-  CheckCircle2,
-  AlertTriangle,
-  Database,
-  Layers,
   Pencil,
-  Trash2,
   History,
-  Sun,
-  Moon,
   Copy,
   Check,
+  TrendingUp,
+  Inbox,
 } from 'lucide-vue-next'
 
 export interface Category {
@@ -107,38 +96,6 @@ const props = defineProps<{
   }
 }>()
 
-const page = usePage()
-const isAuthenticated = computed(() => !!page.props.auth?.user)
-
-// Single Theme Toggle (Synchronized with localStorage & HTML root, defaults to Light)
-const isDark = ref(false)
-
-function toggleTheme() {
-  isDark.value = !isDark.value
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('sipaling-theme', isDark.value ? 'dark' : 'light')
-    if (isDark.value) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }
-}
-
-onMounted(() => {
-  const savedTheme = localStorage.getItem('sipaling-theme')
-  if (savedTheme) {
-    isDark.value = savedTheme === 'dark'
-  } else {
-    isDark.value = false
-  }
-  if (isDark.value) {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
-})
-
 // Currency Formatter
 const formatCurrency = (val: number | string) => {
   return new Intl.NumberFormat('en-GB', {
@@ -153,11 +110,27 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate<{
   product: ProductItem
 }>()
 
+// Toast Notification State
+const toast = ref<ToastState | null>(null)
+let toastTimer: any = null
+
+function showToast(title: string, description?: string) {
+  if (toastTimer) clearTimeout(toastTimer)
+  toast.value = { id: Date.now(), title, description }
+  toastTimer = setTimeout(() => {
+    toast.value = null
+  }, 3200)
+}
+
 const copiedId = ref<string | null>(null)
-function copyUuid(id: string) {
-  if (navigator?.clipboard) {
-    navigator.clipboard.writeText(id)
-    copiedId.value = id
+function copyUuid(product: ProductItem) {
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    navigator.clipboard.writeText(product.id)
+    copiedId.value = product.id
+    showToast(
+      'Kode UUID Berhasil Disalin!',
+      `ID untuk "${product.name}" (${product.sku}) telah tersimpan di clipboard.`
+    )
     setTimeout(() => {
       copiedId.value = null
     }, 2000)
@@ -194,6 +167,18 @@ const columnNames: Record<string, string> = {
   actions: 'Aksi',
 }
 
+const columnWidthClasses: Record<string, string> = {
+  sku: 'w-[75px]',
+  name: 'min-w-[150px] max-w-[170px] xl:max-w-[210px] 2xl:max-w-[280px]',
+  category: 'w-[125px]',
+  unit_price: 'w-[75px]',
+  current_stock: 'w-[75px]',
+  minimum_stock: 'w-[60px]',
+  transaction_details_count: 'w-[80px]',
+  status: 'w-[85px]',
+  actions: 'w-[75px]',
+}
+
 const columns = columnHelper.columns([
   // 1. SKU / Kode
   columnHelper.accessor('sku', {
@@ -203,20 +188,25 @@ const columns = columnHelper.columns([
         {
           variant: 'ghost',
           class:
-            '-ml-3 h-8 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
+            '-ml-2 h-7 px-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
-        () => ['Kode SKU', h(ArrowUpDown, { class: 'ml-1.5 h-3.5 w-3.5 text-slate-400' })],
+        () => ['SKU', h(ArrowUpDown, { class: 'ml-1 h-3 w-3 text-slate-400' })],
       ),
     cell: ({ row }) =>
-      h(
-        'span',
-        { class: 'font-mono text-xs font-semibold text-[#2563EB] dark:text-blue-400' },
-        row.getValue('sku'),
-      ),
+      h('div', { class: 'font-mono text-xs font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap' }, [
+        h(
+          'span',
+          {
+            class:
+              'px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono tracking-wider text-[11px]',
+          },
+          row.getValue('sku'),
+        ),
+      ]),
   }),
 
-  // 2. Nama Barang
+  // 2. Nama Barang (Responsive Truncate with Native Tooltip)
   columnHelper.accessor('name', {
     header: ({ column }) =>
       h(
@@ -224,53 +214,74 @@ const columns = columnHelper.columns([
         {
           variant: 'ghost',
           class:
-            '-ml-3 h-8 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
+            '-ml-2 h-7 px-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
-        () => ['Nama Barang', h(ArrowUpDown, { class: 'ml-1.5 h-3.5 w-3.5 text-slate-400' })],
+        () => ['Nama Barang', h(ArrowUpDown, { class: 'ml-1 h-3 w-3 text-slate-400' })],
       ),
-    cell: ({ row }) =>
-      h(
-        'div',
-        { class: 'font-medium text-slate-900 dark:text-slate-100 leading-snug' },
-        row.getValue('name'),
-      ),
+    cell: ({ row }) => {
+      const product = row.original
+      return h('div', { class: 'flex flex-col min-w-0 max-w-[150px] lg:max-w-[180px] xl:max-w-[260px]' }, [
+        h(
+          'span',
+          {
+            class: 'font-semibold text-slate-900 dark:text-slate-100 text-xs truncate',
+            title: product.name,
+          },
+          product.name,
+        ),
+        h(
+          'span',
+          { class: 'text-[10px] text-slate-400 dark:text-slate-500 font-mono truncate' },
+          `ID: ${product.id.slice(0, 8)}...`,
+        ),
+      ])
+    },
   }),
 
   // 3. Kategori
-  columnHelper.accessor((row) => row.category?.name || 'Umum', {
+  columnHelper.accessor((row) => row.category?.name ?? 'Tanpa Kategori', {
     id: 'category',
-    header: 'Kategori',
-    cell: ({ row }) =>
+    header: () =>
       h(
+        'div',
+        { class: 'text-left font-semibold text-slate-700 dark:text-slate-300 text-xs' },
+        'Kategori',
+      ),
+    cell: ({ row }) => {
+      const catName = row.getValue('category') as string
+      return h(
         'span',
         {
           class:
-            'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80',
+            'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 whitespace-nowrap',
         },
-        [h(Layers, { class: 'w-3 h-3 text-slate-400' }), row.getValue('category')],
-      ),
+        catName,
+      )
+    },
   }),
 
   // 4. Harga Satuan
   columnHelper.accessor('unit_price', {
     header: ({ column }) =>
-      h('div', { class: 'text-right' }, [
+      h(
+        'div',
+        { class: 'text-right' },
         h(
           Button,
           {
             variant: 'ghost',
             class:
-              '-mr-3 h-8 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
+              'h-7 px-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
             onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           },
-          () => ['Harga Satuan', h(ArrowUpDown, { class: 'ml-1.5 h-3.5 w-3.5 text-slate-400' })],
+          () => ['Harga', h(ArrowUpDown, { class: 'ml-1 h-3 w-3 text-slate-400' })],
         ),
-      ]),
+      ),
     cell: ({ row }) =>
       h(
         'div',
-        { class: 'text-right font-medium text-sm text-slate-800 dark:text-slate-200' },
+        { class: 'text-right font-medium text-slate-700 dark:text-slate-300 text-xs tabular-nums whitespace-nowrap' },
         formatCurrency(row.getValue('unit_price')),
       ),
   }),
@@ -278,46 +289,57 @@ const columns = columnHelper.columns([
   // 5. Stok Saat Ini
   columnHelper.accessor('current_stock', {
     header: ({ column }) =>
-      h('div', { class: 'text-right' }, [
+      h(
+        'div',
+        { class: 'text-right' },
         h(
           Button,
           {
             variant: 'ghost',
             class:
-              '-mr-3 h-8 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
+              'h-7 px-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
             onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           },
-          () => ['Stok Saat Ini', h(ArrowUpDown, { class: 'ml-1.5 h-3.5 w-3.5 text-slate-400' })],
+          () => ['Stok', h(ArrowUpDown, { class: 'ml-1 h-3 w-3 text-slate-400' })],
         ),
-      ]),
+      ),
     cell: ({ row }) => {
-      const product = row.original
-      return h('div', { class: 'text-right' }, [
-        h('span', { class: 'font-semibold text-slate-900 dark:text-white text-sm' }, product.current_stock),
-        h('span', { class: 'text-xs text-slate-400 ml-1 font-normal' }, product.unit || 'pcs'),
+      const stock = row.getValue('current_stock') as number
+      const min = row.original.minimum_stock
+      const isLow = stock <= min
+      return h('div', { class: 'text-right flex items-center justify-end gap-1 whitespace-nowrap' }, [
+        h(
+          'span',
+          {
+            class: cn(
+              'font-semibold text-xs tabular-nums',
+              isLow ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100',
+            ),
+          },
+          stock,
+        ),
+        h('span', { class: 'text-[10px] text-slate-400' }, row.original.unit || 'pcs'),
       ])
     },
   }),
 
-  // 6. Batas Minimum (ROP)
+  // 6. Batas Minimum (Safety Stock)
   columnHelper.accessor('minimum_stock', {
     header: () =>
       h(
         'div',
         { class: 'text-right font-semibold text-slate-700 dark:text-slate-300 text-xs' },
-        'Batas Minimum',
+        'Min',
       ),
-    cell: ({ row }) => {
-      const product = row.original
-      return h(
+    cell: ({ row }) =>
+      h(
         'div',
-        { class: 'text-right text-xs text-slate-500 dark:text-slate-400' },
-        `${product.minimum_stock} ${product.unit || 'pcs'}`,
-      )
-    },
+        { class: 'text-right text-xs text-slate-500 dark:text-slate-400 tabular-nums whitespace-nowrap' },
+        `${row.getValue('minimum_stock')} ${row.original.unit || 'pcs'}`,
+      ),
   }),
 
-  // 7. Total Mutasi
+  // 7. Total Mutasi Transaksi
   columnHelper.accessor('transaction_details_count', {
     header: ({ column }) =>
       h('div', { class: 'text-center' }, [
@@ -326,21 +348,21 @@ const columns = columnHelper.columns([
           {
             variant: 'ghost',
             class:
-              'h-8 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
+              'h-7 px-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
             onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           },
-          () => ['Total Mutasi', h(ArrowUpDown, { class: 'ml-1.5 h-3.5 w-3.5 text-slate-400' })],
+          () => ['Mutasi', h(ArrowUpDown, { class: 'ml-1 h-3 w-3 text-slate-400' })],
         ),
       ]),
     cell: ({ row }) =>
-      h('div', { class: 'text-center' }, [
+      h('div', { class: 'text-center whitespace-nowrap' }, [
         h(
           'span',
           {
             class:
-              'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80',
+              'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80',
           },
-          [h(History, { class: 'w-3 h-3 text-slate-400' }), `${row.getValue('transaction_details_count') || 0} mutasi`],
+          [h(History, { class: 'w-3 h-3 text-slate-400' }), `${row.getValue('transaction_details_count') || 0}x`],
         ),
       ]),
   }),
@@ -351,17 +373,17 @@ const columns = columnHelper.columns([
       h(
         'div',
         { class: 'text-center font-semibold text-slate-700 dark:text-slate-300 text-xs' },
-        'Status Stok',
+        'Status',
       ),
     cell: ({ row }) => {
       const status = row.getValue('status') as string
       const isAman = status === 'Aman'
-      return h('div', { class: 'text-center' }, [
+      return h('div', { class: 'text-center whitespace-nowrap' }, [
         h(
           'span',
           {
             class: cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border',
+              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border',
               isAman
                 ? 'bg-emerald-50 dark:bg-emerald-950/50 text-[#10B981] dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
                 : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60',
@@ -382,6 +404,12 @@ const columns = columnHelper.columns([
   columnHelper.display({
     id: 'actions',
     enableHiding: false,
+    header: () =>
+      h(
+        'div',
+        { class: 'text-right font-semibold text-slate-700 dark:text-slate-300 text-xs pr-1' },
+        'Aksi',
+      ),
     cell: ({ row }) => {
       return h(ReuseTemplate, {
         product: row.original,
@@ -397,8 +425,6 @@ const table = useTable({
 })
 
 // Status Filter Tabs + Kartu Statistik Interaktif
-type CardKey = 'total' | 'mutasi' | 'aman' | 'reorder'
-
 const activeStatusFilter = ref<'all' | 'Aman' | 'Reorder'>('all')
 const activeCard = ref<CardKey | null>(null)
 const tableSection = ref<HTMLElement | null>(null)
@@ -414,7 +440,6 @@ function setStatusFilter(status: 'all' | 'Aman' | 'Reorder') {
 }
 
 function onCardClick(key: CardKey) {
-  // Klik kartu yang sama lagi = reset
   if (activeCard.value === key) {
     setStatusFilter('all')
     table.resetSorting(true)
@@ -423,425 +448,237 @@ function onCardClick(key: CardKey) {
   table.resetSorting(true)
   setStatusFilter(key === 'aman' ? 'Aman' : key === 'reorder' ? 'Reorder' : 'all')
   if (key === 'mutasi') {
-    table.getColumn('transaction_details_count')?.toggleSorting(true) // terbanyak dulu
+    table.getColumn('transaction_details_count')?.toggleSorting(true)
   }
   activeCard.value = key
   tableSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-// Angka statistik beranimasi dari 0
-const animated = ref({ total_products: 0, total_details: 0, aman_count: 0, reorder_count: 0 })
+// Dialog States
+const isDialogOpen = ref(false)
+const dialogMode = ref<'create' | 'edit'>('create')
+const selectedProduct = ref<ProductItem | null>(null)
 
-onMounted(() => {
-  const target = {
-    total_products: props.stats.total_products,
-    total_details: props.stats.total_details,
-    aman_count: props.stats.aman_count,
-    reorder_count: props.stats.reorder_count,
-  }
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    animated.value = target
-    return
-  }
-  const duration = 900
-  const start = performance.now()
-  const tick = (now: number) => {
-    const p = Math.min((now - start) / duration, 1)
-    const e = 1 - Math.pow(1 - p, 3) // easeOutCubic
-    animated.value = {
-      total_products: Math.round(target.total_products * e),
-      total_details: Math.round(target.total_details * e),
-      aman_count: Math.round(target.aman_count * e),
-      reorder_count: Math.round(target.reorder_count * e),
-    }
-    if (p < 1) requestAnimationFrame(tick)
-  }
-  requestAnimationFrame(tick)
-})
-  const isDialogOpen = ref(false)
-  const dialogMode = ref<'create' | 'edit'>('create')
-  const selectedProduct = ref<ProductItem | null>(null)
+function openCreateDialog() {
+  dialogMode.value = 'create'
+  selectedProduct.value = null
+  isDialogOpen.value = true
+}
 
-  function openCreateDialog() {
-    dialogMode.value = 'create'
-    selectedProduct.value = null
-    isDialogOpen.value = true
-  }
+function openEditDialog(product: ProductItem) {
+  dialogMode.value = 'edit'
+  selectedProduct.value = product
+  isDialogOpen.value = true
+}
 
-  function openEditDialog(product: ProductItem) {
-    dialogMode.value = 'edit'
-    selectedProduct.value = product
-    isDialogOpen.value = true
-  }
+const isForecastDialogOpen = ref(false)
+const forecastProduct = ref<ProductItem | null>(null)
 
-  function onSaved() {
-    router.reload({ only: ['products', 'stats'] })
-  }
+function openForecastDialog(product: ProductItem) {
+  forecastProduct.value = product
+  isForecastDialogOpen.value = true
+}
+
+function onSaved() {
+  router.reload({ only: ['products', 'stats'] })
+  showToast('Katalog Diperbarui', 'Data barang berhasil disimpan ke database.')
+}
 </script>
 
 <template>
-  <Head title="Inventaris Barang - SIPALING" />
+  <Head title="Katalog Inventaris - SIPALING" />
 
-  <!-- Dropdown Action Template -->
+  <!-- Action Dropdown Template Definition -->
   <DefineTemplate v-slot="{ product }">
-    <DropdownMenu>
-      <DropdownMenuTrigger as-child>
-        <Button variant="ghost" class="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer">
-          <span class="sr-only">Buka menu aksi</span>
-          <MoreHorizontal class="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" class="w-48 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-md">
-        <DropdownMenuLabel class="text-xs text-slate-400 font-normal">Aksi Data</DropdownMenuLabel>
-        <DropdownMenuItem
-          class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs"
-          @click="copyUuid(product.id)"
-        >
-          <Check v-if="copiedId === product.id" class="mr-2 h-3.5 w-3.5 text-emerald-500" />
-          <Copy v-else class="mr-2 h-3.5 w-3.5 text-slate-400" />
-          <span>{{ copiedId === product.id ? 'Tersalin' : 'Salin Kode UUID' }}</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator v-if="isAuthenticated" class="bg-slate-100 dark:bg-slate-800" />
-        <DropdownMenuItem v-if="isAuthenticated" @click="openEditDialog(product)" class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs">
-          <Pencil class="mr-2 h-3.5 w-3.5 text-slate-400" /> Edit Barang
-        </DropdownMenuItem>
-        <DropdownMenuItem v-if="isAuthenticated" class="cursor-pointer text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/50 text-xs">
-          <Trash2 class="mr-2 h-3.5 w-3.5" /> Hapus Barang
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div class="flex items-center justify-end gap-1">
+      <!-- Quick Action: Cek Prediksi DES (Direct 1-Click for Instant Visibility) -->
+      <Button
+        variant="ghost"
+        size="icon"
+        class="h-7 w-7 rounded-md text-[#2563EB] hover:text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/60 cursor-pointer transition-colors"
+        title="Cek Prediksi Holt DES"
+        @click.stop="openForecastDialog(product)"
+      >
+        <span class="sr-only">Cek Prediksi DES</span>
+        <TrendingUp class="h-3.5 w-3.5" />
+      </Button>
+
+      <!-- More Actions Dropdown -->
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <Button
+            variant="ghost"
+            class="h-7 w-7 p-0 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+            title="Menu Tindakan Lainnya"
+          >
+            <span class="sr-only">Buka menu aksi</span>
+            <MoreHorizontal class="h-3.5 w-3.5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="w-44 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-md">
+          <DropdownMenuLabel class="text-xs text-slate-400 font-normal">Aksi Data</DropdownMenuLabel>
+          <DropdownMenuItem
+            class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs"
+            @click="copyUuid(product)"
+          >
+            <Check v-if="copiedId === product.id" class="mr-2 h-3.5 w-3.5 text-emerald-500" />
+            <Copy v-else class="mr-2 h-3.5 w-3.5 text-slate-400" />
+            <span>{{ copiedId === product.id ? 'Tersalin' : 'Salin Kode UUID' }}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem @click="openEditDialog(product)" class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs">
+            <Pencil class="mr-2 h-3.5 w-3.5 text-slate-400" /> Edit Barang
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   </DefineTemplate>
 
-  <div class="min-h-screen bg-slate-50 dark:bg-[#0F172A] p-4 sm:p-6 lg:p-10 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
-    <div class="mx-auto max-w-7xl space-y-6">
+  <AuthenticatedLayout>
+    <!-- Header Slot (Clean Breadcrumbs) -->
+    <template #header>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-slate-400">Inventaris</span>
+        <span class="text-slate-300 dark:text-slate-700">/</span>
+        <h1 class="text-sm font-bold text-slate-900 dark:text-white truncate">
+          Katalog Master Data
+        </h1>
+      </div>
+    </template>
 
-      <!-- Header Navigasi -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-        <div class="flex items-center gap-3">
-          <Link
-            href="/"
-            class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-[#2563EB] dark:hover:text-[#4F46E5] hover:border-[#2563EB]/40 shadow-xs transition-colors"
-            title="Kembali ke Beranda"
-          >
-            <ArrowLeft class="w-4 h-4" />
-          </Link>
-          <div>
-            <div class="flex items-center gap-2.5">
-              <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Daftar Inventaris Barang
-              </h1>
-            </div>
-            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Kelola master data produk, pantau stok aktual, dan riwayat mutasi transaksi.
-            </p>
-          </div>
-        </div>
-
-        <!-- Tombol Aksi & Mode Tema -->
-        <div class="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            @click="toggleTheme"
-            class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 shadow-xs hover:border-[#2563EB]/40 cursor-pointer h-9 px-3"
-          >
-            <Sun v-if="isDark" class="h-4 w-4 mr-1.5 text-amber-400" />
-            <Moon v-else class="h-4 w-4 mr-1.5 text-slate-400" />
-            <span class="text-xs font-medium">{{ isDark ? 'Terang' : 'Gelap' }}</span>
-          </Button>
-
-          <Link
-            v-if="!isAuthenticated"
-            :href="route('login')"
-            class="inline-flex items-center justify-center rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 h-9 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-xs hover:border-[#2563EB]/40 hover:text-[#2563EB] dark:hover:text-[#4F46E5] transition-colors"
-          >
-            Masuk
-          </Link>
-
-          <Button
-            v-if="isAuthenticated"
-            @click="openCreateDialog"
-            class="bg-[#2563EB] hover:bg-blue-700 text-white font-medium shadow-sm transition-all text-xs h-9 px-3.5 cursor-pointer"
-          >
-            <Plus class="w-4 h-4 mr-1.5" /> Tambah Barang
-          </Button>
+    <div class="space-y-6">
+      <!-- Page Banner -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Katalog Master Inventaris
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            Kelola master data produk, pantau stok fisik aktual, dan riwayat mutasi barang.
+          </p>
         </div>
       </div>
+      <!-- 1. Modular Interactive KPI Cards Component -->
+      <InventoryStatsCards
+        :stats="stats"
+        :active-card="activeCard"
+        @select-card="onCardClick"
+      />
 
-      <!-- Ringkasan Statistik Inventaris (Interaktif: hover, animasi angka, klik untuk filter) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- 2. Table Section & Modular Toolbar Component -->
+      <div ref="tableSection" class="space-y-3">
+        <InventoryToolbar
+          :search-query="(table.getColumn('name')?.getFilterValue() as string) ?? ''"
+          :active-status-filter="activeStatusFilter"
+          :total-count="products.length"
+          :aman-count="stats.aman_count"
+          :reorder-count="stats.reorder_count"
+          :table="table"
+          :column-names="columnNames"
+          @update:search-query="table.getColumn('name')?.setFilterValue($event)"
+          @update:status-filter="setStatusFilter"
+          @create="openCreateDialog"
+        />
 
-        <!-- Total Barang -->
-        <Card
-          role="button" tabindex="0" title="Klik untuk menampilkan semua barang"
-          @click="onCardClick('total')" @keydown.enter="onCardClick('total')"
-          :class="activeCard === 'total'
-            ? 'ring-2 ring-[#2563EB] border-[#2563EB]'
-            : 'border-slate-200 dark:border-slate-800 hover:border-[#2563EB]/50'"
-          class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
-        >
-          <CardHeader class="pb-1.5">
-            <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Total Barang
-            </CardTitle>
-            <CardAction>
-              <div class="p-2 rounded-lg bg-[#2563EB]/10 text-[#2563EB] dark:text-blue-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6">
-                <Boxes class="w-4 h-4" />
-              </div>
-            </CardAction>
-          </CardHeader>
-          <CardContent class="pt-0">
-            <div class="flex items-baseline gap-1.5">
-              <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-                {{ animated.total_products }}
-              </span>
-              <span class="text-xs text-slate-500">item</span>
-            </div>
-            <CardDescription class="mt-1 text-xs text-slate-400">
-              Dari {{ stats.total_categories }} kategori barang
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <!-- Total Mutasi Transaksi -->
-        <Card
-          role="button" tabindex="0" title="Klik untuk mengurutkan barang berdasarkan mutasi terbanyak"
-          @click="onCardClick('mutasi')" @keydown.enter="onCardClick('mutasi')"
-          :class="activeCard === 'mutasi'
-            ? 'ring-2 ring-[#4F46E5] border-[#4F46E5]'
-            : 'border-slate-200 dark:border-slate-800 hover:border-[#4F46E5]/50'"
-          class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]"
-        >
-          <CardHeader class="pb-1.5">
-            <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Riwayat Transaksi
-            </CardTitle>
-            <CardAction>
-              <div class="p-2 rounded-lg bg-[#4F46E5]/10 text-[#4F46E5] dark:text-indigo-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6">
-                <Database class="w-4 h-4" />
-              </div>
-            </CardAction>
-          </CardHeader>
-          <CardContent class="pt-0">
-            <div class="flex items-baseline gap-1.5">
-              <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-                {{ animated.total_details.toLocaleString() }}
-              </span>
-              <span class="text-xs text-slate-500">mutasi</span>
-            </div>
-            <CardDescription class="mt-1 text-xs text-slate-400">
-              Tercatat dalam {{ stats.total_transactions.toLocaleString() }} faktur
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <!-- Stok Aman -->
-        <Card
-          role="button" tabindex="0" title="Klik untuk menampilkan barang berstatus Aman"
-          @click="onCardClick('aman')" @keydown.enter="onCardClick('aman')"
-          :class="activeCard === 'aman'
-            ? 'ring-2 ring-[#10B981] border-[#10B981]'
-            : 'border-slate-200 dark:border-slate-800 hover:border-[#10B981]/50'"
-          class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10B981]"
-        >
-          <CardHeader class="pb-1.5">
-            <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Stok Aman
-            </CardTitle>
-            <CardAction>
-              <div class="p-2 rounded-lg bg-[#10B981]/10 text-[#10B981] dark:text-emerald-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6">
-                <CheckCircle2 class="w-4 h-4" />
-              </div>
-            </CardAction>
-          </CardHeader>
-          <CardContent class="pt-0">
-            <div class="flex items-baseline gap-1.5">
-              <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
-                {{ animated.aman_count }}
-              </span>
-              <span class="text-xs text-slate-500">barang</span>
-            </div>
-            <CardDescription class="mt-1 text-xs text-slate-400">
-              Kuantitas di atas batas minimum
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <!-- Perlu Restock -->
-        <Card
-          role="button" tabindex="0" title="Klik untuk menampilkan barang yang perlu restock"
-          @click="onCardClick('reorder')" @keydown.enter="onCardClick('reorder')"
-          :class="activeCard === 'reorder'
-            ? 'ring-2 ring-amber-500 border-amber-500'
-            : 'border-slate-200 dark:border-slate-800 hover:border-amber-500/50'"
-          class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-        >
-          <CardHeader class="pb-1.5">
-            <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Perlu Pengadaan
-            </CardTitle>
-            <CardAction>
-              <div class="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-6">
-                <AlertTriangle class="w-4 h-4" />
-              </div>
-            </CardAction>
-          </CardHeader>
-          <CardContent class="pt-0">
-            <div class="flex items-baseline gap-1.5">
-              <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
-                {{ animated.reorder_count }}
-              </span>
-              <span class="text-xs text-slate-500">barang</span>
-            </div>
-            <CardDescription class="mt-1 text-xs text-slate-400">
-              Mendekati atau di bawah batas minimum
-            </CardDescription>
-          </CardContent>
-        </Card>
-      </div>
-
-      <!-- Bilah Pencarian & Opsi Kolom -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
-        <div class="flex items-center gap-2">
-          <!-- Input Pencarian -->
-          <Input
-            class="w-full sm:w-80 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-xs shadow-xs focus-visible:ring-1 focus-visible:ring-[#2563EB] h-9"
-            placeholder="Cari nama barang..."
-            :model-value="(table.getColumn('name')?.getFilterValue() as string) ?? ''"
-            @update:model-value="table.getColumn('name')?.setFilterValue($event)"
-          />
-
-          <!-- Tab Status -->
-          <div class="hidden sm:flex items-center gap-1 ml-2">
-            <button
-              @click="setStatusFilter('all')"
-              :class="activeStatusFilter === 'all'
-                ? 'bg-[#2563EB] text-white font-medium shadow-xs'
-                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'"
-              class="px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
-            >
-              Semua ({{ props.products.length }})
-            </button>
-            <button
-              @click="setStatusFilter('Aman')"
-              :class="activeStatusFilter === 'Aman'
-                ? 'bg-[#10B981] text-white font-medium shadow-xs'
-                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'"
-              class="px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
-            >
-              Aman ({{ stats.aman_count }})
-            </button>
-            <button
-              @click="setStatusFilter('Reorder')"
-              :class="activeStatusFilter === 'Reorder'
-                ? 'bg-amber-600 text-white font-medium shadow-xs'
-                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'"
-              class="px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
-            >
-              Perlu Restock ({{ stats.reorder_count }})
-            </button>
-          </div>
-        </div>
-
-        <!-- Dropdown Pilih Kolom -->
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <Button variant="outline" class="ml-auto border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs shadow-xs hover:border-[#2563EB]/40 cursor-pointer h-9">
-              Pilih Kolom <ChevronDown class="ml-1.5 h-3.5 w-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" class="w-48 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-            <DropdownMenuLabel class="text-xs text-slate-400 font-normal">Kolom Ditampilkan</DropdownMenuLabel>
-            <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800" />
-            <DropdownMenuCheckboxItem
-              v-for="column in table.getAllColumns().filter((col) => col.getCanHide())"
-              :key="column.id"
-              class="text-xs text-slate-700 dark:text-slate-300 cursor-pointer"
-              :model-value="column.getIsVisible()"
-              @update:model-value="(val) => column.toggleVisibility(!!val)"
-            >
-              {{ columnNames[column.id] || column.id }}
-            </DropdownMenuCheckboxItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <!-- Tabel Inventaris Shadcn -->
-      <div ref="tableSection" class="scroll-mt-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow
-              v-for="headerGroup in table.getHeaderGroups()"
-              :key="headerGroup.id"
-              class="bg-slate-50/80 dark:bg-slate-900/60 border-b-slate-200 dark:border-slate-800"
-            >
-              <TableHead
-                v-for="header in headerGroup.headers"
-                :key="header.id"
-                class="font-semibold text-slate-700 dark:text-slate-300 text-xs py-3.5"
-              >
-                <FlexRender v-if="!header.isPlaceholder" :header="header" />
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <template v-if="table.getRowModel().rows?.length">
-              <TableRow
-                v-for="row in table.getRowModel().rows"
-                :key="row.id"
-                class="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800/60"
-              >
-                <TableCell
-                  v-for="cell in row.getVisibleCells()"
-                  :key="cell.id"
-                  class="py-3"
+        <!-- 3. TanStack Data Table View -->
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden">
+          <Table>
+            <TableHeader class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
+              <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id" class="hover:bg-transparent">
+                <TableHead
+                  v-for="header in headerGroup.headers"
+                  :key="header.id"
+                  :class="cn(
+                    'h-10 px-2 sm:px-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap',
+                    columnWidthClasses[header.column.id],
+                    header.column.id === 'name' && 'max-w-[170px] xl:max-w-[210px] 2xl:max-w-[280px]',
+                    header.column.id === 'actions' && 'sticky right-0 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-xs z-20 text-right pr-3 shadow-[-4px_0_8px_rgba(0,0,0,0.03)] border-l border-slate-200/80 dark:border-slate-800'
+                  )"
                 >
-                  <FlexRender :cell="cell" />
-                </TableCell>
+                  <FlexRender
+                    v-if="!header.isPlaceholder"
+                    :render="header.column.columnDef.header"
+                    :props="header.getContext()"
+                  />
+                </TableHead>
               </TableRow>
-            </template>
+            </TableHeader>
+            <TableBody>
+              <template v-if="table.getRowModel().rows.length">
+                <TableRow
+                  v-for="row in table.getRowModel().rows"
+                  :key="row.id"
+                  class="group border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                >
+                  <TableCell
+                    v-for="cell in row.getVisibleCells()"
+                    :key="cell.id"
+                    :class="cn(
+                      'px-2 sm:px-2.5 py-2.5 text-xs',
+                      columnWidthClasses[cell.column.id],
+                      cell.column.id === 'name' && 'max-w-[170px] xl:max-w-[210px] 2xl:max-w-[280px] overflow-hidden truncate',
+                      cell.column.id === 'actions' && 'sticky right-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 transition-colors z-10 text-right pr-3 shadow-[-4px_0_8px_rgba(0,0,0,0.03)] border-l border-slate-100 dark:border-slate-800/80'
+                    )"
+                  >
+                    <FlexRender
+                      :render="cell.column.columnDef.cell"
+                      :props="cell.getContext()"
+                    />
+                  </TableCell>
+                </TableRow>
+              </template>
+              <template v-else>
+                <TableRow>
+                  <TableCell :colspan="columns.length" class="h-40 text-center">
+                    <div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 py-6">
+                      <Inbox class="w-10 h-10 mb-2 stroke-[1.5]" />
+                      <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Tidak ada barang yang cocok</p>
+                      <p class="text-xs text-slate-400 mt-0.5">Coba ubah kata kunci pencarian atau bersihkan filter.</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        @click="setStatusFilter('all'); table.getColumn('name')?.setFilterValue('')"
+                        class="mt-3 text-xs border-slate-200 dark:border-slate-800 cursor-pointer"
+                      >
+                        Reset Filter
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </template>
+            </TableBody>
+          </Table>
 
-            <TableRow v-else>
-              <TableCell :colspan="columns.length" class="h-32 text-center text-slate-500 dark:text-slate-400">
-                <div class="flex flex-col items-center justify-center gap-1.5">
-                  <Boxes class="w-6 h-6 text-slate-300 dark:text-slate-600" />
-                  <span class="text-xs">Tidak ada data barang yang cocok dengan pencarian.</span>
-                </div>
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-
-        <!-- Paginasi & Total Data -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30">
-          <div class="text-xs text-slate-500 dark:text-slate-400">
-            Total {{ table.getFilteredRowModel().rows.length }} barang terdaftar
-          </div>
-          <div class="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              :disabled="!table.getCanPreviousPage()"
-              @click="table.previousPage()"
-              class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-40 h-8 px-3"
-            >
-              Sebelumnya
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              :disabled="!table.getCanNextPage()"
-              @click="table.nextPage()"
-              class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-40 h-8 px-3"
-            >
-              Berikutnya
-            </Button>
+          <!-- Table Pagination & Total Counter -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30">
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+              Menampilkan <span class="font-semibold text-slate-700 dark:text-slate-300">{{ table.getFilteredRowModel().rows.length }}</span> dari {{ products.length }} barang terdaftar
+            </div>
+            <div class="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                :disabled="!table.getCanPreviousPage()"
+                @click="table.previousPage()"
+                class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-40 h-8 px-3"
+              >
+                Sebelumnya
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                :disabled="!table.getCanNextPage()"
+                @click="table.nextPage()"
+                class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-40 h-8 px-3"
+              >
+                Berikutnya
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-
       </div>
     </div>
 
+    <!-- Modals -->
     <ProductFormDialog
       v-model:open="isDialogOpen"
       :mode="dialogMode"
@@ -849,4 +686,13 @@ onMounted(() => {
       :categories="categories"
       @saved="onSaved"
     />
-  </template>
+
+    <ProductForecastDialog
+      v-model:open="isForecastDialogOpen"
+      :product="forecastProduct"
+    />
+
+    <!-- Modular Toast Notification Component -->
+    <InventoryToast :toast="toast" @close="toast = null" />
+  </AuthenticatedLayout>
+</template>

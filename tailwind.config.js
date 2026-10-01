@@ -16,14 +16,16 @@ export default {
     		fontFamily: {
     			sans: [
     				'"Plus Jakarta Sans"',
-    				'Inter',
-    				'Figtree',
-                    ...defaultTheme.fontFamily.sans
-                ],
-                mono: [
-                    '"JetBrains Mono"',
-                    ...defaultTheme.fontFamily.mono
-                ]
+    				'system-ui',
+    				'-apple-system',
+    				'BlinkMacSystemFont',
+    				'"Segoe UI"',
+    				'sans-serif',
+    			],
+    			mono: [
+    				'"JetBrains Mono"',
+    				...defaultTheme.fontFamily.mono
+    			]
     		},
     		borderRadius: {
     			lg: 'var(--radius)',

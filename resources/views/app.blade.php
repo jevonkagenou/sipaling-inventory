@@ -6,8 +6,9 @@
 
         <title inertia>{{ config('app.name', 'SIPALING') }}</title>
 
-        <!-- Favicon (Official SIPALING 3D Transparent Logo) -->
-        <link rel="icon" type="image/png" href="{{ asset('logo-sipaling-transparent.png') }}?v=6">
+        <!-- Favicon (Official SIPALING Brand Squircle Logo) -->
+        <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=10">
+        <link rel="apple-touch-icon" href="{{ asset('logo-sipaling-squircle.png') }}">
 
         <!-- Theme Initialization: Default is Light Mode unless explicitly set to dark -->
         <script>

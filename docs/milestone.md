@@ -111,12 +111,12 @@ Target Penyelesaian: Minggu ke-10 s.d. Minggu ke-11
 
 | ID | Lapisan | Rincian Tugas Teknis | Target Output / Deliverable | PIC | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| M4-BE-01 | Backend / Skema | Membuat migrasi forecasting_logs untuk menyimpan histori parameter dan hasil DES | Skema tabel `forecasting_logs` | Felix | [ ] |
-| M4-BE-02 | Backend / Model | Membuat Model ForecastingLog.php dengan relasi ke model Product | Model Eloquent log peramalan terintegrasi | Felix | [ ] |
-| M4-LC-01 | Logika / Algoritma | Menyusun DoubleExponentialSmoothingService dengan rumus Holt's Linear (Level & Tren) | Service murni PHP penghitung proyeksi tren | Felix | [ ] |
-| M4-LC-02 | Logika / Akurasi | Mengimplementasikan fungsi kalkulasi metrik error MAPE dan RMSE | Kalkulator tingkat akurasi dan deviasi peramalan | Felix | [ ] |
-| M4-LC-03 | Logika / Optimasi | Membangun fungsi Grid Search untuk menemukan pasangan nilai alpha-beta terbaik | Pencarian otomatis parameter error terendah | Felix | [ ] |
-| M4-LC-04 | Logika / Kalkulasi | Menghitung rekomendasi kuantitas restock: Max(0, Forecast + Safety Stock - Current Stock) | Formula output saran kuantitas pengadaan | Felix | [ ] |
+| M4-BE-01 | Backend / Skema | Membuat migrasi forecasting_logs untuk menyimpan histori parameter dan hasil DES | Skema tabel `forecasting_logs` | Felix | [x] |
+| M4-BE-02 | Backend / Model | Membuat Model ForecastingLog.php dengan relasi ke model Product | Model Eloquent log peramalan terintegrasi | Felix | [x] |
+| M4-LC-01 | Logika / Algoritma | Menyusun DoubleExponentialSmoothingService dengan rumus Holt's Linear (Level & Tren) | Service murni PHP penghitung proyeksi tren | Felix | [x] |
+| M4-LC-02 | Logika / Akurasi | Mengimplementasikan fungsi kalkulasi metrik error MAPE dan RMSE | Kalkulator tingkat akurasi dan deviasi peramalan | Felix | [x] |
+| M4-LC-03 | Logika / Optimasi | Membangun fungsi Grid Search untuk menemukan pasangan nilai alpha-beta terbaik | Pencarian otomatis parameter error terendah | Felix | [x] |
+| M4-LC-04 | Logika / Kalkulasi | Menghitung rekomendasi kuantitas restock: Max(0, Forecast + Safety Stock - Current Stock) | Formula output saran kuantitas pengadaan | Felix | [x] |
 | M4-FE-01 | Frontend / UI | Membangun Dasbor Analitik Manajer Operasional (Analytics/Index.vue) | Halaman dasbor analitik dan statistik stok | Meutia | [ ] |
 | M4-FE-02 | Frontend / UI | Mengintegrasikan visualisasi kurva aktual vs proyeksi peramalan menggunakan Chart | Komponen visual kurva pergerakan kebutuhan barang | Najwa | [ ] |
 | M4-FE-03 | Frontend / UI | Menyediakan kartu informasi akurasi (Nilai Alpha, Nilai Beta, Persentase MAPE) | Kartu visual ringkasan performa algoritma | Najwa | [ ] |

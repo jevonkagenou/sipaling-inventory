@@ -43,6 +43,11 @@ class Product extends Model
         return $this->hasMany(StockTransactionDetail::class);
     }
 
+    public function forecastingLogs(): HasMany
+    {
+        return $this->hasMany(ForecastingLog::class);
+    }
+
     public function getStatusAttribute(): string
     {
         return $this->current_stock <= $this->minimum_stock ? 'Reorder' : 'Aman';
