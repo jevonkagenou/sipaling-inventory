@@ -21,9 +21,10 @@ class NewPasswordController extends Controller
      */
     public function create(Request $request): Response
     {
-        return Inertia::render('Auth/ResetPassword', [
+        return Inertia::render('Auth/ForgotPassword', [
             'email' => $request->email,
             'token' => $request->route('token'),
+            'step' => 3,
         ]);
     }
 
@@ -38,6 +39,12 @@ class NewPasswordController extends Controller
             'token' => 'required',
             'email' => 'required|email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'token.required' => 'Token reset kata sandi tidak valid atau telah kedaluwarsa.',
+            'email.required' => 'Email operasional wajib diisi.',
+            'password.required' => 'Kata sandi baru wajib diisi.',
+            'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
+            'password.min' => 'Kata sandi minimal harus 8 karakter.',
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we
@@ -59,7 +66,7 @@ class NewPasswordController extends Controller
         // the application's home authenticated view. If there is an error we can
         // redirect them back to where they came from with their error message.
         if ($status == Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('status', __($status));
+            return redirect()->route('login')->with('status', 'Kata sandi berhasil diperbarui. Silakan masuk menggunakan kata sandi baru Anda.');
         }
 
         throw ValidationException::withMessages([
