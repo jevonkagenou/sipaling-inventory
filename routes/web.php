@@ -70,9 +70,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // 5. Modul Manajemen Pengguna & Aktivasi Akun (Manajer Operasional & Komisaris)
     Route::middleware(['role:manajer-operasional|komisaris'])->prefix('users')->name('users.')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('Users/Index');
-        })->name('index');
+        Route::get('/', [\App\Http\Controllers\UserController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\UserController::class, 'store'])->name('store');
+        Route::put('/{user}', [\App\Http\Controllers\UserController::class, 'update'])->name('update');
+        Route::patch('/{user}/toggle-status', [\App\Http\Controllers\UserController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{user}', [\App\Http\Controllers\UserController::class, 'destroy'])->name('destroy');
     });
 });
 
