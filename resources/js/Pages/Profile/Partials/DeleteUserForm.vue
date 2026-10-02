@@ -1,10 +1,9 @@
 <script setup>
-import DangerButton from '@/Components/DangerButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Modal from '@/Components/Modal.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
+import { Button } from '@/Components/ui/button';
 import { useForm } from '@inertiajs/vue3';
 import { nextTick, ref } from 'vue';
 
@@ -41,31 +40,32 @@ const closeModal = () => {
 <template>
     <section class="space-y-6">
         <header>
-            <h2 class="text-lg font-bold text-[#0F172A]">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">
                 Hapus Akun
             </h2>
 
-            <p class="mt-1 text-sm text-slate-600">
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen. Sebelum menghapus akun Anda, harap unduh data atau informasi apa pun yang ingin Anda simpan.
             </p>
         </header>
 
-        <DangerButton 
-            @click="confirmUserDeletion"
-            class="bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg"
-        >
-            Hapus Akun
-        </DangerButton>
+        <div class="flex justify-end">
+            <Button
+                variant="destructive"
+                @click="confirmUserDeletion"
+                class="font-medium shadow-sm transition-all text-xs h-9 px-3.5 cursor-pointer"
+            >
+                Hapus Akun
+            </Button>
+        </div>
 
         <Modal :show="confirmingUserDeletion" @close="closeModal">
             <div class="p-6">
-                <h2
-                    class="text-lg font-bold text-[#0F172A]"
-                >
+                <h2 class="text-lg font-bold text-slate-900 dark:text-white">
                     Apakah Anda yakin ingin menghapus akun Anda?
                 </h2>
 
-                <p class="mt-2 text-sm text-slate-600">
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
                     Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen. Harap masukkan kata sandi Anda untuk mengonfirmasi bahwa Anda ingin menghapus akun secara permanen.
                 </p>
 
@@ -81,7 +81,7 @@ const closeModal = () => {
                         ref="passwordInput"
                         v-model="form.password"
                         type="password"
-                        class="mt-1 block w-3/4 border-slate-300 focus:border-[#2563EB] focus:ring-[#2563EB] rounded-lg shadow-sm"
+                        class="mt-1 block w-3/4 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#2563EB] focus:ring-[#2563EB] rounded-lg shadow-sm"
                         placeholder="Kata Sandi"
                         @keyup.enter="deleteUser"
                     />
@@ -90,18 +90,23 @@ const closeModal = () => {
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
-                    <SecondaryButton @click="closeModal" class="rounded-lg">
+                    <Button
+                        variant="outline"
+                        @click="closeModal"
+                        class="text-xs h-9 px-3.5 cursor-pointer"
+                    >
                         Batal
-                    </SecondaryButton>
+                    </Button>
 
-                    <DangerButton
-                        class="bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg"
-                        :class="{ 'opacity-25': form.processing }"
+                    <Button
+                        variant="destructive"
                         :disabled="form.processing"
+                        :class="{ 'opacity-25': form.processing }"
+                        class="text-xs h-9 px-3.5 cursor-pointer"
                         @click="deleteUser"
                     >
                         Hapus Akun
-                    </DangerButton>
+                    </Button>
                 </div>
             </div>
         </Modal>
