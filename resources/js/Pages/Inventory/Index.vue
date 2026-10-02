@@ -61,6 +61,7 @@ import {
   Check,
   TrendingUp,
   Inbox,
+  Trash2,
 } from 'lucide-vue-next'
 
 export interface Category {
@@ -483,6 +484,28 @@ function onSaved() {
   router.reload({ only: ['products', 'stats'] })
   showToast('Katalog Diperbarui', 'Data barang berhasil disimpan ke database.')
 }
+
+function confirmDelete(product: ProductItem) {
+  if (product.transaction_details_count && product.transaction_details_count > 0) {
+    showToast(
+      'Gagal Menghapus',
+      `Produk "${product.name}" (${product.sku}) tidak dapat dihapus karena sudah memiliki ${product.transaction_details_count} riwayat mutasi/transaksi.`
+    )
+    return
+  }
+
+  if (confirm(`Apakah Anda yakin ingin menghapus produk "${product.name}" (${product.sku})? Tindakan ini tidak dapat dibatalkan.`)) {
+    router.delete(route('inventory.destroy', product.id), {
+      preserveScroll: true,
+      onSuccess: () => {
+        showToast('Produk Dihapus', `Barang "${product.name}" berhasil dihapus dari database.`)
+      },
+      onError: (errors) => {
+        showToast('Gagal Menghapus', (errors.error as string) || 'Terjadi kesalahan saat menghapus barang.')
+      },
+    })
+  }
+}
 </script>
 
 <template>
@@ -527,6 +550,13 @@ function onSaved() {
           </DropdownMenuItem>
           <DropdownMenuItem @click="openEditDialog(product)" class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs">
             <Pencil class="mr-2 h-3.5 w-3.5 text-slate-400" /> Edit Barang
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            @click="confirmDelete(product)"
+            class="cursor-pointer text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs focus:text-rose-600 focus:bg-rose-50"
+          >
+            <Trash2 class="mr-2 h-3.5 w-3.5 text-rose-500" /> Hapus Barang
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
