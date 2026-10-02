@@ -1,8 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
-import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
-import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
+import AccountSettingsForm from './Partials/AccountSettingsForm.vue';
 import { Head } from '@inertiajs/vue3';
 import IdentityCard from '@/Components/Profile/IdentityCard.vue';
 
@@ -33,21 +32,13 @@ defineProps({
         <IdentityCard />
 
         <div
-                    class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-2xs sm:rounded-xl sm:p-8"
-                >
-                    <UpdateProfileInformationForm
-                        :must-verify-email="mustVerifyEmail"
-                        :status="status"
-                        class="max-w-xl"
-                    />
-                </div>
-
-                <div
-                    class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-2xs sm:rounded-xl sm:p-8"
-                >
-                    <UpdatePasswordForm class="max-w-xl" />
-                </div>
-
+    class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-2xs sm:rounded-xl sm:p-8"
+>
+    <AccountSettingsForm
+        :must-verify-email="mustVerifyEmail"
+        :status="status"
+    />
+</div>
                 <div
                     class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-2xs sm:rounded-xl sm:p-8"
                 >
