@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent } from '@/Components/ui/card';
@@ -13,7 +13,7 @@ import {
     Moon,
     CheckCircle2
 } from 'lucide-vue-next';
-
+import AuthErrorToast from '@/Components/Auth/AuthErrorToast.vue';
 defineProps({
     canResetPassword: {
         type: Boolean,
@@ -61,7 +61,24 @@ onMounted(() => {
         document.documentElement.classList.remove('dark');
     }
 });
+const errorToast = ref(null);
+let toastCounter = 0;
 
+watch(() => form.errors.email, (newError) => {
+    if (newError && newError.includes('non-aktif')) {
+        toastCounter++;
+        errorToast.value = { id: toastCounter, message: newError };
+        setTimeout(() => {
+            if (errorToast.value?.id === toastCounter) {
+                errorToast.value = null;
+            }
+        }, 5000);
+    }
+});
+
+function closeErrorToast() {
+    errorToast.value = null;
+}
 const submit = () => {
     form.post(route('login'), {
         onFinish: () => form.reset('password'),
@@ -124,9 +141,9 @@ const submit = () => {
                                 class="h-10 text-sm bg-transparent border-slate-300 dark:border-slate-700 focus-visible:ring-1 focus-visible:ring-[#2563EB] focus-visible:border-[#2563EB] rounded-lg"
                                 :class="{ 'border-red-500 focus-visible:ring-red-500': form.errors.email }"
                             />
-                            <p v-if="form.errors.email" class="text-[11px] text-red-500 font-medium">
-                                {{ form.errors.email }}
-                            </p>
+                            <p v-if="form.errors.email && !form.errors.email.includes('non-aktif')" class="text-[11px] text-red-500 font-medium">
+                                    {{ form.errors.email }}
+                                </p>
                         </div>
 
                         <!-- Password Input -->
@@ -226,5 +243,6 @@ const submit = () => {
                 <Moon v-else class="h-4 w-4 text-slate-400" />
             </button>
         </div>
+        <AuthErrorToast :toast="errorToast" @close="closeErrorToast" />
     </div>
 </template>
