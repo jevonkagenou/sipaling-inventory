@@ -99,9 +99,9 @@ Target Penyelesaian: Minggu ke-8 s.d. Minggu ke-9
 | M3-LC-01 | Logika / Service | Membangun StockTransactionService dengan eksekusi transaksi atomik DB::transaction | Service mutasi stok bergaransi konsistensi | Sultan | [ ] |
 | M3-LC-02 | Logika / Locking | Menerapkan lockForUpdate pada baris produk untuk mencegah race condition mutasi | Proteksi konkurensi stok terhindar dari minus | Sultan | [ ] |
 | M3-LC-03 | Logika / Nomor | Membuat generator otomatis nomor referensi dokumen mutasi (TRX-IN / TRX-OUT) | Penomoran unik otomatis berformat standar | Sultan | [ ] |
-| M3-FE-01 | Frontend / UI | Membangun antarmuka Transaksi Masuk (InboundCreate.vue) dengan input multi-item | Formulir dinamis penerimaan barang gudang | Desy | [ ] |
-| M3-FE-02 | Frontend / UI | Membangun antarmuka Transaksi Keluar (OutboundCreate.vue) dengan batas stok riil | Formulir pengeluaran barang dengan validasi stok | Desy | [ ] |
-| M3-FE-03 | Frontend / UI | Membuat halaman riwayat mutasi Transactions/Index.vue dengan tab pemisah | Halaman riwayat transaksi dan filter tanggal | Desy | [ ] |
+| M3-FE-01 | Frontend / UI | Membangun antarmuka Transaksi Masuk (InboundCreate.vue) dengan input multi-item | Formulir dinamis penerimaan barang gudang | Desy | [x] |
+| M3-FE-02 | Frontend / UI | Membangun antarmuka Transaksi Keluar (OutboundCreate.vue) dengan batas stok riil | Formulir pengeluaran barang dengan validasi stok | Desy | [x] |
+| M3-FE-03 | Frontend / UI | Membuat halaman riwayat mutasi Transactions/Index.vue dengan tab pemisah | Halaman riwayat transaksi dan filter tanggal | Desy | [x] |
 | M3-FE-04 | Frontend / UI | Membuat dialog rincian bukti transaksi mutasi yang dapat dicetak | Tampilan cetak bukti serah terima barang | Najwa | [ ] |
 
 ---
