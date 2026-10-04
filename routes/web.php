@@ -41,15 +41,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // 1. Modul Operasional Gudang: Mutasi Masuk & Keluar (Staf Gudang & Manajer Operasional)
     Route::middleware(['role:staf-gudang|manajer-operasional'])->prefix('transactions')->name('transactions.')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('Transactions/Index');
-        })->name('index');
-        Route::get('/inbound', function () {
-            return Inertia::render('Transactions/InboundCreate');
-        })->name('inbound.create');
-        Route::get('/outbound', function () {
-            return Inertia::render('Transactions/OutboundCreate');
-        })->name('outbound.create');
+        Route::get('/', [\App\Http\Controllers\StockTransactionController::class, 'index'])->name('index');
+        Route::get('/inbound', [\App\Http\Controllers\StockTransactionController::class, 'inboundCreate'])->name('inbound.create');
+        Route::post('/inbound', [\App\Http\Controllers\StockTransactionController::class, 'inboundStore'])->name('inbound.store');
+        Route::get('/outbound', [\App\Http\Controllers\StockTransactionController::class, 'outboundCreate'])->name('outbound.create');
+        Route::post('/outbound', [\App\Http\Controllers\StockTransactionController::class, 'outboundStore'])->name('outbound.store');
     });
 
     // 2. Modul Analitik & Mesin Peramalan DES (Mode Referensi & Pengujian Terbuka untuk Seluruh Tim)
