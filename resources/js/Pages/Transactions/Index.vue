@@ -18,6 +18,7 @@ import {
   Clock,
   CheckCircle2,
   X,
+  Printer,
 } from 'lucide-vue-next'
 
 export interface TransactionProduct {
@@ -105,14 +106,22 @@ function applyFilter() {
 const selectedTransaction = ref<TransactionItem | null>(null)
 const isDetailModalOpen = ref(false)
 
+const originalTitle = document.title
+
 function openDetail(tx: TransactionItem) {
   selectedTransaction.value = tx
   isDetailModalOpen.value = true
+  document.title = `Operasional Mutasi Stok_${tx.reference_no}`
 }
 
 function closeDetail() {
   selectedTransaction.value = null
   isDetailModalOpen.value = false
+  document.title = originalTitle
+}
+
+function printReceipt() {
+  window.print()
 }
 
 function formatDate(dateStr: string) {
@@ -425,11 +434,15 @@ function formatRupiah(val: number | string) {
           leave-to-class="opacity-0 scale-95"
         >
           <div
-            v-if="isDetailModalOpen && selectedTransaction"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
-            @click.self="closeDetail"
-          >
-            <div class="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+    v-if="isDetailModalOpen && selectedTransaction"
+    class="receipt-modal-root fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+    @click.self="closeDetail"
+    >
+            <div id="receipt-print-area" class="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+            <div class="hidden print:block text-center mb-4 pb-3 border-b-2 border-slate-900">
+              <h2 class="text-lg font-bold">SIPALING — Bukti Serah Terima Barang</h2>
+              <p class="text-xs text-slate-500">Sistem Inventaris Prediktif & Audit Log Terintegrasi</p>
+            </div>
               <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div>
                   <div class="flex items-center gap-2">
@@ -507,21 +520,41 @@ function formatRupiah(val: number | string) {
                 </div>
               </div>
 
-              <!-- Notes -->
-              <div v-if="selectedTransaction.notes" class="text-xs bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl">
-                <span class="font-semibold text-slate-700 dark:text-slate-300 block mb-0.5">Catatan:</span>
-                <p class="text-slate-500 dark:text-slate-400">{{ selectedTransaction.notes }}</p>
-              </div>
+            <!-- Notes -->
+            <div v-if="selectedTransaction.notes" class="text-xs bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl">
+              <span class="font-semibold text-slate-700 dark:text-slate-300 block mb-0.5">Catatan:</span>
+              <p class="text-slate-500 dark:text-slate-400">{{ selectedTransaction.notes }}</p>
+            </div>
 
-              <div class="flex justify-end pt-2">
-                <button
-                  type="button"
-                  @click="closeDetail"
-                  class="rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors"
-                >
-                  Tutup
-                </button>
+            <!-- Kolom tanda tangan khusus cetak -->
+            <div class="signature-grid hidden print:grid grid-cols-2 gap-8 pt-8 mt-4 text-xs">
+              <div class="text-center">
+                <p class="mb-12">Diserahkan oleh,</p>
+                <p class="border-t border-slate-900 pt-1">( _______________ )</p>
               </div>
+              <div class="text-center">
+                <p class="mb-12">Diterima oleh,</p>
+                <p class="border-t border-slate-900 pt-1">( _______________ )</p>
+              </div>
+            </div>
+
+              <div class="flex justify-end gap-2 pt-2 no-print">
+              <button
+                type="button"
+                @click="closeDetail"
+                class="rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors"
+              >
+                Tutup
+              </button>
+              <button
+                type="button"
+                @click="printReceipt"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 px-4 py-2 text-xs font-semibold text-white transition-colors"
+              >
+                <Printer class="h-3.5 w-3.5" />
+                Cetak Bukti
+              </button>
+            </div>
             </div>
           </div>
         </Transition>

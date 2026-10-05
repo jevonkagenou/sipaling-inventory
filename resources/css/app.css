@@ -140,4 +140,42 @@ body {
   scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
 }
 
-
+/* Print layout untuk bukti transaksi */
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+  body > * {
+    display: none !important;
+  }
+  body > .receipt-modal-root {
+    display: block !important;
+    position: static !important;
+    background: none !important;
+    padding: 0 !important;
+  }
+  .receipt-modal-root > * {
+    display: none !important;
+  }
+  #receipt-print-area {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .signature-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 2rem !important;
+  }
+  .signature-grid > div {
+    text-align: center !important;
+  }
+}
