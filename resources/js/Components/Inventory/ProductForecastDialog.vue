@@ -20,6 +20,8 @@ import {
   Layers,
   Info,
 } from 'lucide-vue-next'
+import DemandForecastChart from '@/Components/Inventory/DemandForecastChart.vue'
+
 
 export interface ProductItem {
   id: string
@@ -469,151 +471,17 @@ const restockBadge = computed(() => {
           </div>
 
           <!-- 3. Grafik Tren Permintaan & Proyeksi Stok -->
-          <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-3.5 bg-white dark:bg-slate-950">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-              <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <TrendingUp class="w-4 h-4 text-[#2563EB]" />
-                Riwayat Permintaan & Proyeksi Kebutuhan Stok
-              </div>
-
-              <!-- Legend -->
-              <div class="flex items-center gap-3.5 text-xs text-slate-500 dark:text-slate-400">
-                <span class="flex items-center gap-1.5">
-                  <span class="w-2.5 h-2.5 rounded-full bg-[#2563EB]"></span> Aktual
-                </span>
-                <span class="flex items-center gap-1.5">
-                  <span class="w-3 h-0.5 bg-[#4F46E5]"></span> Taksiran Model
-                </span>
-                <span class="flex items-center gap-1.5">
-                  <span class="w-3 h-0.5 border-t-2 border-dashed border-[#10B981]"></span> Proyeksi (+3 Bulan)
-                </span>
-              </div>
-            </div>
-
-            <!-- SVG Visualizer -->
-            <div v-if="chartPoints" class="relative overflow-x-auto">
-              <svg
-                :viewBox="`0 0 ${chartPoints.width} ${chartPoints.height}`"
-                class="w-full h-48 select-none"
-              >
-                <!-- Grid Lines -->
-                <line
-                  :x1="chartPoints.paddingLeft"
-                  :y1="chartPoints.paddingTop"
-                  :x2="chartPoints.width - chartPoints.paddingRight"
-                  :y2="chartPoints.paddingTop"
-                  stroke="currentColor"
-                  stroke-dasharray="3,3"
-                  class="text-slate-200 dark:text-slate-800"
-                />
-                <line
-                  :x1="chartPoints.paddingLeft"
-                  :y1="chartPoints.height - chartPoints.paddingBottom"
-                  :x2="chartPoints.width - chartPoints.paddingRight"
-                  :y2="chartPoints.height - chartPoints.paddingBottom"
-                  stroke="currentColor"
-                  class="text-slate-200 dark:text-slate-800"
-                />
-
-                <!-- Label Y Axis -->
-                <text
-                  :x="chartPoints.paddingLeft - 8"
-                  :y="chartPoints.paddingTop + 4"
-                  text-anchor="end"
-                  class="text-xs fill-slate-400 tabular-nums"
-                >
-                  {{ chartPoints.maxVal.toLocaleString() }}
-                </text>
-                <text
-                  :x="chartPoints.paddingLeft - 8"
-                  :y="chartPoints.height - chartPoints.paddingBottom"
-                  text-anchor="end"
-                  class="text-xs fill-slate-400 tabular-nums"
-                >
-                  0
-                </text>
-
-                <!-- Path Fitted (Indigo) -->
-                <path
-                  :d="chartPoints.fittedPath"
-                  fill="none"
-                  stroke="#4F46E5"
-                  stroke-width="1.75"
-                  stroke-opacity="0.65"
-                />
-
-                <!-- Path Proyeksi DES (Emerald Putus-putus) -->
-                <path
-                  :d="chartPoints.futurePath"
-                  fill="none"
-                  stroke="#10B981"
-                  stroke-width="2"
-                  stroke-dasharray="5,4"
-                />
-
-                <!-- Path Aktual (Royal Blue) -->
-                <path
-                  :d="chartPoints.actualPath"
-                  fill="none"
-                  stroke="#2563EB"
-                  stroke-width="2.5"
-                />
-
-                <!-- Titik Aktual -->
-                <circle
-                  v-for="(pt, idx) in chartPoints.actualPoints"
-                  :key="'act-' + idx"
-                  :cx="pt.x"
-                  :cy="pt.y"
-                  r="3.5"
-                  class="fill-[#2563EB] stroke-white dark:stroke-slate-900 cursor-pointer hover:r-5 transition-all"
-                  stroke-width="2"
-                  @mouseenter="hoveredIndex = idx"
-                  @mouseleave="hoveredIndex = null"
-                />
-
-                <!-- Titik Proyeksi -->
-                <circle
-                  v-for="(pt, idx) in chartPoints.futurePoints.slice(1)"
-                  :key="'fut-' + idx"
-                  :cx="pt.x"
-                  :cy="pt.y"
-                  r="4"
-                  class="fill-[#10B981] stroke-white dark:stroke-slate-900 cursor-pointer hover:r-5 transition-all"
-                  stroke-width="2"
-                />
-
-                <!-- Label X Axis (Periode Historis) -->
-                <text
-                  v-for="(pt, idx) in chartPoints.actualPoints"
-                  :key="'lbl-' + idx"
-                  :x="pt.x"
-                  :y="chartPoints.height - 10"
-                  text-anchor="middle"
-                  class="text-xs fill-slate-500 dark:fill-slate-400 font-medium tabular-nums"
-                >
-                  {{ pt.period }}
-                </text>
-
-                <!-- Label X Axis Proyeksi -->
-                <text
-                  v-for="(pt, idx) in chartPoints.futurePoints.slice(1)"
-                  :key="'fut-lbl-' + idx"
-                  :x="pt.x"
-                  :y="chartPoints.height - 10"
-                  text-anchor="middle"
-                  class="text-xs fill-emerald-600 dark:fill-emerald-400 font-semibold tabular-nums"
-                >
-                  {{ pt.period }}
-                </text>
-              </svg>
-
-              <!-- Keterangan Garis X -->
-              <div class="flex justify-between text-xs text-slate-400 px-3 mt-1.5">
-                <span>&larr; Riwayat Tertutup ({{ forecastData.historical_periods.length }} Periode)</span>
-                <span class="text-[#10B981] dark:text-emerald-400 font-medium">3 Periode Proyeksi Masa Depan &rarr;</span>
-              </div>
-            </div>
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white dark:bg-slate-950 shadow-2xs">
+            <DemandForecastChart
+              v-if="forecastData && forecastData.has_sufficient_data"
+              :historical-periods="forecastData.historical_periods"
+              :actual-series="forecastData.actual_series"
+              :fitted-series="forecastData.fitted_series"
+              :future-periods="forecastData.future_periods"
+              :future-forecasts="forecastData.future_forecasts"
+              :unit="product?.unit || 'unit'"
+              :height="220"
+            />
           </div>
 
           <!-- 4. Uji Sensitivitas Parameter Alpha & Beta -->

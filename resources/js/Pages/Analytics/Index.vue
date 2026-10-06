@@ -17,6 +17,8 @@ import {
   Sliders,
   ShieldCheck,
 } from 'lucide-vue-next'
+import DemandForecastChart from '@/Components/Inventory/DemandForecastChart.vue'
+
 
 const props = defineProps({
   products: {
@@ -458,7 +460,7 @@ const hoveredPoint = ref(null)
       </div>
 
       <!-- Section: Visualisasi Kurva Tren DES -->
-      <div v-if="chartData" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-4">
+      <div v-if="forecastData && forecastData.has_sufficient_data" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -469,206 +471,17 @@ const hoveredPoint = ref(null)
               Data transaksi historis bulanan tertutup dan estimasi 3 periode ke depan.
             </p>
           </div>
-
-          <!-- Legenda Garis -->
-          <div class="flex items-center gap-4 text-xs">
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-[#2563EB]" />
-              <span class="text-slate-600 dark:text-slate-400">Aktual</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-1 bg-indigo-400 rounded-full" />
-              <span class="text-slate-600 dark:text-slate-400">Fitted Model</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-1 border-t-2 border-dashed border-[#10B981]" />
-              <span class="text-[#10B981] font-semibold">Proyeksi</span>
-            </div>
-          </div>
         </div>
 
-        <!-- SVG Container (relative buat posisi tooltip mengambang) -->
-        <div class="relative w-full overflow-x-auto custom-scrollbar">
-          <svg
-            :viewBox="`0 0 ${chartWidth} ${chartHeight}`"
-            class="w-full min-w-[640px] h-[240px] select-none"
-          >
-            <defs>
-              <linearGradient id="actualAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#2563EB" stop-opacity="0.22" />
-                <stop offset="100%" stop-color="#2563EB" stop-opacity="0" />
-              </linearGradient>
-            </defs>
-
-            <!-- Grid Lines -->
-            <g class="stroke-slate-100 dark:stroke-slate-800/80" stroke-width="1">
-              <line
-                :x1="padding.left"
-                :y1="chartHeight - padding.bottom"
-                :x2="chartWidth - padding.right"
-                :y2="chartHeight - padding.bottom"
-              />
-              <line
-                :x1="padding.left"
-                :y1="padding.top"
-                :x2="chartWidth - padding.right"
-                :y2="padding.top"
-                stroke-dasharray="3 3"
-              />
-              <line
-                :x1="padding.left"
-                :y1="(padding.top + chartHeight - padding.bottom) / 2"
-                :x2="chartWidth - padding.right"
-                :y2="(padding.top + chartHeight - padding.bottom) / 2"
-                stroke-dasharray="3 3"
-              />
-            </g>
-
-            <!-- Garis Pembatas Histori vs Proyeksi -->
-            <g v-if="chartData.dividerX">
-              <line
-                :x1="chartData.dividerX"
-                :y1="padding.top"
-                :x2="chartData.dividerX"
-                :y2="chartHeight - padding.bottom"
-                stroke="#94A3B8"
-                stroke-width="1"
-                stroke-dasharray="2 3"
-              />
-              <text
-                :x="chartData.dividerX"
-                :y="padding.top - 6"
-                text-anchor="middle"
-                class="text-[9px] fill-slate-400 font-medium uppercase tracking-wider"
-              >
-                Proyeksi &rarr;
-              </text>
-            </g>
-
-            <!-- Y-Axis Labels -->
-            <text
-              :x="padding.left - 10"
-              :y="padding.top + 4"
-              text-anchor="end"
-              class="text-[10px] fill-slate-400"
-            >
-              {{ chartData.maxVal }}
-            </text>
-            <text
-              :x="padding.left - 10"
-              :y="chartHeight - padding.bottom"
-              text-anchor="end"
-              class="text-[10px] fill-slate-400"
-            >
-              0
-            </text>
-
-            <!-- Area Fill di bawah garis Aktual -->
-            <path
-              v-if="chartData.actualAreaPath"
-              :d="chartData.actualAreaPath"
-              fill="url(#actualAreaGradient)"
-              stroke="none"
-            />
-
-            <!-- Fitted Model Path -->
-            <path
-              v-if="chartData.fittedPath"
-              :d="chartData.fittedPath"
-              fill="none"
-              stroke="#818CF8"
-              stroke-width="2"
-              stroke-dasharray="4 4"
-            />
-
-            <!-- Proyeksi Path -->
-            <path
-              v-if="chartData.projPath"
-              :d="chartData.projPath"
-              fill="none"
-              stroke="#10B981"
-              stroke-width="2.5"
-              stroke-dasharray="5 3"
-            />
-
-            <!-- Actual Path (smooth curve) -->
-            <path
-              v-if="chartData.actualPath"
-              :d="chartData.actualPath"
-              fill="none"
-              stroke="#2563EB"
-              stroke-width="2.5"
-              stroke-linecap="round"
-            />
-
-            <!-- Points: Actual -->
-            <circle
-              v-for="(p, i) in chartData.actualPoints"
-              :key="'act-' + i"
-              :cx="p.x"
-              :cy="p.y"
-              r="4"
-              fill="#2563EB"
-              class="transition-transform hover:scale-150 cursor-pointer"
-              @mouseenter="hoveredPoint = p"
-              @mouseleave="hoveredPoint = null"
-            />
-
-            <!-- Points: Future -->
-            <circle
-              v-for="(p, i) in chartData.futurePoints"
-              :key="'fut-' + i"
-              :cx="p.x"
-              :cy="p.y"
-              r="4.5"
-              fill="#10B981"
-              class="transition-transform hover:scale-150 cursor-pointer"
-              @mouseenter="hoveredPoint = p"
-              @mouseleave="hoveredPoint = null"
-            />
-
-            <!-- X-Axis Labels -->
-            <text
-              v-for="(period, idx) in chartData.periods"
-              :key="'lbl-' + idx"
-              :x="chartData.getX(idx)"
-              :y="chartHeight - 12"
-              text-anchor="middle"
-              :class="idx >= chartData.actualPoints.length ? 'fill-[#10B981] font-bold' : 'fill-slate-400'"
-              class="text-[10px]"
-            >
-              {{ period }}
-            </text>
-          </svg>
-
-          <!-- Tooltip Mengambang -->
-          <Transition
-            enter-active-class="transition duration-150 ease-out"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="transition duration-100 ease-in"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
-          >
-            <div
-              v-if="hoveredPoint"
-              class="absolute pointer-events-none rounded-lg bg-slate-900 dark:bg-slate-700 text-white text-[11px] font-medium px-2.5 py-1.5 shadow-lg whitespace-nowrap z-10"
-              :style="{
-                left: (hoveredPoint.x / chartWidth) * 100 + '%',
-                top: hoveredPoint.y + 'px',
-                transform: 'translate(-50%, -130%)',
-              }"
-            >
-              <div class="flex items-center gap-1.5">
-                <span class="inline-block w-1.5 h-1.5 rounded-full" :class="hoveredPoint.type === 'future' ? 'bg-[#10B981]' : 'bg-[#2563EB]'" />
-                <span>{{ hoveredPoint.period }}: <strong class="tabular-nums">{{ Math.round(hoveredPoint.val) }} unit</strong></span>
-              </div>
-              <span class="text-[9px] text-slate-300 block">
-                {{ hoveredPoint.type === 'future' ? 'Hasil Proyeksi DES' : 'Riwayat Aktual' }}
-              </span>
-            </div>
-          </Transition>
-        </div>
+        <DemandForecastChart
+          :historical-periods="forecastData.historical_periods"
+          :actual-series="forecastData.actual_series"
+          :fitted-series="forecastData.fitted_series"
+          :future-periods="forecastData.future_periods"
+          :future-forecasts="forecastData.future_forecasts"
+          :unit="currentProduct?.unit || 'unit'"
+          :height="260"
+        />
       </div>
 
       <!-- Section: Matriks Peringatan Restock Seluruh Master Produk -->
