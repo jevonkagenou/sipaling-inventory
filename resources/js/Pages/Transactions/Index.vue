@@ -69,6 +69,7 @@ const props = defineProps<{
     today_inbound_qty: number
     today_outbound_qty: number
   }
+  can_create?: boolean
 }>()
 
 const search = ref(props.filters.search || '')
@@ -165,8 +166,8 @@ function formatRupiah(val: number | string) {
           </p>
         </div>
 
-        <!-- Quick Action Buttons -->
-        <div class="flex items-center gap-3">
+        <!-- Quick Action Buttons (Khusus Staf Gudang & Manajer) -->
+        <div v-if="props.can_create !== false" class="flex items-center gap-3">
           <Link
             :href="route('transactions.inbound.create')"
             class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#10B981] to-[#059669] px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-500/20 hover:from-[#059669] hover:to-[#047857] transition-all cursor-pointer"

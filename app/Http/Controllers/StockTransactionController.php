@@ -67,6 +67,7 @@ class StockTransactionController extends Controller
                 'search' => $search ?? '',
             ],
             'stats' => $stats,
+            'can_create' => Auth::user()?->hasAnyRole(['staf-gudang', 'manajer-operasional']) || Auth::user()?->can('transactions.create'),
         ]);
     }
 
@@ -110,7 +111,7 @@ class StockTransactionController extends Controller
             'items.*.quantity.min' => 'Jumlah barang masuk minimal 1.',
         ]);
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($validated, $request) {
             $transaction = StockTransaction::create([
                 'reference_no' => $validated['reference_no'],
                 'type' => 'inbound',
@@ -119,6 +120,9 @@ class StockTransactionController extends Controller
                 'notes' => $validated['notes'] ?? null,
                 'created_by' => Auth::id(),
             ]);
+
+            $totalQuantity = 0;
+            $itemSummaries = [];
 
             foreach ($validated['items'] as $item) {
                 // Lock row produk untuk konsistensi
@@ -134,7 +138,31 @@ class StockTransactionController extends Controller
 
                 // Tambah kuantitas stok produk
                 $product->increment('current_stock', $item['quantity']);
+
+                $totalQuantity += (int) $item['quantity'];
+                $itemSummaries[] = [
+                    'sku' => $product->sku,
+                    'name' => $product->name,
+                    'quantity' => (int) $item['quantity'],
+                    'unit' => $product->unit,
+                ];
             }
+
+            // Catat ke ActivityLog (Audit Trail Terintegrasi Spatie)
+            activity('inventory')
+                ->performedOn($transaction)
+                ->causedBy(Auth::user())
+                ->event('inbound')
+                ->withProperties([
+                    'reference_no' => $transaction->reference_no,
+                    'party_name' => $transaction->party_name,
+                    'total_quantity' => $totalQuantity,
+                    'items_count' => count($validated['items']),
+                    'items' => $itemSummaries,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ])
+                ->log("Mencatat penerimaan barang masuk (Inbound): Ref {$transaction->reference_no} ({$totalQuantity} unit)");
         });
 
         return redirect()->route('transactions.index')->with('success', 'Transaksi barang masuk berhasil dicatat dan stok telah diperbarui.');
@@ -180,7 +208,7 @@ class StockTransactionController extends Controller
             'items.*.quantity.min' => 'Jumlah barang keluar minimal 1.',
         ]);
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($validated, $request) {
             // Validasi ketersediaan stok fisik riil
             foreach ($validated['items'] as $item) {
                 $product = Product::where('id', $item['product_id'])->lockForUpdate()->firstOrFail();
@@ -200,6 +228,9 @@ class StockTransactionController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
+            $totalQuantity = 0;
+            $itemSummaries = [];
+
             foreach ($validated['items'] as $item) {
                 $product = Product::where('id', $item['product_id'])->lockForUpdate()->firstOrFail();
 
@@ -213,7 +244,31 @@ class StockTransactionController extends Controller
 
                 // Kurangi kuantitas stok produk
                 $product->decrement('current_stock', $item['quantity']);
+
+                $totalQuantity += (int) $item['quantity'];
+                $itemSummaries[] = [
+                    'sku' => $product->sku,
+                    'name' => $product->name,
+                    'quantity' => (int) $item['quantity'],
+                    'unit' => $product->unit,
+                ];
             }
+
+            // Catat ke ActivityLog (Audit Trail Terintegrasi Spatie)
+            activity('inventory')
+                ->performedOn($transaction)
+                ->causedBy(Auth::user())
+                ->event('outbound')
+                ->withProperties([
+                    'reference_no' => $transaction->reference_no,
+                    'party_name' => $transaction->party_name,
+                    'total_quantity' => $totalQuantity,
+                    'items_count' => count($validated['items']),
+                    'items' => $itemSummaries,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ])
+                ->log("Mencatat pengeluaran barang (Outbound): Ref {$transaction->reference_no} ({$totalQuantity} unit)");
         });
 
         return redirect()->route('transactions.index')->with('success', 'Transaksi pengeluaran barang berhasil disimpan dan stok telah dikurangi.');

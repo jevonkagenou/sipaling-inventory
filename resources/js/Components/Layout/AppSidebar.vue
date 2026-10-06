@@ -102,7 +102,7 @@ const roleBadge = computed(() => {
 
 // RBAC Permissions Check
 const canAccessTransactions = computed(() =>
-  roles.value.some((r) => ['staf-gudang', 'manajer-operasional'].includes(r))
+  roles.value.some((r) => ['staf-gudang', 'manajer-operasional', 'komisaris', 'auditor-internal'].includes(r))
 )
 const canAccessRestock = computed(() =>
   roles.value.some((r) => ['manajer-operasional', 'komisaris'].includes(r))
