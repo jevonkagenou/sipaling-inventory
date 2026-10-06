@@ -39,6 +39,30 @@ interface ChartPoint {
 
 const hoveredPoint = ref<ChartPoint | null>(null)
 
+// Posisi Tooltip Dinamis (Mencegah terpotong di bagian atas / kanan container)
+const tooltipStyle = computed(() => {
+  if (!hoveredPoint.value) return {}
+  const { x, y } = hoveredPoint.value
+
+  const posXPercent = (x / chartWidth) * 100
+  const isNearTop = y < 95
+
+  let translateX = '-50%'
+  if (posXPercent > 80) {
+    translateX = '-92%'
+  } else if (posXPercent < 20) {
+    translateX = '-8%'
+  }
+
+  const translateY = isNearTop ? '16px' : '-115%'
+
+  return {
+    left: `${posXPercent}%`,
+    top: `${y}px`,
+    transform: `translate(${translateX}, ${translateY})`,
+  }
+})
+
 const chartData = computed(() => {
   const histPeriods = props.historicalPeriods || []
   const actuals = props.actualSeries || []
@@ -420,11 +444,7 @@ const chartData = computed(() => {
         <div
           v-if="hoveredPoint"
           class="absolute pointer-events-none rounded-xl bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 text-xs font-medium px-3 py-2 shadow-xl border border-slate-200/90 dark:border-slate-800 whitespace-nowrap z-20 backdrop-blur-md transition-colors"
-          :style="{
-            left: `${(hoveredPoint.x / chartWidth) * 100}%`,
-            top: `${hoveredPoint.y}px`,
-            transform: 'translate(-50%, -125%)',
-          }"
+          :style="tooltipStyle"
         >
           <div class="flex items-center gap-1.5">
             <span
