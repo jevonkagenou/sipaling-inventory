@@ -39,13 +39,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // 1. Modul Operasional Gudang: Mutasi Masuk & Keluar (Staf Gudang & Manajer Operasional)
-    Route::middleware(['role:staf-gudang|manajer-operasional'])->prefix('transactions')->name('transactions.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\StockTransactionController::class, 'index'])->name('index');
-        Route::get('/inbound', [\App\Http\Controllers\StockTransactionController::class, 'inboundCreate'])->name('inbound.create');
-        Route::post('/inbound', [\App\Http\Controllers\StockTransactionController::class, 'inboundStore'])->name('inbound.store');
-        Route::get('/outbound', [\App\Http\Controllers\StockTransactionController::class, 'outboundCreate'])->name('outbound.create');
-        Route::post('/outbound', [\App\Http\Controllers\StockTransactionController::class, 'outboundStore'])->name('outbound.store');
+    // 1. Modul Operasional Gudang: Mutasi Masuk & Keluar
+    Route::prefix('transactions')->name('transactions.')->group(function () {
+        Route::middleware(['role_or_permission:staf-gudang|manajer-operasional|komisaris|auditor-internal|transactions.view'])->group(function () {
+            Route::get('/', [\App\Http\Controllers\StockTransactionController::class, 'index'])->name('index');
+        });
+
+        Route::middleware(['role_or_permission:staf-gudang|manajer-operasional|transactions.create'])->group(function () {
+            Route::get('/inbound', [\App\Http\Controllers\StockTransactionController::class, 'inboundCreate'])->name('inbound.create');
+            Route::post('/inbound', [\App\Http\Controllers\StockTransactionController::class, 'inboundStore'])->name('inbound.store');
+            Route::get('/outbound', [\App\Http\Controllers\StockTransactionController::class, 'outboundCreate'])->name('outbound.create');
+            Route::post('/outbound', [\App\Http\Controllers\StockTransactionController::class, 'outboundStore'])->name('outbound.store');
+        });
     });
 
     // 2. Modul Analitik & Mesin Peramalan DES (Mode Referensi & Pengujian Terbuka untuk Seluruh Tim)
@@ -73,7 +78,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 4. Modul Jejak Audit & Investigasi Forensik (Auditor Internal & Komisaris)
     Route::middleware(['role:auditor-internal|komisaris'])->prefix('audit')->name('audit.')->group(function () {
         Route::get('/', function () {
-            return Inertia::render('Audit/Index');
+            $logs = \App\Models\ActivityLog::with('causer:id,name,email')
+                ->latest()
+                ->paginate(15);
+
+            $stats = [
+                'total_logs' => \App\Models\ActivityLog::count(),
+                'inventory_logs' => \App\Models\ActivityLog::where('log_name', 'inventory')->count(),
+                'user_logs' => \App\Models\ActivityLog::where('log_name', 'users')->count(),
+                'forecast_logs' => \App\Models\ForecastingLog::count(),
+            ];
+
+            return Inertia::render('Audit/Index', [
+                'logs' => $logs,
+                'stats' => $stats,
+            ]);
         })->name('index');
     });
 
@@ -87,4 +106,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

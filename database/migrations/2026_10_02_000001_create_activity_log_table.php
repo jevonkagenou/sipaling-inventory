@@ -17,9 +17,10 @@ return new class extends Migration
             $table->text('description');
             $table->string('subject_type')->nullable();
             $table->string('event')->nullable();
-            $table->uuid('subject_id')->nullable();
+            $table->string('subject_id')->nullable();
             $table->string('causer_type')->nullable();
-            $table->uuid('causer_id')->nullable();
+            $table->string('causer_id')->nullable();
+            $table->json('attribute_changes')->nullable();
             $table->json('properties')->nullable();
             $table->uuid('batch_uuid')->nullable();
             $table->timestamps();
