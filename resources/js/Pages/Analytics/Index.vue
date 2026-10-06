@@ -174,15 +174,51 @@ const chartData = computed(() => {
     return valid.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
   }
 
+  // Smooth curve pakai Catmull-Rom spline diubah jadi Bezier
+  const toSmoothPath = (pts) => {
+    const valid = pts.filter((p) => p.y !== null)
+    if (valid.length < 2) return toPath(pts)
+    let d = `M ${valid[0].x} ${valid[0].y}`
+    for (let i = 0; i < valid.length - 1; i++) {
+      const p0 = valid[i - 1] || valid[i]
+      const p1 = valid[i]
+      const p2 = valid[i + 1]
+      const p3 = valid[i + 2] || p2
+      const cp1x = p1.x + (p2.x - p0.x) / 6
+      const cp1y = p1.y + (p2.y - p0.y) / 6
+      const cp2x = p2.x - (p3.x - p1.x) / 6
+      const cp2y = p2.y - (p3.y - p1.y) / 6
+      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
+    }
+    return d
+  }
+
+  // Area fill di bawah garis Aktual
+  const baselineY = chartHeight - padding.bottom
+  const actualAreaPath = (() => {
+    const valid = actualPoints.filter((p) => p.y !== null)
+    if (valid.length < 2) return ''
+    const linePath = toSmoothPath(valid)
+    const last = valid[valid.length - 1]
+    const first = valid[0]
+    return `${linePath} L ${last.x} ${baselineY} L ${first.x} ${baselineY} Z`
+  })()
+
+  // Garis pembatas antara histori dan proyeksi
+  const dividerX = futurePoints.length && lastActual ? (lastActual.x + futurePoints[0].x) / 2 : null
+
   return {
     periods: allPeriods,
     maxVal: Math.round(maxVal),
     actualPoints,
     fittedPoints,
     futurePoints,
-    actualPath: toPath(actualPoints),
-    fittedPath: toPath(fittedPoints),
-    projPath: toPath(projLinePoints),
+    actualPath: toSmoothPath(actualPoints),
+    actualAreaPath,
+    fittedPath: toSmoothPath(fittedPoints),
+    projPath: toSmoothPath(projLinePoints),
+    dividerX,
+    baselineY,
     getX,
     getY,
   }
@@ -451,12 +487,19 @@ const hoveredPoint = ref(null)
           </div>
         </div>
 
-        <!-- SVG Container -->
-        <div class="w-full overflow-x-auto custom-scrollbar">
+        <!-- SVG Container (relative buat posisi tooltip mengambang) -->
+        <div class="relative w-full overflow-x-auto custom-scrollbar">
           <svg
             :viewBox="`0 0 ${chartWidth} ${chartHeight}`"
             class="w-full min-w-[640px] h-[240px] select-none"
           >
+            <defs>
+              <linearGradient id="actualAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#2563EB" stop-opacity="0.22" />
+                <stop offset="100%" stop-color="#2563EB" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+
             <!-- Grid Lines -->
             <g class="stroke-slate-100 dark:stroke-slate-800/80" stroke-width="1">
               <line
@@ -481,6 +524,27 @@ const hoveredPoint = ref(null)
               />
             </g>
 
+            <!-- Garis Pembatas Histori vs Proyeksi -->
+            <g v-if="chartData.dividerX">
+              <line
+                :x1="chartData.dividerX"
+                :y1="padding.top"
+                :x2="chartData.dividerX"
+                :y2="chartHeight - padding.bottom"
+                stroke="#94A3B8"
+                stroke-width="1"
+                stroke-dasharray="2 3"
+              />
+              <text
+                :x="chartData.dividerX"
+                :y="padding.top - 6"
+                text-anchor="middle"
+                class="text-[9px] fill-slate-400 font-medium uppercase tracking-wider"
+              >
+                Proyeksi &rarr;
+              </text>
+            </g>
+
             <!-- Y-Axis Labels -->
             <text
               :x="padding.left - 10"
@@ -498,6 +562,14 @@ const hoveredPoint = ref(null)
             >
               0
             </text>
+
+            <!-- Area Fill di bawah garis Aktual -->
+            <path
+              v-if="chartData.actualAreaPath"
+              :d="chartData.actualAreaPath"
+              fill="url(#actualAreaGradient)"
+              stroke="none"
+            />
 
             <!-- Fitted Model Path -->
             <path
@@ -519,13 +591,14 @@ const hoveredPoint = ref(null)
               stroke-dasharray="5 3"
             />
 
-            <!-- Actual Path -->
+            <!-- Actual Path (smooth curve) -->
             <path
               v-if="chartData.actualPath"
               :d="chartData.actualPath"
               fill="none"
               stroke="#2563EB"
               stroke-width="2.5"
+              stroke-linecap="round"
             />
 
             <!-- Points: Actual -->
@@ -567,18 +640,34 @@ const hoveredPoint = ref(null)
               {{ period }}
             </text>
           </svg>
-        </div>
 
-        <!-- Tooltip Hover Preview -->
-        <div v-if="hoveredPoint" class="text-xs text-slate-600 dark:text-slate-300 font-medium pt-1 flex items-center gap-2">
-          <span class="inline-block w-2 h-2 rounded-full" :class="hoveredPoint.type === 'future' ? 'bg-[#10B981]' : 'bg-[#2563EB]'" />
-          <span>Periode {{ hoveredPoint.period }}:</span>
-          <span class="font-bold tabular-nums text-slate-900 dark:text-white">
-            {{ Math.round(hoveredPoint.val) }} unit
-          </span>
-          <span class="text-[11px] text-slate-400">
-            ({{ hoveredPoint.type === 'future' ? 'Hasil Proyeksi DES' : 'Riwayat Aktual' }})
-          </span>
+          <!-- Tooltip Mengambang -->
+          <Transition
+            enter-active-class="transition duration-150 ease-out"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="transition duration-100 ease-in"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div
+              v-if="hoveredPoint"
+              class="absolute pointer-events-none rounded-lg bg-slate-900 dark:bg-slate-700 text-white text-[11px] font-medium px-2.5 py-1.5 shadow-lg whitespace-nowrap z-10"
+              :style="{
+                left: (hoveredPoint.x / chartWidth) * 100 + '%',
+                top: hoveredPoint.y + 'px',
+                transform: 'translate(-50%, -130%)',
+              }"
+            >
+              <div class="flex items-center gap-1.5">
+                <span class="inline-block w-1.5 h-1.5 rounded-full" :class="hoveredPoint.type === 'future' ? 'bg-[#10B981]' : 'bg-[#2563EB]'" />
+                <span>{{ hoveredPoint.period }}: <strong class="tabular-nums">{{ Math.round(hoveredPoint.val) }} unit</strong></span>
+              </div>
+              <span class="text-[9px] text-slate-300 block">
+                {{ hoveredPoint.type === 'future' ? 'Hasil Proyeksi DES' : 'Riwayat Aktual' }}
+              </span>
+            </div>
+          </Transition>
         </div>
       </div>
 
