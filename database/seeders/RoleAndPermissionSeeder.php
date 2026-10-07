@@ -119,5 +119,14 @@ class RoleAndPermissionSeeder extends Seeder
             // Menghubungkan pengguna dengan perannya
             $user->syncRoles([$userData['role']]);
         }
+
+        // 4. Catat Log Inisialisasi Sistem (Spatie Activitylog)
+        activity('system')
+            ->event('system_initialized')
+            ->withProperties([
+                'seeded_roles_count' => count($rolesWithPermissions),
+                'seeded_users_count' => count($defaultUsers),
+            ])
+            ->log('Inisialisasi sistem inventaris SIPALING & penetapan 4 peran utama pengguna berhasil dijalankan via Seeder');
     }
 }
