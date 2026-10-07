@@ -98,7 +98,7 @@ class RoleAndPermissionSeeder extends Seeder
             ],
             [
                 'name' => 'Auditor Internal',
-                'email' => 'auditor@sipaling.com',
+                'email' => 'sultansyarif630@gmail.com',
                 'role' => 'auditor-internal',
                 'phone' => '081200000004',
             ],
