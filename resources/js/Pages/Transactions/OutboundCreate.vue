@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Plus,
   Trash2,
-  PackageMinus,
   Boxes,
   Calendar,
   Building2,
@@ -16,6 +15,7 @@ import {
   CheckCircle2,
   Search,
   ShieldAlert,
+  ArrowRight,
 } from 'lucide-vue-next'
 
 export interface Category {
@@ -158,9 +158,20 @@ function submit() {
   <Head title="Pencatatan Barang Keluar (Outbound)" />
 
   <AuthenticatedLayout>
+    <!-- Header Slot (Navbar Breadcrumbs) -->
+    <template #header>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-slate-400">Operasional Gudang</span>
+        <span class="text-slate-300 dark:text-slate-700">/</span>
+        <h1 class="text-sm font-bold text-slate-900 dark:text-white truncate">
+          Catat Barang Keluar
+        </h1>
+      </div>
+    </template>
+
     <div class="mx-auto max-w-6xl space-y-6 pb-16">
       <!-- Header Bar -->
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-3">
           <Link
             :href="route('transactions.index')"
@@ -170,16 +181,10 @@ function submit() {
             <ArrowLeft class="h-4 w-4" />
           </Link>
           <div>
-            <div class="flex items-center gap-2">
-              <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200/60 dark:bg-amber-950/60 dark:border-amber-800/60 dark:text-amber-300 uppercase tracking-wider">
-                <PackageMinus class="h-3.5 w-3.5" />
-                Outbound Transaksi
-              </span>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
+            <h2 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               Catat Barang Keluar
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Pengeluaran inventaris untuk distribusi, penjualan, atau pemindahan barang dari gudang.
             </p>
           </div>
@@ -215,10 +220,10 @@ function submit() {
 
         <!-- Section 1: Informasi Dokumen & Tujuan Pengeluaran -->
         <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+          <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
             <FileText class="h-4 w-4 text-[#2563EB]" />
             1. Informasi Bukti Pengeluaran
-          </h2>
+          </h3>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <!-- No Referensi -->
@@ -232,7 +237,7 @@ function submit() {
                   type="text"
                   required
                   placeholder="Misal: TRX-OUT-20261003-001"
-                  class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs sm:text-sm font-mono font-medium text-slate-900 focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 dark:border-slate-700 dark:bg-slate-800/60 dark:text-white dark:focus:bg-slate-800"
+                  class="h-9 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-1.5 text-xs sm:text-sm font-mono font-medium text-slate-900 focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-800/60 dark:text-white dark:focus:bg-slate-800"
                 />
               </div>
               <span class="text-[11px] text-slate-400 mt-1 block">Nomor unik transaksi bukti mutasi.</span>
@@ -248,7 +253,7 @@ function submit() {
                   v-model="form.transaction_date"
                   type="datetime-local"
                   required
-                  class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  class="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
                 />
               </div>
               <span class="text-[11px] text-slate-400 mt-1 block">Waktu aktual pengeluaran barang.</span>
@@ -264,7 +269,7 @@ function submit() {
                   v-model="form.party_name"
                   type="text"
                   placeholder="Misal: Toko Cabang Surabaya / Pelanggan"
-                  class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  class="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
                 />
               </div>
               <span class="text-[11px] text-slate-400 mt-1 block">Tujuan alokasi barang.</span>
@@ -280,7 +285,7 @@ function submit() {
               v-model="form.notes"
               rows="2"
               placeholder="Keterangan keperluan distribusi, no invoice, atau alasan penarikan..."
-              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
             ></textarea>
           </div>
         </div>
@@ -289,10 +294,10 @@ function submit() {
         <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                 <Boxes class="h-4 w-4 text-amber-500" />
                 2. Rincian Barang Keluar
-              </h2>
+              </h3>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Kuantitas pengeluaran akan otomatis divalidasi terhadap stok gudang saat ini.
               </p>
@@ -332,7 +337,7 @@ function submit() {
                       v-model="item.searchQuery"
                       @focus="item.isDropdownOpen = true"
                       placeholder="Cari SKU atau Nama Produk..."
-                      class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      class="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
                     />
                     <Search class="absolute right-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
                   </div>
@@ -340,7 +345,7 @@ function submit() {
                   <!-- Dropdown Search Result Popup -->
                   <div
                     v-if="item.isDropdownOpen"
-                    class="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-800 custom-scrollbar"
+                    class="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-800 custom-scrollbar"
                   >
                     <div
                       v-if="filteredProducts(item.searchQuery).length === 0"
@@ -391,7 +396,7 @@ function submit() {
                     :max="getSelectedProduct(item.product_id)?.current_stock || 99999"
                     required
                     :class="[
-                      'w-full rounded-xl border bg-white px-3 py-2 text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 dark:bg-slate-800',
+                      'h-9 w-full rounded-xl border bg-white px-3 py-1.5 text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 dark:bg-slate-800',
                       getSelectedProduct(item.product_id) && Number(item.quantity) > (getSelectedProduct(item.product_id)?.current_stock || 0)
                         ? 'border-rose-500 text-rose-600 focus:ring-rose-500/20 dark:text-rose-400'
                         : 'border-slate-200 text-amber-600 focus:border-amber-500 focus:ring-amber-500/20 dark:border-slate-700 dark:text-amber-400',
@@ -409,7 +414,7 @@ function submit() {
                     type="number"
                     min="0"
                     placeholder="Rp"
-                    class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    class="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
                   />
                 </div>
 
@@ -422,7 +427,7 @@ function submit() {
                     v-model="item.notes"
                     type="text"
                     placeholder="Alasan / Permintaan"
-                    class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    class="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
                   />
                 </div>
 
@@ -433,7 +438,7 @@ function submit() {
                     :disabled="form.items.length <= 1"
                     @click="removeItem(index)"
                     :class="[
-                      'p-2 rounded-xl border transition-colors cursor-pointer',
+                      'h-9 w-9 rounded-xl border flex items-center justify-center transition-colors cursor-pointer',
                       form.items.length <= 1
                         ? 'opacity-40 cursor-not-allowed border-slate-200 text-slate-400 dark:border-slate-800'
                         : 'border-rose-200 text-rose-500 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:hover:bg-rose-950/40',
@@ -461,7 +466,7 @@ function submit() {
                     Stok Awal: <strong class="text-slate-900 dark:text-white">{{ getSelectedProduct(item.product_id)?.current_stock }}</strong>
                   </span>
                   <span class="text-rose-500 font-bold">- {{ item.quantity || 0 }}</span>
-                  <span class="text-slate-400">➔</span>
+                  <ArrowRight class="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   
                   <template v-if="Number(item.quantity) > (getSelectedProduct(item.product_id)?.current_stock || 0)">
                     <span class="font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1">
@@ -508,17 +513,17 @@ function submit() {
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex items-center gap-3 self-end sm:self-auto">
+            <div class="flex items-center gap-2.5 self-end sm:self-auto">
               <Link
                 :href="route('transactions.index')"
-                class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                class="h-9 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs transition-all inline-flex items-center justify-center cursor-pointer"
               >
                 Batal
               </Link>
               <button
                 type="submit"
                 :disabled="form.processing || isSubmitting || hasStockExceededError"
-                class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-amber-600/20 hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all cursor-pointer disabled:opacity-50"
+                class="h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50"
               >
                 <CheckCircle2 class="h-4 w-4" />
                 {{ form.processing ? 'Menyimpan Transaksi...' : 'Simpan Barang Keluar' }}

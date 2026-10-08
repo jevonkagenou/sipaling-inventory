@@ -148,29 +148,34 @@ function formatRupiah(val: number | string) {
   <Head title="Operasional Mutasi Stok" />
 
   <AuthenticatedLayout>
+    <!-- Header Slot (Navbar Breadcrumbs) -->
+    <template #header>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-slate-400">Operasional Gudang</span>
+        <span class="text-slate-300 dark:text-slate-700">/</span>
+        <h1 class="text-sm font-bold text-slate-900 dark:text-white truncate">
+          Mutasi Stok Barang
+        </h1>
+      </div>
+    </template>
+
     <div class="mx-auto max-w-7xl space-y-6 pb-16">
       <!-- Header Banner & Action Buttons -->
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-[#2563EB] border border-blue-200/60 dark:bg-blue-950/60 dark:border-blue-800/60 uppercase tracking-wider">
-              <Boxes class="h-3.5 w-3.5" />
-              Operasional Gudang
-            </span>
-          </div>
-          <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
+          <h2 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
             Mutasi Stok Barang
-          </h1>
-          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Pencatatan dan pemantauan riwayat barang masuk (*Inbound*) dan pengeluaran barang (*Outbound*).
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Pencatatan dan pemantauan riwayat barang masuk (Inbound) dan pengeluaran barang (Outbound).
           </p>
         </div>
 
         <!-- Quick Action Buttons (Khusus Staf Gudang & Manajer) -->
-        <div v-if="props.can_create !== false" class="flex items-center gap-3">
+        <div v-if="props.can_create !== false" class="flex items-center gap-2.5">
           <Link
             :href="route('transactions.inbound.create')"
-            class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#10B981] to-[#059669] px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-500/20 hover:from-[#059669] hover:to-[#047857] transition-all cursor-pointer"
+            class="h-9 px-3.5 rounded-xl bg-[#10B981] hover:bg-emerald-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
           >
             <PackagePlus class="h-4 w-4" />
             Catat Masuk (Inbound)
@@ -178,7 +183,7 @@ function formatRupiah(val: number | string) {
 
           <Link
             :href="route('transactions.outbound.create')"
-            class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-amber-600/20 hover:from-amber-700 hover:to-amber-800 transition-all cursor-pointer"
+            class="h-9 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
           >
             <PackageMinus class="h-4 w-4" />
             Catat Keluar (Outbound)
@@ -186,70 +191,82 @@ function formatRupiah(val: number | string) {
         </div>
       </div>
 
-      <!-- Stat Cards -->
-      <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <!-- Stat Cards (Matching Unified Interactive KPI Cards) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Inbound Total -->
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Transaksi Masuk</span>
-            <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-[#10B981] dark:bg-emerald-950/60">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Transaksi Inbound</span>
+            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <PackagePlus class="h-4 w-4" />
             </div>
           </div>
-          <p class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-2">
-            {{ stats.total_inbound }}
-          </p>
-          <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 block">
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+              {{ stats.total_inbound }}
+            </span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">faktur</span>
+          </div>
+          <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 truncate">
             Dokumen Inbound Terdaftar
-          </span>
+          </p>
         </div>
 
         <!-- Outbound Total -->
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Transaksi Keluar</span>
-            <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/60">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Transaksi Outbound</span>
+            <div class="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <PackageMinus class="h-4 w-4" />
             </div>
           </div>
-          <p class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-2">
-            {{ stats.total_outbound }}
-          </p>
-          <span class="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5 block">
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+              {{ stats.total_outbound }}
+            </span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">faktur</span>
+          </div>
+          <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-1 truncate">
             Dokumen Outbound Terdaftar
-          </span>
+          </p>
         </div>
 
         <!-- Inbound Hari Ini -->
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Masuk Hari Ini</span>
-            <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB] dark:bg-blue-950/60">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Masuk Hari Ini</span>
+            <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <Calendar class="h-4 w-4" />
             </div>
           </div>
-          <p class="text-xl sm:text-2xl font-bold text-[#10B981] mt-2">
-            + {{ stats.today_inbound_qty }} Unit
-          </p>
-          <span class="text-[11px] text-slate-400 mt-0.5 block">
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
+              + {{ stats.today_inbound_qty }}
+            </span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">unit</span>
+          </div>
+          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
             Kuantitas Fisik Diterima
-          </span>
+          </p>
         </div>
 
         <!-- Outbound Hari Ini -->
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Keluar Hari Ini</span>
-            <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-50 text-[#4F46E5] dark:bg-purple-950/60">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#4F46E5]/50 dark:hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Keluar Hari Ini</span>
+            <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <Clock class="h-4 w-4" />
             </div>
           </div>
-          <p class="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2">
-            - {{ stats.today_outbound_qty }} Unit
-          </p>
-          <span class="text-[11px] text-slate-400 mt-0.5 block">
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
+              - {{ stats.today_outbound_qty }}
+            </span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">unit</span>
+          </div>
+          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
             Kuantitas Fisik Dikeluarkan
-          </span>
+          </p>
         </div>
       </div>
 
@@ -305,7 +322,7 @@ function formatRupiah(val: number | string) {
               v-model="search"
               type="text"
               placeholder="Cari No Ref, Pihak, SKU..."
-              class="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 dark:border-slate-700 dark:bg-slate-800/60 dark:text-white dark:focus:bg-slate-800"
+              class="h-9 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
             />
             <Search class="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
           </div>
@@ -313,85 +330,90 @@ function formatRupiah(val: number | string) {
 
         <!-- Table View -->
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs sm:text-sm">
-            <thead class="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400 border-b border-slate-200/80 dark:border-slate-800/80">
-              <tr>
-                <th class="px-4 py-3">No. Referensi</th>
-                <th class="px-4 py-3">Tipe</th>
-                <th class="px-4 py-3">Tanggal</th>
-                <th class="px-4 py-3">Pemasok / Tujuan</th>
-                <th class="px-4 py-3">Rincian Item</th>
-                <th class="px-4 py-3">Pencatat</th>
-                <th class="px-4 py-3 text-right">Aksi</th>
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <tr class="h-10">
+                <th class="px-3 py-2.5 whitespace-nowrap">No. Referensi</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Tipe Mutasi</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Tanggal</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Pemasok / Tujuan</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Rincian Barang</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Petugas</th>
+                <th class="px-3 py-2.5 text-right whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
               <tr v-if="transactions.data.length === 0">
-                <td colspan="7" class="px-4 py-12 text-center text-xs text-slate-400">
-                  <Boxes class="h-8 w-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                <td colspan="7" class="px-3 py-12 text-center text-xs text-slate-400">
+                  <Boxes class="h-8 w-8 mx-auto text-slate-300 dark:text-slate-600 mb-2 stroke-[1.5]" />
                   Belum ada rekaman transaksi mutasi stok.
                 </td>
               </tr>
               <tr
                 v-for="tx in transactions.data"
                 :key="tx.id"
-                class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                class="group hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
               >
                 <!-- Reference No -->
-                <td class="px-4 py-3 font-mono font-bold text-slate-900 dark:text-white">
-                  {{ tx.reference_no }}
+                <td class="px-3 py-2.5 whitespace-nowrap">
+                  <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono tracking-wider text-[11px] font-semibold">
+                    {{ tx.reference_no }}
+                  </span>
                 </td>
 
                 <!-- Type Badge -->
-                <td class="px-4 py-3">
+                <td class="px-3 py-2.5 whitespace-nowrap">
                   <span
                     :class="[
-                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border uppercase tracking-wider',
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border',
                       tx.type === 'inbound'
                         ? 'bg-emerald-50 text-[#10B981] border-emerald-200/80 dark:bg-emerald-950/60 dark:border-emerald-800/60'
                         : 'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-950/60 dark:border-amber-800/60 dark:text-amber-300',
                     ]"
                   >
-                    <component :is="tx.type === 'inbound' ? PackagePlus : PackageMinus" class="h-3 w-3" />
-                    {{ tx.type === 'inbound' ? 'Masuk' : 'Keluar' }}
+                    <span
+                      class="w-1.5 h-1.5 rounded-full"
+                      :class="tx.type === 'inbound' ? 'bg-[#10B981]' : 'bg-amber-500'"
+                    />
+                    {{ tx.type === 'inbound' ? 'Barang Masuk' : 'Barang Keluar' }}
                   </span>
                 </td>
 
                 <!-- Date -->
-                <td class="px-4 py-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400 text-xs whitespace-nowrap tabular-nums">
                   {{ formatDate(tx.transaction_date) }}
                 </td>
 
                 <!-- Party Name -->
-                <td class="px-4 py-3 text-slate-700 dark:text-slate-200 font-medium">
+                <td class="px-3 py-2.5 text-slate-800 dark:text-slate-200 font-medium text-xs truncate max-w-[180px]" :title="tx.party_name || '-'">
                   {{ tx.party_name || '-' }}
                 </td>
 
                 <!-- Details Preview -->
-                <td class="px-4 py-3">
+                <td class="px-3 py-2.5">
                   <div class="flex items-center gap-1.5">
-                    <span class="inline-block px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    <span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
                       {{ tx.details_count || tx.details?.length || 0 }} SKU
                     </span>
-                    <span class="text-xs text-slate-400 truncate max-w-[150px]">
+                    <span class="text-[11px] text-slate-400 dark:text-slate-500 truncate max-w-[150px]">
                       {{ tx.details?.[0]?.product?.name || '' }}
                     </span>
                   </div>
                 </td>
 
                 <!-- Creator -->
-                <td class="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">
+                <td class="px-3 py-2.5 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap">
                   {{ tx.creator?.name || 'Sistem' }}
                 </td>
 
                 <!-- Action -->
-                <td class="px-4 py-3 text-right">
+                <td class="px-3 py-2.5 text-right whitespace-nowrap">
                   <button
                     type="button"
                     @click="openDetail(tx)"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#2563EB] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                    class="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs inline-flex items-center gap-1 cursor-pointer transition-colors"
                   >
-                    <Eye class="h-3.5 w-3.5" />
+                    <Eye class="h-3.5 w-3.5 text-slate-400" />
                     Detail
                   </button>
                 </td>
@@ -501,18 +523,18 @@ function formatRupiah(val: number | string) {
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                      <tr v-for="dt in selectedTransaction.details" :key="dt.id">
+                      <tr v-for="dt in selectedTransaction.details" :key="dt.id" class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                         <td class="px-3 py-2.5">
-                          <p class="font-bold text-slate-900 dark:text-white">{{ dt.product?.name }}</p>
-                          <span class="font-mono text-[10px] text-slate-400">{{ dt.product?.sku }}</span>
+                          <p class="font-semibold text-xs text-slate-900 dark:text-white">{{ dt.product?.name }}</p>
+                          <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono text-[10px]">{{ dt.product?.sku }}</span>
                         </td>
-                        <td class="px-3 py-2.5 text-center font-bold" :class="selectedTransaction.type === 'inbound' ? 'text-emerald-600' : 'text-amber-600'">
+                        <td class="px-3 py-2.5 text-center font-bold tabular-nums" :class="selectedTransaction.type === 'inbound' ? 'text-[#10B981]' : 'text-amber-600'">
                           {{ selectedTransaction.type === 'inbound' ? '+' : '-' }}{{ dt.quantity }} {{ dt.product?.unit }}
                         </td>
-                        <td class="px-3 py-2.5 text-right font-medium text-slate-700 dark:text-slate-300">
+                        <td class="px-3 py-2.5 text-right font-medium tabular-nums text-slate-700 dark:text-slate-300">
                           {{ formatRupiah(dt.unit_price) }}
                         </td>
-                        <td class="px-3 py-2.5 text-slate-400">
+                        <td class="px-3 py-2.5 text-slate-500 text-[11px]">
                           {{ dt.notes || '-' }}
                         </td>
                       </tr>

@@ -295,7 +295,7 @@ onUnmounted(() => {
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                                     <Mail class="w-4 h-4" />
                                 </div>
-                                <Input id="email" type="email" v-model="userEmail" placeholder="nama@perusahaan.com" required autofocus class="h-10 pl-9 text-sm bg-transparent border-slate-300 dark:border-slate-700 focus-visible:ring-1 focus-visible:ring-[#2563EB] focus-visible:border-[#2563EB] rounded-lg" :class="{ 'border-red-500 focus-visible:ring-red-500': formStep1.errors.email }" @keydown.enter.prevent="proceedToOtp" />
+                                <Input id="email" type="email" v-model="userEmail" placeholder="nama@perusahaan.com" required autofocus class="h-10 pl-9 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus-visible:ring-2 focus-visible:ring-[#2563EB]/15 focus-visible:border-[#2563EB] rounded-xl shadow-2xs" :class="{ 'border-rose-500 focus-visible:ring-rose-500/20': formStep1.errors.email }" @keydown.enter.prevent="proceedToOtp" />
                             </div>
                             <p v-if="formStep1.errors.email" class="text-[11px] text-red-500 font-medium flex items-center gap-1">
                                 <AlertCircle class="w-3 h-3" />
@@ -379,7 +379,7 @@ onUnmounted(() => {
                         <div class="space-y-1.5">
                             <Label for="new-password" class="text-xs font-medium text-slate-700 dark:text-slate-300">Kata Sandi Baru</Label>
                             <div class="relative">
-                                <Input id="new-password" :type="showPassword ? 'text' : 'password'" v-model="formStep3.password" placeholder="••••••••" required class="h-10 pr-10 text-sm bg-transparent border-slate-300 dark:border-slate-700 focus-visible:ring-1 focus-visible:ring-[#2563EB] rounded-lg" />
+                                <Input id="new-password" :type="showPassword ? 'text' : 'password'" v-model="formStep3.password" placeholder="••••••••" required class="h-10 pr-10 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus-visible:ring-2 focus-visible:ring-[#2563EB]/15 focus-visible:border-[#2563EB] rounded-xl shadow-2xs" />
                                 <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" tabindex="-1">
                                     <EyeOff v-if="showPassword" class="w-3.5 h-3.5" /> <Eye v-else class="w-3.5 h-3.5" />
                                 </button>
@@ -398,10 +398,10 @@ onUnmounted(() => {
                         <div class="space-y-1.5">
                             <div class="flex items-center justify-between">
                                 <Label for="confirm-password" class="text-xs font-medium text-slate-700 dark:text-slate-300">Konfirmasi Kata Sandi</Label>
-                                <span v-if="isPasswordMatch !== null" class="text-[11px] font-semibold" :class="isPasswordMatch ? 'text-emerald-500' : 'text-red-500'">{{ isPasswordMatch ? '✓ Cocok' : '✗ Tidak Cocok' }}</span>
+                                <span v-if="isPasswordMatch !== null" class="text-[11px] font-semibold" :class="isPasswordMatch ? 'text-emerald-500' : 'text-rose-500'">{{ isPasswordMatch ? 'Sandi Cocok' : 'Sandi Tidak Cocok' }}</span>
                             </div>
                             <div class="relative">
-                                <Input id="confirm-password" :type="showConfirmPassword ? 'text' : 'password'" v-model="formStep3.password_confirmation" placeholder="••••••••" required class="h-10 pr-10 text-sm bg-transparent border-slate-300 dark:border-slate-700 rounded-lg" :class="{ 'border-red-500': isPasswordMatch === false, 'border-emerald-500': isPasswordMatch === true }" @keydown.enter.prevent="submitNewPassword" />
+                                <Input id="confirm-password" :type="showConfirmPassword ? 'text' : 'password'" v-model="formStep3.password_confirmation" placeholder="••••••••" required class="h-10 pr-10 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus-visible:ring-2 focus-visible:ring-[#2563EB]/15 focus-visible:border-[#2563EB] rounded-xl shadow-2xs" :class="{ 'border-rose-500': isPasswordMatch === false, 'border-emerald-500': isPasswordMatch === true }" @keydown.enter.prevent="submitNewPassword" />
                                 <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" tabindex="-1">
                                     <EyeOff v-if="showConfirmPassword" class="w-3.5 h-3.5" /> <Eye v-else class="w-3.5 h-3.5" />
                                 </button>

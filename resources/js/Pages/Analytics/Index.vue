@@ -233,31 +233,27 @@ const hoveredPoint = ref(null)
   <Head title="Analitik Peramalan DES - SIPALING" />
 
   <AuthenticatedLayout>
+    <!-- Header Slot (Navbar Breadcrumbs) -->
+    <template #header>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-slate-400">Intelijen Bisnis</span>
+        <span class="text-slate-300 dark:text-slate-700">/</span>
+        <h1 class="text-sm font-bold text-slate-900 dark:text-white truncate">
+          Peramalan Holt DES
+        </h1>
+      </div>
+    </template>
+
     <div class="space-y-6 max-w-7xl mx-auto">
       <!-- Header Banner & Keterangan Modul -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div class="flex items-center gap-2.5">
-            <div class="h-9 w-9 rounded-xl bg-[#2563EB]/10 text-[#2563EB] dark:text-blue-400 flex items-center justify-center font-bold">
-              <TrendingUp class="w-5 h-5" />
-            </div>
-            <div>
-              <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Mesin Peramalan Double Exponential Smoothing
-              </h1>
-              <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                Proyeksi tren permintaan retail dengan metode Holt's Linear berdasar data penutupan transaksi bulanan.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mode Referensi Badge -->
-        <div class="flex items-center gap-2">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-[#10B981] border border-emerald-200 dark:border-emerald-800/60 shadow-2xs">
-            <span class="h-2 w-2 rounded-full bg-[#10B981] animate-pulse" />
-            Akses Referensi Tim Aktif
-          </span>
+          <h2 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Mesin Peramalan Double Exponential Smoothing
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Proyeksi tren permintaan retail dengan metode Holt's Linear berdasar data penutupan transaksi bulanan.
+          </p>
         </div>
       </div>
 
@@ -277,7 +273,7 @@ const hoveredPoint = ref(null)
           <select
             :value="selectedProductId"
             @change="onProductChange($event.target.value)"
-            class="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950 px-3.5 py-2.5 text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2563EB] cursor-pointer"
+            class="h-9 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 text-xs font-medium text-slate-900 dark:text-slate-100 shadow-2xs transition-all duration-200 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 cursor-pointer"
           >
             <option
               v-for="p in products"
@@ -326,7 +322,7 @@ const hoveredPoint = ref(null)
             <button
               type="button"
               @click="resetToOptimal"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/60 dark:border-blue-800/40 transition-colors cursor-pointer self-start sm:self-auto"
+              class="h-9 px-3.5 rounded-xl border border-blue-200/80 dark:border-blue-800/60 bg-blue-50/70 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-[#2563EB] dark:text-blue-400 font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5 self-start sm:self-auto"
             >
               <Sparkles class="w-3.5 h-3.5" />
               Gunakan Optimal Grid (&alpha;={{ forecastData?.optimal_alpha }}, &beta;={{ forecastData?.optimal_beta }})
@@ -366,7 +362,7 @@ const hoveredPoint = ref(null)
                 min="0.05"
                 max="0.95"
                 step="0.05"
-                class="w-full accent-indigo-600 cursor-pointer"
+                class="w-full accent-[#4F46E5] cursor-pointer"
               />
             </div>
           </div>
@@ -375,7 +371,7 @@ const hoveredPoint = ref(null)
             <button
               type="button"
               @click="applyCustomParams"
-              class="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+              class="h-9 px-4 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
             >
               <RotateCcw class="w-3.5 h-3.5" />
               Kalkulasi Ulang Simulasi
@@ -384,76 +380,92 @@ const hoveredPoint = ref(null)
         </div>
       </div>
 
-      <!-- Section: Kartu Hasil Akurasi & Rekomendasi Restock -->
+      <!-- Section: Kartu Hasil Akurasi & Rekomendasi Restock (Unified Interactive KPI Cards) -->
       <div v-if="forecastData" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- 1. Akurasi Model -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs">
-          <div class="flex items-center justify-between text-xs text-slate-400">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
             <span>Akurasi Model</span>
-            <CheckCircle2 class="w-4 h-4 text-[#10B981]" />
+            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <CheckCircle2 class="w-4 h-4" />
+            </div>
           </div>
-          <div class="mt-2 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tabular-nums text-[#10B981]">
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
               {{ forecastData.accuracy_rate ? forecastData.accuracy_rate + '%' : 'N/A' }}
             </span>
           </div>
-          <p class="mt-1 text-[11px] text-slate-400">
+          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
             100% &minus; MAPE (Tingkat Ketepatan)
           </p>
         </div>
 
         <!-- 2. Galat MAPE & RMSE -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs">
-          <div class="flex items-center justify-between text-xs text-slate-400">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#4F46E5]/50 dark:hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
             <span>Metrik Galat (MAPE)</span>
-            <BarChart3 class="w-4 h-4 text-slate-400" />
+            <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <BarChart3 class="w-4 h-4" />
+            </div>
           </div>
-          <div class="mt-2 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tabular-nums text-slate-800 dark:text-slate-100">
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
               {{ forecastData.mape ? forecastData.mape + '%' : 'N/A' }}
             </span>
           </div>
-          <p class="mt-1 text-[11px] text-slate-400">
+          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
             RMSE: {{ forecastData.rmse ? Math.round(forecastData.rmse) : '-' }} unit
           </p>
         </div>
 
         <!-- 3. Proyeksi Periode Depan -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs">
-          <div class="flex items-center justify-between text-xs text-slate-400">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
             <span>Proyeksi Periode Depan</span>
-            <TrendingUp class="w-4 h-4 text-[#2563EB]" />
+            <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <TrendingUp class="w-4 h-4" />
+            </div>
           </div>
-          <div class="mt-2 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tabular-nums text-[#2563EB]">
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold tracking-tight text-[#2563EB] dark:text-blue-400 tabular-nums">
               {{ Math.round(forecastData.future_forecasts?.[0] || 0) }}
             </span>
-            <span class="text-xs text-slate-400">unit</span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">unit</span>
           </div>
-          <p class="mt-1 text-[11px] text-slate-400">
+          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
             Periode: {{ forecastData.future_periods?.[0] || '-' }}
           </p>
         </div>
 
         <!-- 4. Saran Restock Pengadaan -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs">
-          <div class="flex items-center justify-between text-xs text-slate-400">
+        <div
+          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
+          :class="forecastData.restock_recommendation?.status === 'RESTOCK_URGENT' ? 'hover:border-amber-500/50' : 'hover:border-emerald-500/50'"
+        >
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
             <span>Saran Restock</span>
-            <AlertTriangle
-              :class="forecastData.restock_recommendation?.status === 'RESTOCK_URGENT' ? 'text-amber-500' : 'text-[#10B981]'"
-              class="w-4 h-4"
-            />
+            <div
+              class="h-8 w-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
+              :class="forecastData.restock_recommendation?.status === 'RESTOCK_URGENT'
+                ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
+                : 'bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400'"
+            >
+              <AlertTriangle class="w-4 h-4" />
+            </div>
           </div>
-          <div class="mt-2 flex items-baseline gap-1.5">
+          <div class="mt-2.5 flex items-baseline gap-1.5">
             <span
-              :class="forecastData.restock_recommendation?.status === 'RESTOCK_URGENT' ? 'text-amber-600 dark:text-amber-400' : 'text-[#10B981]'"
-              class="text-2xl font-bold tabular-nums"
+              :class="forecastData.restock_recommendation?.status === 'RESTOCK_URGENT' ? 'text-amber-600 dark:text-amber-400' : 'text-[#10B981] dark:text-emerald-400'"
+              class="text-2xl font-bold tracking-tight tabular-nums"
             >
               {{ forecastData.restock_recommendation?.suggested_quantity || 0 }}
             </span>
-            <span class="text-xs text-slate-400">unit</span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">unit</span>
           </div>
-          <p class="mt-1 text-[11px] font-medium" :class="forecastData.restock_recommendation?.status === 'RESTOCK_URGENT' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'">
+          <p
+            class="text-[11px] mt-1 font-medium truncate"
+            :class="forecastData.restock_recommendation?.status === 'RESTOCK_URGENT' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'"
+          >
             {{ forecastData.restock_recommendation?.status_label }}
           </p>
         </div>
@@ -503,58 +515,64 @@ const hoveredPoint = ref(null)
 
         <div class="overflow-x-auto">
           <table class="w-full text-xs">
-            <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th class="py-3 px-4 text-left">SKU</th>
-                <th class="py-3 px-4 text-left">Nama Barang</th>
-                <th class="py-3 px-4 text-right">Stok Aktual</th>
-                <th class="py-3 px-4 text-right">Safety Stock</th>
-                <th class="py-3 px-4 text-right">Prediksi Kebutuhan</th>
-                <th class="py-3 px-4 text-right">Saran Restock</th>
-                <th class="py-3 px-4 text-center">Status</th>
-                <th class="py-3 px-4 text-center">Aksi</th>
+            <thead class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <tr class="h-10">
+                <th class="px-3 py-2.5 text-left whitespace-nowrap">SKU</th>
+                <th class="px-3 py-2.5 text-left whitespace-nowrap">Nama Barang</th>
+                <th class="px-3 py-2.5 text-right whitespace-nowrap">Stok Aktual</th>
+                <th class="px-3 py-2.5 text-right whitespace-nowrap">Safety Stock</th>
+                <th class="px-3 py-2.5 text-right whitespace-nowrap">Prediksi DES</th>
+                <th class="px-3 py-2.5 text-right whitespace-nowrap">Saran Restock</th>
+                <th class="px-3 py-2.5 text-center whitespace-nowrap">Status</th>
+                <th class="px-3 py-2.5 text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
               <tr
                 v-for="item in restockAlerts"
                 :key="item.id"
-                class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                class="group hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
                 :class="item.id === selectedProductId ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''"
               >
-                <td class="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300">
-                  {{ item.sku }}
+                <td class="px-3 py-2.5 whitespace-nowrap">
+                  <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono tracking-wider text-[11px] font-semibold">
+                    {{ item.sku }}
+                  </span>
                 </td>
-                <td class="py-3 px-4 font-medium text-slate-900 dark:text-white">
+                <td class="px-3 py-2.5 font-semibold text-slate-900 dark:text-white text-xs truncate max-w-[200px]" :title="item.name">
                   {{ item.name }}
                 </td>
-                <td class="py-3 px-4 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                <td class="px-3 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-300 text-xs font-medium">
                   {{ item.current_stock }} {{ item.unit }}
                 </td>
-                <td class="py-3 px-4 text-right tabular-nums text-slate-500">
+                <td class="px-3 py-2.5 text-right tabular-nums text-slate-500 text-xs">
                   {{ item.minimum_stock }} {{ item.unit }}
                 </td>
-                <td class="py-3 px-4 text-right tabular-nums font-semibold text-[#2563EB] dark:text-blue-400">
+                <td class="px-3 py-2.5 text-right tabular-nums font-semibold text-[#2563EB] dark:text-blue-400 text-xs">
                   {{ item.next_forecast }} {{ item.unit }}
                 </td>
-                <td class="py-3 px-4 text-right tabular-nums font-bold" :class="item.suggested_quantity > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-[#10B981]'">
+                <td class="px-3 py-2.5 text-right tabular-nums font-bold text-xs" :class="item.suggested_quantity > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-[#10B981]'">
                   {{ item.suggested_quantity }} {{ item.unit }}
                 </td>
-                <td class="py-3 px-4 text-center">
+                <td class="px-3 py-2.5 text-center whitespace-nowrap">
                   <span
                     :class="item.status === 'RESTOCK_URGENT'
-                      ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
-                      : 'bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] border-emerald-200 dark:border-emerald-800/60'"
-                    class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium border"
+                      ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
+                      : 'bg-emerald-50 dark:bg-emerald-950/50 text-[#10B981] dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border"
                   >
+                    <span
+                      class="w-1.5 h-1.5 rounded-full"
+                      :class="item.status === 'RESTOCK_URGENT' ? 'bg-amber-500' : 'bg-[#10B981]'"
+                    />
                     {{ item.status_label }}
                   </span>
                 </td>
-                <td class="py-3 px-4 text-center">
+                <td class="px-3 py-2.5 text-center whitespace-nowrap">
                   <button
                     type="button"
                     @click="onProductChange(item.id)"
-                    class="px-2.5 py-1 rounded-lg text-[11px] font-medium text-[#2563EB] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/60 cursor-pointer transition-colors"
+                    class="h-7 px-2.5 rounded-lg border border-blue-200/80 dark:border-blue-800/60 bg-blue-50/60 dark:bg-blue-950/40 text-[11px] font-semibold text-[#2563EB] dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 cursor-pointer transition-colors"
                   >
                     Simulasi
                   </button>

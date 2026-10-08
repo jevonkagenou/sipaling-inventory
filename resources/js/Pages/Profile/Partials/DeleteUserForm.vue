@@ -81,7 +81,7 @@ const closeModal = () => {
                         ref="passwordInput"
                         v-model="form.password"
                         type="password"
-                        class="mt-1 block w-3/4 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#2563EB] focus:ring-[#2563EB] rounded-lg shadow-sm"
+                        class="mt-1 block w-3/4 border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 rounded-xl shadow-2xs text-xs sm:text-sm"
                         placeholder="Kata Sandi"
                         @keyup.enter="deleteUser"
                     />
@@ -93,7 +93,7 @@ const closeModal = () => {
                     <Button
                         variant="outline"
                         @click="closeModal"
-                        class="text-xs h-9 px-3.5 cursor-pointer"
+                        class="text-xs h-9 px-3.5 rounded-xl cursor-pointer"
                     >
                         Batal
                     </Button>

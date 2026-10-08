@@ -16,7 +16,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   RotateCcw,
-  Sparkles,
+  Target,
   Layers,
   Info,
 } from 'lucide-vue-next'
@@ -432,7 +432,7 @@ const restockBadge = computed(() => {
             <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/40 dark:bg-slate-950/40">
               <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
                 <span class="text-xs font-medium">Akurasi Model</span>
-                <Sparkles class="w-4 h-4 text-[#10B981] dark:text-emerald-400" />
+                <Target class="w-4 h-4 text-[#10B981] dark:text-emerald-400" />
               </div>
               <div class="text-lg font-bold mt-1 tabular-nums" :class="accuracyBadge.valueColor">
                 {{ accuracyBadge.rateText }}

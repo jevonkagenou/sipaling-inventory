@@ -33,7 +33,7 @@ const activeRate = computed(() => {
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
     <!-- Card 1: Total Pengguna Terdaftar -->
     <div
-      class="group relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0F172A] p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer"
+      class="group relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0F172A] p-4 sm:p-5 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
       :class="[
         activeStatusFilter === 'all'
           ? 'ring-2 ring-[#2563EB]/80 border-[#2563EB]/40 bg-blue-50/20 dark:bg-blue-950/20'
@@ -53,19 +53,19 @@ const activeRate = computed(() => {
             <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Akun Terdaftar</span>
           </div>
         </div>
-        <div class="h-11 w-11 rounded-xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200/60 dark:border-blue-800/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shadow-xs">
+        <div class="h-11 w-11 rounded-xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200/60 dark:border-blue-800/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform duration-200">
           <Users class="h-5 w-5" />
         </div>
       </div>
       <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>Akses Terverifikasi</span>
-        <span class="font-semibold text-blue-600 dark:text-blue-400">4 Peran Spatie</span>
+        <span class="font-semibold text-blue-600 dark:text-blue-400">4 Peran Terdaftar</span>
       </div>
     </div>
 
     <!-- Card 2: Pengguna Aktif (Stitch AI Emerald) -->
     <div
-      class="group relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0F172A] p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer"
+      class="group relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0F172A] p-4 sm:p-5 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
       :class="[
         activeStatusFilter === '1'
           ? 'ring-2 ring-[#10B981]/80 border-[#10B981]/40 bg-emerald-50/20 dark:bg-emerald-950/20'
@@ -87,7 +87,7 @@ const activeRate = computed(() => {
             </span>
           </div>
         </div>
-        <div class="h-11 w-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/60 dark:border-emerald-800/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center shadow-xs">
+        <div class="h-11 w-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/60 dark:border-emerald-800/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform duration-200">
           <UserCheck class="h-5 w-5" />
         </div>
       </div>
@@ -102,7 +102,7 @@ const activeRate = computed(() => {
 
     <!-- Card 3: Pengguna Nonaktif / Ditangguhkan -->
     <div
-      class="group relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0F172A] p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer"
+      class="group relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0F172A] p-4 sm:p-5 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
       :class="[
         activeStatusFilter === '0'
           ? 'ring-2 ring-rose-500/80 border-rose-500/40 bg-rose-50/20 dark:bg-rose-950/20'
@@ -122,14 +122,14 @@ const activeRate = computed(() => {
             <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Ditangguhkan</span>
           </div>
         </div>
-        <div class="h-11 w-11 rounded-xl bg-rose-50 dark:bg-rose-950/70 border border-rose-200/60 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shadow-xs">
+        <div class="h-11 w-11 rounded-xl bg-rose-50 dark:bg-rose-950/70 border border-rose-200/60 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform duration-200">
           <UserX class="h-5 w-5" />
         </div>
       </div>
       <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>Akses Ditolak</span>
         <span class="font-semibold text-rose-600 dark:text-rose-400">
-          {{ stats.inactive_users > 0 ? 'Perlu Ditinjau' : 'Nol Masalah' }}
+          {{ stats.inactive_users > 0 ? 'Perlu Ditinjau' : 'Semua Aktif' }}
         </span>
       </div>
     </div>

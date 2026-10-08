@@ -15,7 +15,6 @@ import {
   Sun,
   Moon,
   X,
-  Sparkles,
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -132,7 +131,6 @@ const navGroups = computed(() => [
         route: 'inventory.index',
         icon: Boxes,
         active: route().current('inventory.*'),
-        badge: '10 SKU',
         show: true,
       },
     ],
@@ -164,7 +162,6 @@ const navGroups = computed(() => [
         route: 'analytics.index',
         icon: LineChart,
         active: route().current('analytics.*'),
-        badge: 'Holt DES',
         show: canAccessAnalytics.value,
       },
       {

@@ -66,7 +66,7 @@ const emit = defineEmits<{
       <Button
         type="button"
         @click="emit('create')"
-        class="h-9 px-4 rounded-xl bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1E40AF] text-white text-xs font-semibold shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-all active:scale-95"
+        class="h-9 px-4 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-all active:scale-95"
       >
         <UserPlus class="w-4 h-4" />
         <span>Tambah Pengguna</span>

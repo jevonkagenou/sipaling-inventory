@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
@@ -18,10 +19,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Katalog Master Inventaris & Simulasi Prediksi
     Route::get('/inventory', [ProductController::class, 'index'])->name('inventory.index');
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::match(['get', 'post'], '/analytics/simulate/{productId}', [AnalyticsController::class, 'simulate'])->name('analytics.simulate');
 
-    // Operasi CRUD Master Produk (Khusus Manajer Operasional)
-    Route::middleware(['role_or_permission:manajer-operasional|inventory.manage'])->group(function () {
+    // Operasi CRUD Master Produk & Kategori (Khusus Manajer Operasional & Komisaris)
+    Route::middleware(['role_or_permission:manajer-operasional|komisaris|inventory.manage'])->group(function () {
         Route::post('/inventory', [ProductController::class, 'store'])->name('inventory.store');
         Route::put('/inventory/{product}', [ProductController::class, 'update'])->name('inventory.update');
         Route::delete('/inventory/{product}', [ProductController::class, 'destroy'])->name('inventory.destroy');
@@ -29,12 +31,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/products', [ProductController::class, 'store'])->name('products.store');
         Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+        Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+        Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+        Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
     });
 
     // Dasbor Utama & Pengaturan Profil
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

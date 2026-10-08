@@ -49,6 +49,8 @@ import InventoryToolbar from '@/Components/Inventory/InventoryToolbar.vue'
 import InventoryToast, { type ToastState } from '@/Components/Inventory/InventoryToast.vue'
 import ProductFormDialog from '@/Components/Inventory/ProductFormDialog.vue'
 import ProductForecastDialog from '@/Components/Inventory/ProductForecastDialog.vue'
+import ProductDeleteDialog from '@/Components/Inventory/ProductDeleteDialog.vue'
+import CategoryManageDialog from '@/Components/Inventory/CategoryManageDialog.vue'
 
 // Lucide Icons
 import {
@@ -68,6 +70,8 @@ export interface Category {
   id: string
   name: string
   slug: string
+  description?: string | null
+  products_count?: number
 }
 
 export interface ProductItem {
@@ -460,6 +464,10 @@ const isDialogOpen = ref(false)
 const dialogMode = ref<'create' | 'edit'>('create')
 const selectedProduct = ref<ProductItem | null>(null)
 
+const isCategoryDialogOpen = ref(false)
+const isDeleteDialogOpen = ref(false)
+const deletingProduct = ref<ProductItem | null>(null)
+
 function openCreateDialog() {
   dialogMode.value = 'create'
   selectedProduct.value = null
@@ -481,30 +489,26 @@ function openForecastDialog(product: ProductItem) {
 }
 
 function onSaved() {
-  router.reload({ only: ['products', 'stats'] })
+  router.reload({ only: ['products', 'categories', 'stats'] })
   showToast('Katalog Diperbarui', 'Data barang berhasil disimpan ke database.')
 }
 
-function confirmDelete(product: ProductItem) {
-  if (product.transaction_details_count && product.transaction_details_count > 0) {
-    showToast(
-      'Gagal Menghapus',
-      `Produk "${product.name}" (${product.sku}) tidak dapat dihapus karena sudah memiliki ${product.transaction_details_count} riwayat mutasi/transaksi.`
-    )
-    return
-  }
+function onCategorySaved() {
+  router.reload({ only: ['categories', 'products', 'stats'] })
+}
 
-  if (confirm(`Apakah Anda yakin ingin menghapus produk "${product.name}" (${product.sku})? Tindakan ini tidak dapat dibatalkan.`)) {
-    router.delete(route('inventory.destroy', product.id), {
-      preserveScroll: true,
-      onSuccess: () => {
-        showToast('Produk Dihapus', `Barang "${product.name}" berhasil dihapus dari database.`)
-      },
-      onError: (errors) => {
-        showToast('Gagal Menghapus', (errors.error as string) || 'Terjadi kesalahan saat menghapus barang.')
-      },
-    })
-  }
+function confirmDelete(product: ProductItem) {
+  deletingProduct.value = product
+  isDeleteDialogOpen.value = true
+}
+
+function onDeleted() {
+  showToast('Produk Dihapus', `Barang berhasil dihapus dari database.`)
+  router.reload({ only: ['products', 'stats'] })
+}
+
+function onDeleteError(message: string) {
+  showToast('Gagal Menghapus', message)
 }
 </script>
 
@@ -579,10 +583,10 @@ function confirmDelete(product: ProductItem) {
       <!-- Page Banner -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h2 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
             Katalog Master Inventaris
           </h2>
-          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Kelola master data produk, pantau stok fisik aktual, dan riwayat mutasi barang.
           </p>
         </div>
@@ -607,6 +611,7 @@ function confirmDelete(product: ProductItem) {
           @update:search-query="table.getColumn('name')?.setFilterValue($event)"
           @update:status-filter="setStatusFilter"
           @create="openCreateDialog"
+          @manage-categories="isCategoryDialogOpen = true"
         />
 
         <!-- 3. TanStack Data Table View -->
@@ -715,6 +720,20 @@ function confirmDelete(product: ProductItem) {
       :product="selectedProduct"
       :categories="categories"
       @saved="onSaved"
+    />
+
+    <ProductDeleteDialog
+      v-model:open="isDeleteDialogOpen"
+      :product="deletingProduct"
+      @deleted="onDeleted"
+      @error="onDeleteError"
+    />
+
+    <CategoryManageDialog
+      v-model:open="isCategoryDialogOpen"
+      :categories="categories"
+      @saved="onCategorySaved"
+      @toast="showToast"
     />
 
     <ProductForecastDialog
