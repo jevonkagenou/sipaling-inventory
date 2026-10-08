@@ -265,7 +265,7 @@ function submit() {
                 <Input
                   v-model="form.name"
                   placeholder="Contoh: Budi Pratama"
-                  class="text-xs rounded-xl h-9.5 bg-slate-50/70 dark:bg-slate-900"
+                  class="text-xs rounded-xl h-9 bg-slate-50/70 dark:bg-slate-900"
                   :class="{ 'border-rose-500 focus-visible:ring-rose-500': clientErrors.name || form.errors.name }"
                 />
                 <p v-if="clientErrors.name || form.errors.name" class="text-[11px] text-rose-500 flex items-center gap-1">
@@ -284,7 +284,7 @@ function submit() {
                   v-model="form.email"
                   type="email"
                   placeholder="nama@sipaling.com"
-                  class="text-xs rounded-xl h-9.5 bg-slate-50/70 dark:bg-slate-900"
+                  class="text-xs rounded-xl h-9 bg-slate-50/70 dark:bg-slate-900"
                   :class="{ 'border-rose-500 focus-visible:ring-rose-500': clientErrors.email || form.errors.email }"
                 />
                 <p v-if="clientErrors.email || form.errors.email" class="text-[11px] text-rose-500 flex items-center gap-1">
@@ -303,7 +303,7 @@ function submit() {
               <Input
                 v-model="form.phone"
                 placeholder="Contoh: 081234567890"
-                class="text-xs rounded-xl h-9.5 bg-slate-50/70 dark:bg-slate-900"
+                class="text-xs rounded-xl h-9 bg-slate-50/70 dark:bg-slate-900"
                 :class="{ 'border-rose-500 focus-visible:ring-rose-500': clientErrors.phone || form.errors.phone }"
               />
               <p v-if="clientErrors.phone || form.errors.phone" class="text-[11px] text-rose-500 flex items-center gap-1">
@@ -387,7 +387,7 @@ function submit() {
                     v-model="form.password"
                     :type="showPassword ? 'text' : 'password'"
                     placeholder="Minimal 8 karakter"
-                    class="text-xs rounded-xl h-9.5 pr-8.5 bg-slate-50/70 dark:bg-slate-900"
+                    class="text-xs rounded-xl h-9 pr-8.5 bg-slate-50/70 dark:bg-slate-900"
                     :class="{ 'border-rose-500 focus-visible:ring-rose-500': clientErrors.password || form.errors.password }"
                   />
                   <button
@@ -417,7 +417,7 @@ function submit() {
                     v-model="form.password_confirmation"
                     :type="showPasswordConfirm ? 'text' : 'password'"
                     placeholder="Ulangi kata sandi"
-                    class="text-xs rounded-xl h-9.5 pr-8.5 bg-slate-50/70 dark:bg-slate-900"
+                    class="text-xs rounded-xl h-9 pr-8.5 bg-slate-50/70 dark:bg-slate-900"
                     :class="{ 'border-rose-500 focus-visible:ring-rose-500': clientErrors.password_confirmation || form.errors.password_confirmation }"
                   />
                   <button

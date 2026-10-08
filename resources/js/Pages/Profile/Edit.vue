@@ -19,11 +19,13 @@ defineProps({
 
     <AuthenticatedLayout>
         <template #header>
-            <h2
-                class="text-base font-bold leading-tight text-slate-900 dark:text-white"
-            >
-                Pengaturan Profil & Keamanan
-            </h2>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-slate-400">Pengaturan</span>
+                <span class="text-slate-300 dark:text-slate-700">/</span>
+                <h1 class="text-sm font-bold text-slate-900 dark:text-white truncate">
+                    Profil & Keamanan Akun
+                </h1>
+            </div>
         </template>
 
         <div class="space-y-6">

@@ -49,7 +49,7 @@ class ProductController extends Controller
 
         return Inertia::render('Inventory/Index', [
             'products' => $products,
-            'categories' => Category::select('id', 'name')->orderBy('name')->get(),
+            'categories' => Category::withCount('products')->orderBy('name')->get(),
             'filters' => [
                 'search' => $search ?? '',
             ],

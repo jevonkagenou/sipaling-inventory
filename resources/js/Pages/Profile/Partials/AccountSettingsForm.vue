@@ -101,7 +101,7 @@ function submitAll() {
                         <TextInput
                             id="name"
                             type="text"
-                            class="mt-1.5 block w-full text-sm border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#2563EB] focus:ring-[#2563EB] rounded-lg shadow-sm"
+                            class="mt-1.5 block w-full text-xs sm:text-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 rounded-xl shadow-2xs"
                             v-model="profileForm.name"
                             required
                             autocomplete="name"
@@ -116,7 +116,7 @@ function submitAll() {
                             <TextInput
                                 id="email"
                                 type="email"
-                                class="block w-full pl-9 text-sm border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#2563EB] focus:ring-[#2563EB] rounded-lg shadow-sm"
+                                class="block w-full pl-9 text-xs sm:text-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 rounded-xl shadow-2xs"
                                 v-model="profileForm.email"
                                 required
                                 autocomplete="username"
@@ -132,7 +132,7 @@ function submitAll() {
                             <TextInput
                                 id="phone"
                                 type="text"
-                                class="block w-full pl-9 text-sm border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#2563EB] focus:ring-[#2563EB] rounded-lg shadow-sm"
+                                class="block w-full pl-9 text-xs sm:text-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 rounded-xl shadow-2xs"
                                 v-model="profileForm.phone"
                                 placeholder="Contoh: 081234567890"
                                 autocomplete="tel"
@@ -191,7 +191,7 @@ function submitAll() {
                                 ref="currentPasswordInput"
                                 v-model="passwordForm.current_password"
                                 :type="showCurrentPassword ? 'text' : 'password'"
-                                class="block w-full text-sm border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#2563EB] focus:ring-[#2563EB] rounded-lg shadow-sm pr-10"
+                                class="block w-full text-xs sm:text-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 rounded-xl shadow-2xs pr-10"
                                 autocomplete="current-password"
                             />
                             <button
@@ -219,7 +219,7 @@ function submitAll() {
                                 ref="passwordInput"
                                 v-model="passwordForm.password"
                                 :type="showPassword ? 'text' : 'password'"
-                                class="block w-full text-sm border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#2563EB] focus:ring-[#2563EB] rounded-lg shadow-sm pr-10"
+                                class="block w-full text-xs sm:text-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 rounded-xl shadow-2xs pr-10"
                                 autocomplete="new-password"
                             />
                             <button
@@ -246,7 +246,7 @@ function submitAll() {
                                 id="password_confirmation"
                                 v-model="passwordForm.password_confirmation"
                                 :type="showPasswordConfirmation ? 'text' : 'password'"
-                                class="block w-full text-sm border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-[#2563EB] focus:ring-[#2563EB] rounded-lg shadow-sm pr-10"
+                                class="block w-full text-xs sm:text-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 rounded-xl shadow-2xs pr-10"
                                 autocomplete="new-password"
                             />
                             <button

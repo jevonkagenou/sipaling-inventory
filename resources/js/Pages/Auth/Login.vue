@@ -138,10 +138,10 @@ const submit = () => {
                                 required
                                 autofocus
                                 autocomplete="username"
-                                class="h-10 text-sm bg-transparent border-slate-300 dark:border-slate-700 focus-visible:ring-1 focus-visible:ring-[#2563EB] focus-visible:border-[#2563EB] rounded-lg"
-                                :class="{ 'border-red-500 focus-visible:ring-red-500': form.errors.email }"
+                                class="h-10 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus-visible:ring-2 focus-visible:ring-[#2563EB]/15 focus-visible:border-[#2563EB] rounded-xl"
+                                :class="{ 'border-rose-500 focus-visible:ring-rose-500/20': form.errors.email }"
                             />
-                            <p v-if="form.errors.email && !form.errors.email.includes('non-aktif')" class="text-[11px] text-red-500 font-medium">
+                            <p v-if="form.errors.email && !form.errors.email.includes('non-aktif')" class="text-[11px] text-rose-500 font-medium">
                                     {{ form.errors.email }}
                                 </p>
                         </div>
@@ -168,8 +168,8 @@ const submit = () => {
                                     required
                                     autocomplete="current-password"
                                     placeholder="••••••••"
-                                    class="h-10 pr-10 text-sm bg-transparent border-slate-300 dark:border-slate-700 focus-visible:ring-1 focus-visible:ring-[#2563EB] focus-visible:border-[#2563EB] rounded-lg"
-                                    :class="{ 'border-red-500 focus-visible:ring-red-500': form.errors.password }"
+                                    class="h-10 pr-10 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus-visible:ring-2 focus-visible:ring-[#2563EB]/15 focus-visible:border-[#2563EB] rounded-xl"
+                                    :class="{ 'border-rose-500 focus-visible:ring-rose-500/20': form.errors.password }"
                                 />
                                 <button
                                     type="button"

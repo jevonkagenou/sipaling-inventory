@@ -55,19 +55,19 @@ Target Penyelesaian: Minggu ke-6
 | M1-BE-01 | Backend / Skema | Mengubah migrasi users agar id bertipe UUID, menambah kolom phone dan is_active | Migrasi `users` dengan primary key UUID | Meutia | [x] |
 | M1-BE-02 | Backend / Skema | Menyesuaikan migrasi Spatie Permission agar kolom model_id mendukung tipe UUID | Skema tabel Spatie Permission dengan UUID | Felix | [x] |
 | M1-BE-03 | Backend / Model | Menambahkan trait HasRoles dan HasUuids pada model User.php | Model `User.php` terintegrasi UUID dan Spatie | Felix | [x] |
-| M1-BE-04 | Backend / Skema | Membuat migrasi tabel password_reset_otps untuk verifikasi 2-Step FA | Skema tabel kode OTP 2FA dengan UUID dan batas kedaluwarsa | Sultan | [ ] |
-| M1-BE-05 | Backend / Validasi | Memperbarui ProfileUpdateRequest untuk validasi nomor telepon dan model User | Validasi profil backend terintegrasi nomor telepon dan UUID | Meutia | [ ] |
+| M1-BE-04 | Backend / Skema | Membuat migrasi tabel password_reset_otps untuk verifikasi 2-Step FA | Skema tabel kode OTP 2FA dengan UUID dan batas kedaluwarsa | Sultan | [x] |
+| M1-BE-05 | Backend / Validasi | Memperbarui ProfileUpdateRequest untuk validasi nomor telepon dan model User | Validasi profil backend terintegrasi nomor telepon dan UUID | Meutia | [x] |
 | M1-LC-01 | Logika / Seeder | Membuat RoleAndPermissionSeeder.php untuk 4 peran statis dan akun bawaan | Seeder peran dan user default siap pakai | Felix | [x] |
 | M1-LC-02 | Logika / Middleware | Menerapkan middleware pembatasan hak akses berbasis peran pada routes/web.php | Rute terlindungi berdasarkan hak akses | Felix | [x] |
 | M1-LC-03 | Logika / Middleware | Mengonfigurasi HandleInertiaRequests.php untuk membagikan data peran ke Vue | State `auth.roles` tersedia di seluruh halaman Vue | Felix | [x] |
-| M1-LC-04 | Logika / Service | Membangun TwoFactorResetService untuk generate OTP 6-digit dan rate limiting | Service verifikasi OTP 2-Step FA anti-bruteforce | Sultan | [ ] |
-| M1-LC-05 | Logika / Controller | Menghubungkan alur lupa password dengan challenge verifikasi 2-Step FA | Controller penanganan alur OTP, verifikasi kode & token reset | Sultan | [ ] |
-| M1-FE-01 | Frontend / UI | Memperbarui antarmuka Login.vue dengan pesan validasi akun non-aktif | Form login terintegrasi validasi status akun | Najwa | [ ] |
+| M1-LC-04 | Logika / Service | Membangun TwoFactorResetService untuk generate OTP 6-digit dan rate limiting | Service verifikasi OTP 2-Step FA anti-bruteforce | Sultan | [x] |
+| M1-LC-05 | Logika / Controller | Menghubungkan alur lupa password dengan challenge verifikasi 2-Step FA | Controller penanganan alur OTP, verifikasi kode & token reset | Sultan | [x] |
+| M1-FE-01 | Frontend / UI | Memperbarui antarmuka Login.vue dengan pesan validasi akun non-aktif | Form login terintegrasi validasi status akun | Najwa | [x] |
 | M1-FE-02 | Frontend / UI | Membangun navigasi dinamis di AuthenticatedLayout.vue berbasis peran pengguna | Menu sidebar/navbar adaptif sesuai peran aktif | Desy | [x] |
-| M1-FE-03 | Frontend / UI | Menyusun halaman manajemen pengguna untuk pengaturan aktivasi akun | Halaman kelola user dengan badge role | Desy | [ ] |
+| M1-FE-03 | Frontend / UI | Menyusun halaman manajemen pengguna untuk pengaturan aktivasi akun | Halaman kelola user dengan badge role | Desy | [x] |
 | M1-FE-04 | Frontend / UI | Membangun antarmuka verifikasi 2-Step FA (Auth/VerifyOtp.vue) dengan timer OTP | Halaman input 6-digit kode OTP terintegrasi form lupa password | Desy | [x] |
-| M1-FE-05 | Frontend / UI | Merancang kartu identitas pengguna (Digital ID Card) di Profile/Edit.vue | Komponen kartu profil digital & header namecard responsif | Najwa | [ ] |
-| M1-FE-06 | Frontend / UI | Membangun formulir interaktif informasi profil, ganti kata sandi, dan modal hapus akun | Formulir profil dan keamanan kredensial berpalet Stitch AI | Meutia | [ ] |
+| M1-FE-05 | Frontend / UI | Merancang kartu identitas pengguna (Digital ID Card) di Profile/Edit.vue | Komponen kartu profil digital & header namecard responsif | Najwa | [x] |
+| M1-FE-06 | Frontend / UI | Membangun formulir interaktif informasi profil, ganti kata sandi, dan modal hapus akun | Formulir profil dan keamanan kredensial berpalet Stitch AI | Meutia | [x] |
 
 ---
 
@@ -79,11 +79,11 @@ Target Penyelesaian: Minggu ke-7
 | M2-BE-01 | Backend / Skema | Membuat migrasi tabel categories dengan kolom id (UUID), name, slug, description | Skema tabel `categories` | Felix | [x] |
 | M2-BE-02 | Backend / Skema | Membuat migrasi tabel products dengan category_id (UUID), sku, name, unit, stok | Skema tabel `products` dengan safety stock | Felix | [x] |
 | M2-BE-03 | Backend / Model | Membangun relasi Eloquent one-to-many antara Category dan Product | Model `Category.php` dan `Product.php` aktif | Felix | [x] |
-| M2-LC-01 | Logika / Validasi | Membuat Form Request StoreProductRequest dan UpdateProductRequest | Validasi keunikan SKU dan kuantitas numerik | Sultan | [ ] |
-| M2-LC-02 | Logika / Controller | Membuat ProductController.php dengan proteksi restrict delete jika berelasi transaksi | Controller master barang dengan proteksi integritas | Sultan | [ ] |
+| M2-LC-01 | Logika / Validasi | Membuat Form Request StoreProductRequest dan UpdateProductRequest | Validasi keunikan SKU dan kuantitas numerik | Sultan | [x] |
+| M2-LC-02 | Logika / Controller | Membuat ProductController.php dan CategoryController.php dengan proteksi restrict delete jika berelasi | Controller master barang & kategori dengan proteksi integritas | Sultan | [x] |
 | M2-LC-03 | Logika / Seeder | Mengimpor dataset Kaggle retail ke database melalui seeder InventoryCsvSeeder | 5.000 data produk dan kategori terisi di database | Felix | [x] |
 | M2-FE-01 | Frontend / UI | Menyempurnakan Inventory/Index.vue dengan TanStack Table dan pagination | Tabel katalog inventaris interaktif dan cepat | Felix | [x] |
-| M2-FE-02 | Frontend / UI | Membuat Dialog Modal shadcn-vue untuk form Tambah dan Edit Produk | Form popup modal tambah/edit barang | Najwa | [ ] |
+| M2-FE-02 | Frontend / UI | Membuat Dialog Modal shadcn-vue untuk form Tambah/Edit Produk dan Panel Kelola Kategori | Form modal produk & kelola kategori terintegrasi | Najwa | [x] |
 | M2-FE-03 | Frontend / UI | Menerapkan badge visual status ketersediaan stok (Aman, Reorder, Habis) | Indikator visual level persediaan barang | Felix | [x] |
 
 ---
@@ -96,13 +96,13 @@ Target Penyelesaian: Minggu ke-8 s.d. Minggu ke-9
 | M3-BE-01 | Backend / Skema | Membuat migrasi stock_transactions untuk header bukti mutasi masuk/keluar | Skema tabel header `stock_transactions` | Felix | [x] |
 | M3-BE-02 | Backend / Skema | Membuat migrasi stock_transaction_details untuk rincian item barang mutasi | Skema tabel detail `stock_transaction_details` | Felix | [x] |
 | M3-BE-03 | Backend / Model | Membuat model StockTransaction dan StockTransactionDetail beserta relasinya | Model Eloquent transaksi stok siap pakai | Felix | [x] |
-| M3-LC-01 | Logika / Service | Membangun StockTransactionService dengan eksekusi transaksi atomik DB::transaction | Service mutasi stok bergaransi konsistensi | Sultan | [ ] |
-| M3-LC-02 | Logika / Locking | Menerapkan lockForUpdate pada baris produk untuk mencegah race condition mutasi | Proteksi konkurensi stok terhindar dari minus | Sultan | [ ] |
-| M3-LC-03 | Logika / Nomor | Membuat generator otomatis nomor referensi dokumen mutasi (TRX-IN / TRX-OUT) | Penomoran unik otomatis berformat standar | Sultan | [ ] |
+| M3-LC-01 | Logika / Service | Membangun StockTransactionService dengan eksekusi transaksi atomik DB::transaction | Service mutasi stok bergaransi konsistensi | Sultan | [x] |
+| M3-LC-02 | Logika / Locking | Menerapkan lockForUpdate pada baris produk untuk mencegah race condition mutasi | Proteksi konkurensi stok terhindar dari minus | Sultan | [x] |
+| M3-LC-03 | Logika / Nomor | Membuat generator otomatis nomor referensi dokumen mutasi (TRX-IN / TRX-OUT) | Penomoran unik otomatis berformat standar | Sultan | [x] |
 | M3-FE-01 | Frontend / UI | Membangun antarmuka Transaksi Masuk (InboundCreate.vue) dengan input multi-item | Formulir dinamis penerimaan barang gudang | Desy | [x] |
 | M3-FE-02 | Frontend / UI | Membangun antarmuka Transaksi Keluar (OutboundCreate.vue) dengan batas stok riil | Formulir pengeluaran barang dengan validasi stok | Desy | [x] |
 | M3-FE-03 | Frontend / UI | Membuat halaman riwayat mutasi Transactions/Index.vue dengan tab pemisah | Halaman riwayat transaksi dan filter tanggal | Desy | [x] |
-| M3-FE-04 | Frontend / UI | Membuat dialog rincian bukti transaksi mutasi yang dapat dicetak | Tampilan cetak bukti serah terima barang | Najwa | [ ] |
+| M3-FE-04 | Frontend / UI | Membuat dialog rincian bukti transaksi mutasi yang dapat dicetak | Tampilan cetak bukti serah terima barang | Najwa | [x] |
 
 ---
 
@@ -117,10 +117,10 @@ Target Penyelesaian: Minggu ke-10 s.d. Minggu ke-11
 | M4-LC-02 | Logika / Akurasi | Mengimplementasikan fungsi kalkulasi metrik error MAPE dan RMSE | Kalkulator tingkat akurasi dan deviasi peramalan | Felix | [x] |
 | M4-LC-03 | Logika / Optimasi | Membangun fungsi Grid Search untuk menemukan pasangan nilai alpha-beta terbaik | Pencarian otomatis parameter error terendah | Felix | [x] |
 | M4-LC-04 | Logika / Kalkulasi | Menghitung rekomendasi kuantitas restock: Max(0, Forecast + Safety Stock - Current Stock) | Formula output saran kuantitas pengadaan | Felix | [x] |
-| M4-FE-01 | Frontend / UI | Membangun Dasbor Analitik Manajer Operasional (Analytics/Index.vue) | Halaman dasbor analitik dan statistik stok | Meutia | [ ] |
-| M4-FE-02 | Frontend / UI | Mengintegrasikan visualisasi kurva aktual vs proyeksi peramalan menggunakan Chart | Komponen visual kurva pergerakan kebutuhan barang | Najwa | [ ] |
-| M4-FE-03 | Frontend / UI | Menyediakan kartu informasi akurasi (Nilai Alpha, Nilai Beta, Persentase MAPE) | Kartu visual ringkasan performa algoritma | Najwa | [ ] |
-| M4-FE-04 | Frontend / UI | Membuat tabel rekomendasi stok menipis dengan tombol aksi cepat ajukan restock | Tabel prioritas pengadaan barang kritis | Meutia | [ ] |
+| M4-FE-01 | Frontend / UI | Membangun Dasbor Analitik Manajer Operasional (Analytics/Index.vue) | Halaman dasbor analitik dan statistik stok | Meutia | [x] |
+| M4-FE-02 | Frontend / UI | Mengintegrasikan visualisasi kurva aktual vs proyeksi peramalan menggunakan Chart | Komponen visual kurva pergerakan kebutuhan barang | Najwa | [x] |
+| M4-FE-03 | Frontend / UI | Menyediakan kartu informasi akurasi (Nilai Alpha, Nilai Beta, Persentase MAPE) | Kartu visual ringkasan performa algoritma | Najwa | [x] |
+| M4-FE-04 | Frontend / UI | Membuat tabel rekomendasi stok menipis dengan tombol aksi cepat ajukan restock | Tabel prioritas pengadaan barang kritis | Meutia | [x] |
 
 ---
 
@@ -145,14 +145,14 @@ Target Penyelesaian: Minggu ke-12 s.d. Minggu ke-13
 Target Penyelesaian: Minggu ke-14
 
 | ID | Lapisan | Rincian Tugas Teknis | Target Output / Deliverable | PIC | Status |
-| :--- | :--- | :--- | :--- | :--- | :---: |
-| M6-BE-01 | Backend / Skema | Menyesuaikan migrasi Spatie Activitylog agar kolom causer_id dan subject_id UUID | Skema tabel `activity_log` kompatibel UUID | Felix | [ ] |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| M6-BE-01 | Backend / Skema | Menyesuaikan migrasi Spatie Activitylog agar kolom causer_id dan subject_id UUID | Skema tabel `activity_log` kompatibel UUID | Felix | [x] |
 | M6-BE-02 | Backend / Model | Menimpa model ActivityLog dengan menonaktifkan delete() dan update() di Eloquent | Jaminan log bersifat append-only permanen | Felix | [ ] |
 | M6-LC-01 | Logika / Observer | Mendaftarkan ProductObserver dan StockTransactionObserver untuk merekam histori | Perekaman otomatis data lama dan data baru | Felix | [ ] |
-| M6-LC-02 | Logika / Security | Menangkap metadata keamanan (Alamat IP Klien dan User Agent) ke properties log | Jejak audit forensik lengkap dengan IP pengguna | Felix | [ ] |
+| M6-LC-02 | Logika / Security | Menangkap metadata keamanan (Alamat IP Klien dan User Agent) ke properties log | Jejak audit forensik lengkap dengan IP pengguna | Felix | [x] |
 | M6-LC-03 | Logika / Service | Membangun AuditLogQueryService dengan filter rentang tanggal, modul, dan aktor | Service penelusuran histori berkecepatan tinggi | Felix | [ ] |
-| M6-FE-01 | Frontend / UI | Membangun portal investigasi log khusus Auditor Internal (Audit/Index.vue) | Halaman investigasi riwayat sistem | Meutia | [ ] |
-| M6-FE-02 | Frontend / UI | Membuat komponen Visual Diff Viewer untuk perbandingan data lama vs data baru | Dialog perbandingan nilai perubahan atribut | Najwa | [ ] |
+| M6-FE-01 | Frontend / UI | Membangun portal investigasi log khusus Auditor Internal (Audit/Index.vue) | Halaman investigasi riwayat sistem | Meutia | [x] |
+| M6-FE-02 | Frontend / UI | Membuat komponen Visual Diff Viewer untuk perbandingan data lama vs data baru | Dialog perbandingan nilai perubahan atribut | Najwa | [x] |
 | M6-FE-03 | Frontend / UI | Menyediakan filter pencarian histori multi-parameter (Tanggal, Pengguna, Modul) | Filter data log interaktif | Meutia | [ ] |
 | M6-FE-04 | Frontend / UI | Membuat fitur ekspor log audit ke dalam format berkas CSV dan dokumen PDF | Laporan audit berkas siap unduh | Meutia | [ ] |
 

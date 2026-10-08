@@ -125,7 +125,7 @@ function submit() {
             <label class="text-xs font-medium text-slate-700 dark:text-slate-300">Kategori *</label>
             <select
               v-model="form.category_id"
-              class="w-full h-9 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs px-3 text-slate-900 dark:text-slate-100"
+              class="w-full h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs px-3 text-slate-900 dark:text-slate-100 shadow-2xs transition-all duration-200 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 cursor-pointer"
             >
               <option value="" disabled>Pilih kategori</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
@@ -173,15 +173,16 @@ function submit() {
           <textarea
             v-model="form.description"
             rows="2"
-            class="w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs px-3 py-2 text-slate-900 dark:text-slate-100"
+            class="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs px-3 py-2 text-slate-900 dark:text-slate-100 shadow-2xs transition-all duration-200 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            placeholder="Keterangan spesifikasi atau catatan produk..."
           />
         </div>
 
         <DialogFooter class="pt-2">
-          <Button type="button" variant="outline" :disabled="form.processing" @click="handleClose(false)">
+          <Button type="button" variant="outline" :disabled="form.processing" @click="handleClose(false)" class="rounded-xl text-xs h-9">
             Batal
           </Button>
-          <Button type="submit" :disabled="form.processing" class="bg-[#2563EB] hover:bg-blue-700 text-white">
+          <Button type="submit" :disabled="form.processing" class="rounded-xl text-xs h-9 bg-[#2563EB] hover:bg-blue-700 text-white font-medium">
             {{ form.processing ? 'Menyimpan...' : submitLabel }}
           </Button>
         </DialogFooter>

@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu'
-import { ChevronDown, Plus, Search } from 'lucide-vue-next'
+import { ChevronDown, Plus, Search, FolderTree } from 'lucide-vue-next'
 
 const props = defineProps<{
   searchQuery: string
@@ -26,6 +26,7 @@ const emit = defineEmits<{
   (e: 'update:searchQuery', val: string): void
   (e: 'update:statusFilter', status: 'all' | 'Aman' | 'Reorder'): void
   (e: 'create'): void
+  (e: 'manageCategories'): void
 }>()
 
 const hideableColumns = computed(() => {
@@ -42,7 +43,7 @@ const hideableColumns = computed(() => {
       <div class="relative w-full sm:w-80">
         <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
         <Input
-          class="w-full pl-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-xs shadow-2xs focus-visible:ring-1 focus-visible:ring-[#2563EB] h-9 rounded-lg"
+          class="w-full pl-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-xs shadow-2xs focus-visible:ring-2 focus-visible:ring-[#2563EB]/15 focus-visible:border-[#2563EB] h-9 rounded-xl"
           placeholder="Cari kode SKU atau nama barang..."
           :model-value="searchQuery"
           @update:model-value="emit('update:searchQuery', String($event))"
@@ -110,6 +111,16 @@ const hideableColumns = computed(() => {
           </DropdownMenuCheckboxItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <!-- Kelola Kategori Button -->
+      <Button
+        variant="outline"
+        @click="emit('manageCategories')"
+        class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 font-medium shadow-2xs transition-all text-xs h-9 px-3 cursor-pointer"
+        title="Buka panel kelola master kategori"
+      >
+        <FolderTree class="w-3.5 h-3.5 mr-1.5 text-slate-500" /> Kelola Kategori
+      </Button>
 
       <!-- Tambah Barang Button -->
       <Button
