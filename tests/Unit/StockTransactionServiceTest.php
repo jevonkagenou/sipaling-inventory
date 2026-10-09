@@ -89,6 +89,42 @@ class StockTransactionServiceTest extends TestCase
         $this->assertSame("TRX-OUT-{$today}-0001", $outboundRef);
     }
 
+    public function test_generate_reference_number_supports_case_insensitive_and_uppercase_type(): void
+    {
+        $today = now()->format('Ymd');
+
+        $inboundRefUpper = $this->service->generateReferenceNumber('INBOUND');
+        $this->assertSame("TRX-IN-{$today}-0001", $inboundRefUpper);
+
+        $outboundRefMixed = $this->service->generateReferenceNumber('OutBound');
+        $this->assertSame("TRX-OUT-{$today}-0001", $outboundRefMixed);
+    }
+
+    public function test_generate_reference_number_guarantees_uniqueness_on_collision(): void
+    {
+        $today = now()->format('Ymd');
+        $prefix = "TRX-IN-{$today}-";
+
+        // Simulasi kondisi di mana 0001 dan 0002 sudah terisi
+        StockTransaction::create([
+            'reference_no' => "{$prefix}0001",
+            'type' => 'inbound',
+            'transaction_date' => now(),
+            'created_by' => $this->user->id,
+        ]);
+
+        StockTransaction::create([
+            'reference_no' => "{$prefix}0002",
+            'type' => 'inbound',
+            'transaction_date' => now(),
+            'created_by' => $this->user->id,
+        ]);
+
+        // Generator harus mendeteksi dan menghasilkan nomor 0003
+        $nextRef = $this->service->generateReferenceNumber('inbound');
+        $this->assertSame("{$prefix}0003", $nextRef);
+    }
+
     public function test_generate_reference_number_throws_exception_on_invalid_type(): void
     {
         $this->expectException(InvalidArgumentException::class);
