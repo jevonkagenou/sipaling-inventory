@@ -49,8 +49,8 @@ class LoginRequest extends FormRequest
         if ($user && ! $user->is_active && Hash::check($this->password, $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
-           throw ValidationException::withMessages([
-           'email' => 'Akun Anda non-aktif. Hubungi Administrator.',
+            throw ValidationException::withMessages([
+                'email' => 'Akun Anda non-aktif. Hubungi Administrator.',
             ]);
         }
 

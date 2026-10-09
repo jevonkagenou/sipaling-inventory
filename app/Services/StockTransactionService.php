@@ -96,7 +96,10 @@ class StockTransactionService
             $totalQuantity = 0;
             $itemSummaries = [];
 
-            foreach ($data['items'] as $item) {
+            // Urutkan item berdasarkan product_id secara konsisten untuk mencegah potensi deadlock saat konkurensi tinggi
+            $sortedItems = collect($data['items'])->sortBy('product_id')->values()->all();
+
+            foreach ($sortedItems as $item) {
                 // Lock row produk secara pesimistik untuk konsistensi & pencegahan race condition
                 $product = Product::where('id', $item['product_id'])->lockForUpdate()->firstOrFail();
 
@@ -152,15 +155,28 @@ class StockTransactionService
         $creator = $user ?? Auth::user();
 
         return DB::transaction(function () use ($data, $creator, $meta) {
-            // Tahap 1: Validasi stok fisik riil dengan pessimistic locking (lockForUpdate)
+            // Tahap 1: Hitung akumulasi kebutuhan total per produk (mencegah duplikasi item lolos validasi)
+            $requiredPerProduct = [];
             foreach ($data['items'] as $item) {
-                $product = Product::where('id', $item['product_id'])->lockForUpdate()->firstOrFail();
+                $pId = $item['product_id'];
+                $requiredPerProduct[$pId] = ($requiredPerProduct[$pId] ?? 0) + (int) $item['quantity'];
+            }
 
-                if ($product->current_stock < (int) $item['quantity']) {
+            // Urutkan product_id secara konsisten untuk mencegah deadlock pada transaksi paralel
+            ksort($requiredPerProduct);
+
+            // Tahap 2: Validasi stok fisik riil dengan pessimistic row locking (lockForUpdate)
+            $lockedProducts = [];
+            foreach ($requiredPerProduct as $productId => $totalRequired) {
+                $product = Product::where('id', $productId)->lockForUpdate()->firstOrFail();
+
+                if ($product->current_stock < $totalRequired) {
                     throw ValidationException::withMessages([
-                        'items' => "Stok produk {$product->name} (SKU: {$product->sku}) tidak mencukupi. Sisa stok: {$product->current_stock}, diminta: {$item['quantity']}.",
+                        'items' => "Stok produk {$product->name} (SKU: {$product->sku}) tidak mencukupi. Sisa stok: {$product->current_stock}, diminta: {$totalRequired}.",
                     ]);
                 }
+
+                $lockedProducts[$productId] = $product;
             }
 
             $referenceNo = $data['reference_no'] ?? $this->generateReferenceNumber('outbound');
@@ -178,7 +194,7 @@ class StockTransactionService
             $itemSummaries = [];
 
             foreach ($data['items'] as $item) {
-                $product = Product::where('id', $item['product_id'])->lockForUpdate()->firstOrFail();
+                $product = $lockedProducts[$item['product_id']] ?? Product::where('id', $item['product_id'])->lockForUpdate()->firstOrFail();
 
                 StockTransactionDetail::create([
                     'stock_transaction_id' => $transaction->id,

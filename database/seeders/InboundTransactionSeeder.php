@@ -22,6 +22,7 @@ class InboundTransactionSeeder extends Seeder
         $products = Product::all();
         if ($products->isEmpty()) {
             $this->command?->warn('Belum ada produk untuk membuat seeder transaksi Inbound.');
+
             return;
         }
 
@@ -74,12 +75,12 @@ class InboundTransactionSeeder extends Seeder
         // 2. Buat batch tanggal terkini (Oktober 2026) termasuk hari ini agar KPI Card Hari Ini terisi
         $todayStr = Carbon::today()->format('Y-m-d');
         $recentDates = [
-            Carbon::today()->subDays(6)->format('Y-m-d') . ' 10:15:00',
-            Carbon::today()->subDays(4)->format('Y-m-d') . ' 13:30:00',
-            Carbon::today()->subDays(2)->format('Y-m-d') . ' 09:45:00',
-            Carbon::today()->subDays(1)->format('Y-m-d') . ' 14:00:00',
-            $todayStr . ' 08:30:00', // Hari ini batch 1
-            $todayStr . ' 13:45:00', // Hari ini batch 2
+            Carbon::today()->subDays(6)->format('Y-m-d').' 10:15:00',
+            Carbon::today()->subDays(4)->format('Y-m-d').' 13:30:00',
+            Carbon::today()->subDays(2)->format('Y-m-d').' 09:45:00',
+            Carbon::today()->subDays(1)->format('Y-m-d').' 14:00:00',
+            $todayStr.' 08:30:00', // Hari ini batch 1
+            $todayStr.' 13:45:00', // Hari ini batch 2
         ];
 
         $allBatchDates = array_merge($historicalDates, $recentDates);
@@ -89,7 +90,7 @@ class InboundTransactionSeeder extends Seeder
 
             foreach ($allBatchDates as $idx => $dateStr) {
                 $cDate = Carbon::parse($dateStr);
-                $refNo = 'TRX-IN-' . $cDate->format('Ymd') . '-' . strtoupper(Str::random(4));
+                $refNo = 'TRX-IN-'.$cDate->format('Ymd').'-'.strtoupper(Str::random(4));
                 $supplier = $suppliers[$idx % count($suppliers)];
                 $note = $notesList[$idx % count($notesList)];
 
@@ -120,7 +121,7 @@ class InboundTransactionSeeder extends Seeder
                         'product_id' => $prod->id,
                         'quantity' => $qty,
                         'unit_price' => $price,
-                        'notes' => 'Batch batching ' . $prod->sku,
+                        'notes' => 'Batch batching '.$prod->sku,
                         'created_at' => $cDate,
                         'updated_at' => $cDate,
                     ]);

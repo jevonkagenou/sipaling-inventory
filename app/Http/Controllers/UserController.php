@@ -149,7 +149,7 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['general' => 'Gagal menyimpan pengguna: ' . $e->getMessage()]);
+                ->withErrors(['general' => 'Gagal menyimpan pengguna: '.$e->getMessage()]);
         }
     }
 
@@ -207,7 +207,7 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['general' => 'Gagal memperbarui pengguna: ' . $e->getMessage()]);
+                ->withErrors(['general' => 'Gagal memperbarui pengguna: '.$e->getMessage()]);
         }
     }
 
