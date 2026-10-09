@@ -2,9 +2,13 @@
 
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StockTransactionController;
 use App\Http\Controllers\UserController;
+use App\Models\ActivityLog;
+use App\Models\ForecastingLog;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -38,7 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Dasbor Utama & Pengaturan Profil
-    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -46,15 +50,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 1. Modul Operasional Gudang: Mutasi Masuk & Keluar
     Route::prefix('transactions')->name('transactions.')->group(function () {
         Route::middleware(['role_or_permission:staf-gudang|manajer-operasional|komisaris|auditor-internal|transactions.view'])->group(function () {
-            Route::get('/', [\App\Http\Controllers\StockTransactionController::class, 'index'])->name('index');
-            Route::get('/{transaction}/receipt', [\App\Http\Controllers\StockTransactionController::class, 'receiptPdf'])->name('receipt');
+            Route::get('/', [StockTransactionController::class, 'index'])->name('index');
+            Route::get('/{transaction}/receipt', [StockTransactionController::class, 'receiptPdf'])->name('receipt');
         });
 
         Route::middleware(['role_or_permission:staf-gudang|manajer-operasional|transactions.create'])->group(function () {
-            Route::get('/inbound', [\App\Http\Controllers\StockTransactionController::class, 'inboundCreate'])->name('inbound.create');
-            Route::post('/inbound', [\App\Http\Controllers\StockTransactionController::class, 'inboundStore'])->name('inbound.store');
-            Route::get('/outbound', [\App\Http\Controllers\StockTransactionController::class, 'outboundCreate'])->name('outbound.create');
-            Route::post('/outbound', [\App\Http\Controllers\StockTransactionController::class, 'outboundStore'])->name('outbound.store');
+            Route::get('/inbound', [StockTransactionController::class, 'inboundCreate'])->name('inbound.create');
+            Route::post('/inbound', [StockTransactionController::class, 'inboundStore'])->name('inbound.store');
+            Route::get('/outbound', [StockTransactionController::class, 'outboundCreate'])->name('outbound.create');
+            Route::post('/outbound', [StockTransactionController::class, 'outboundStore'])->name('outbound.store');
         });
     });
 
@@ -83,15 +87,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 4. Modul Jejak Audit & Investigasi Forensik (Auditor Internal & Komisaris)
     Route::middleware(['role:auditor-internal|komisaris'])->prefix('audit')->name('audit.')->group(function () {
         Route::get('/', function () {
-            $logs = \App\Models\ActivityLog::with('causer:id,name,email')
+            $logs = ActivityLog::with('causer:id,name,email')
                 ->latest()
                 ->paginate(15);
 
             $stats = [
-                'total_logs' => \App\Models\ActivityLog::count(),
-                'inventory_logs' => \App\Models\ActivityLog::where('log_name', 'inventory')->count(),
-                'user_logs' => \App\Models\ActivityLog::where('log_name', 'users')->count(),
-                'forecast_logs' => \App\Models\ForecastingLog::count(),
+                'total_logs' => ActivityLog::count(),
+                'inventory_logs' => ActivityLog::where('log_name', 'inventory')->count(),
+                'user_logs' => ActivityLog::where('log_name', 'users')->count(),
+                'forecast_logs' => ForecastingLog::count(),
             ];
 
             return Inertia::render('Audit/Index', [
@@ -111,4 +115,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

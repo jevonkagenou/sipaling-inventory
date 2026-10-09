@@ -15,8 +15,8 @@ class DoubleExponentialSmoothingService
      *
      * @param  array<float|int>  $series  Nilai aktual time-series [y1, y2, ..., yn]
      * @param  float  $alpha  Parameter pemulusan level (0 < alpha < 1)
-     * @param  float  $beta   Parameter pemulusan tren (0 < beta < 1)
-     * @param  int    $horizon Jumlah periode ke depan yang diproyeksikan (default: 1)
+     * @param  float  $beta  Parameter pemulusan tren (0 < beta < 1)
+     * @param  int  $horizon  Jumlah periode ke depan yang diproyeksikan (default: 1)
      * @return array{
      *     levels: float[],
      *     trends: float[],
@@ -103,7 +103,7 @@ class DoubleExponentialSmoothingService
      * Hitung Metrik Akurasi Error (RMSE, MAPE, MAE)
      *
      * @param  array<float|int>  $actuals
-     * @param  array<float|null> $fitted
+     * @param  array<float|null>  $fitted
      * @return array{mape: float|null, rmse: float|null, mae: float|null}
      */
     public function calculateErrors(array $actuals, array $fitted): array
@@ -172,7 +172,6 @@ class DoubleExponentialSmoothingService
      *
      * @param  array<float|int>  $series
      * @param  float  $step  Besaran langkah inkremental (default: 0.1)
-     * @param  int    $horizon
      * @return array{
      *     optimal_alpha: float,
      *     optimal_beta: float,
@@ -228,9 +227,9 @@ class DoubleExponentialSmoothingService
      * Hitung Rekomendasi Kuantitas Restock
      * Formula: Max(0, Forecast + Safety Stock - Current Stock)
      *
-     * @param  float|int  $forecastQuantity Kuantitas perkiraan kebutuhan periode mendatang
-     * @param  int        $safetyStock      Ambang batas persediaan pengaman (minimum_stock)
-     * @param  int        $currentStock     Kuantitas persediaan fisik saat ini (current_stock)
+     * @param  float|int  $forecastQuantity  Kuantitas perkiraan kebutuhan periode mendatang
+     * @param  int  $safetyStock  Ambang batas persediaan pengaman (minimum_stock)
+     * @param  int  $currentStock  Kuantitas persediaan fisik saat ini (current_stock)
      * @return array{
      *     suggested_quantity: int,
      *     status: 'RESTOCK_URGENT'|'RESTOCK_SUGGESTED'|'STOCK_ADEQUATE',
@@ -325,8 +324,7 @@ class DoubleExponentialSmoothingService
     /**
      * Ekstraksi Agregasi Time-Series Bulanan untuk Produk dari Riwayat Transaksi Outbound
      *
-     * @param  string  $productId
-     * @param  bool    $onlyClosedPeriods Batasi hanya pada periode yang sudah tutup buku (default: true)
+     * @param  bool  $onlyClosedPeriods  Batasi hanya pada periode yang sudah tutup buku (default: true)
      * @return Collection<int, object{period: string, total_quantity: int}>
      */
     public function getMonthlyOutboundSeries(string $productId, bool $onlyClosedPeriods = true): Collection
@@ -355,12 +353,6 @@ class DoubleExponentialSmoothingService
     /**
      * Jalankan Peramalan Menyeluruh untuk Produk Tertentu
      * Menarik time-series, mencari parameter optimal via Grid Search, menghitung restock, dan menyusun payload dasbor.
-     *
-     * @param  Product  $product
-     * @param  float|null  $manualAlpha
-     * @param  float|null  $manualBeta
-     * @param  int  $horizon
-     * @return array
      */
     public function forecastProduct(
         Product $product,
@@ -461,9 +453,7 @@ class DoubleExponentialSmoothingService
     /**
      * Catat Hasil Peramalan ke Tabel forecasting_logs
      *
-     * @param  Product  $product
-     * @param  array    $forecastResult Hasil dari forecastProduct()
-     * @return ForecastingLog
+     * @param  array  $forecastResult  Hasil dari forecastProduct()
      */
     public function persistForecastLog(Product $product, array $forecastResult): ForecastingLog
     {

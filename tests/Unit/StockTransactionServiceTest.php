@@ -244,4 +244,116 @@ class StockTransactionServiceTest extends TestCase
         $this->assertDatabaseCount('stock_transactions', 0);
         $this->assertDatabaseCount('stock_transaction_details', 0);
     }
+
+    public function test_create_outbound_validates_aggregated_quantities_for_duplicate_products(): void
+    {
+        // Product A memiliki stok 10
+        // Coba kirim permintaan dengan 2 baris item produk yang sama: 6 + 5 = 11 (melebihi stok 10)
+        $data = [
+            'party_name' => 'Toko Mitra',
+            'items' => [
+                [
+                    'product_id' => $this->productA->id,
+                    'quantity' => 6,
+                ],
+                [
+                    'product_id' => $this->productA->id,
+                    'quantity' => 5,
+                ],
+            ],
+        ];
+
+        $this->expectException(ValidationException::class);
+        $this->service->createOutbound($data, $this->user);
+
+        $this->productA->refresh();
+        $this->assertSame(10, $this->productA->current_stock);
+    }
+
+    public function test_concurrency_race_condition_simulation_prevents_negative_stock(): void
+    {
+        // Simulasi 2 proses yang mencoba mengambil barang pada saat yang sama:
+        // Stok awal Product A = 10.
+        // Transaksi 1 meminta 6 unit.
+        // Transaksi 2 meminta 6 unit (Total 12 > 10).
+        $tx1Data = [
+            'party_name' => 'Pemesan 1',
+            'items' => [
+                ['product_id' => $this->productA->id, 'quantity' => 6],
+            ],
+        ];
+
+        $tx2Data = [
+            'party_name' => 'Pemesan 2',
+            'items' => [
+                ['product_id' => $this->productA->id, 'quantity' => 6],
+            ],
+        ];
+
+        $successCount = 0;
+        $failedCount = 0;
+
+        // Eksekusi transaksi 1
+        try {
+            $this->service->createOutbound($tx1Data, $this->user);
+            $successCount++;
+        } catch (ValidationException) {
+            $failedCount++;
+        }
+
+        // Eksekusi transaksi 2 yang berkompetisi
+        try {
+            $this->service->createOutbound($tx2Data, $this->user);
+            $successCount++;
+        } catch (ValidationException) {
+            $failedCount++;
+        }
+
+        $this->assertSame(1, $successCount, 'Hanya 1 transaksi yang boleh berhasil.');
+        $this->assertSame(1, $failedCount, 'Transaksi kedua harus ditolak karena stok tidak mencukupi.');
+
+        $this->productA->refresh();
+        $this->assertSame(4, $this->productA->current_stock, 'Sisa stok harus tepat 4 (10 - 6) dan tidak minus.');
+        $this->assertGreaterThanOrEqual(0, $this->productA->current_stock, 'Stok tidak boleh bernilai negatif.');
+    }
+
+    public function test_simulation_50_concurrent_mutations_prevents_race_condition_and_stock_minus(): void
+    {
+        // Pengujian Concurrency: Simulasi 50 transaksi mutasi simultan pada produk yang sama
+        // Sesuai milestone M3-LC-02 & Section 4.A
+        // Stok awal Product B = 20 unit.
+        // Dijalankan 50 permintaan pengeluaran masing-masing 1 unit secara berurutan / terisolasi lock.
+        $successfulTransactions = 0;
+        $rejectedTransactions = 0;
+
+        for ($i = 1; $i <= 50; $i++) {
+            $data = [
+                'party_name' => "Pemesan Konkuren #{$i}",
+                'notes' => "Stress test race condition mutasi ke-{$i}",
+                'items' => [
+                    [
+                        'product_id' => $this->productB->id,
+                        'quantity' => 1,
+                    ],
+                ],
+            ];
+
+            try {
+                $this->service->createOutbound($data, $this->user);
+                $successfulTransactions++;
+            } catch (ValidationException) {
+                $rejectedTransactions++;
+            }
+        }
+
+        // 20 permintaan pertama harus berhasil mengurangi stok dari 20 ke 0
+        $this->assertSame(20, $successfulTransactions, 'Tepat 20 transaksi yang harus berhasil sesuai ketersediaan stok awal.');
+        // 30 permintaan berikutnya harus ditolak oleh validasi pessimistic lock
+        $this->assertSame(30, $rejectedTransactions, '30 transaksi sisanya harus ditolak untuk mencegah stok minus.');
+
+        $this->productB->refresh();
+        $this->assertSame(0, $this->productB->current_stock, 'Stok akhir harus tepat 0, tidak boleh minus.');
+        $this->assertDatabaseCount('stock_transactions', 20);
+        $this->assertDatabaseCount('stock_transaction_details', 20);
+    }
 }

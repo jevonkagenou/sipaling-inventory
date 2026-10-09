@@ -7,13 +7,13 @@ use App\Models\Product;
 use App\Models\StockTransaction;
 use App\Models\StockTransactionDetail;
 use App\Services\StockTransactionService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class StockTransactionController extends Controller
 {
@@ -170,7 +170,8 @@ class StockTransactionController extends Controller
 
         return redirect()->route('transactions.index')->with('success', 'Transaksi pengeluaran barang berhasil disimpan dan stok telah dikurangi.');
     }
-        /**
+
+    /**
      * Mengunduh bukti transaksi dalam format PDF.
      */
     public function receiptPdf(StockTransaction $transaction)
@@ -180,7 +181,7 @@ class StockTransactionController extends Controller
         $pdf = Pdf::loadView('receipts.transaction', compact('transaction'))
             ->setPaper('a4', 'portrait');
 
-        $filename = 'Bukti-' . $transaction->reference_no . '.pdf';
+        $filename = 'Bukti-'.$transaction->reference_no.'.pdf';
 
         return $pdf->stream($filename);
     }
