@@ -412,6 +412,7 @@ function submit() {
                   <input
                     v-model.number="item.unit_price"
                     type="number"
+                    step="any"
                     min="0"
                     placeholder="Rp"
                     class="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-800 dark:text-white"

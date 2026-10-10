@@ -23,7 +23,7 @@ class ForecastingLog extends Model
     ];
 
     protected $casts = [
-        'period_date' => 'date',
+        'period_date' => 'date:Y-m-d',
         'alpha' => 'float',
         'beta' => 'float',
         'actual_quantity' => 'integer',
@@ -31,6 +31,11 @@ class ForecastingLog extends Model
         'mape' => 'float',
         'rmse' => 'float',
     ];
+
+    public function setPeriodDateAttribute($value): void
+    {
+        $this->attributes['period_date'] = \Carbon\Carbon::parse($value)->format('Y-m-d');
+    }
 
     public function product(): BelongsTo
     {

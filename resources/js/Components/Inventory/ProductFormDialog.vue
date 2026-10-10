@@ -116,14 +116,16 @@ function submit() {
       <form class="space-y-4" @submit.prevent="submit">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="space-y-1.5">
-            <label class="text-xs font-medium text-slate-700 dark:text-slate-300">Kode SKU *</label>
-            <Input v-model="form.sku" placeholder="Contoh: ITM-011" class="text-xs" />
+            <label for="sku" class="text-xs font-medium text-slate-700 dark:text-slate-300">Kode SKU *</label>
+            <Input id="sku" name="sku" v-model="form.sku" placeholder="Contoh: ITM-011" class="text-xs" />
             <p v-if="form.errors.sku" class="text-xs text-red-600 dark:text-red-400">{{ form.errors.sku }}</p>
           </div>
 
           <div class="space-y-1.5">
-            <label class="text-xs font-medium text-slate-700 dark:text-slate-300">Kategori *</label>
+            <label for="category_id" class="text-xs font-medium text-slate-700 dark:text-slate-300">Kategori *</label>
             <select
+              id="category_id"
+              name="category_id"
               v-model="form.category_id"
               class="w-full h-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs px-3 text-slate-900 dark:text-slate-100 shadow-2xs transition-all duration-200 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 cursor-pointer"
             >
@@ -135,42 +137,44 @@ function submit() {
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-xs font-medium text-slate-700 dark:text-slate-300">Nama Barang *</label>
-          <Input v-model="form.name" placeholder="Contoh: Laptop ThinkPad T14" class="text-xs" />
+          <label for="name" class="text-xs font-medium text-slate-700 dark:text-slate-300">Nama Barang *</label>
+          <Input id="name" name="name" v-model="form.name" placeholder="Contoh: Laptop ThinkPad T14" class="text-xs" />
           <p v-if="form.errors.name" class="text-xs text-red-600 dark:text-red-400">{{ form.errors.name }}</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="space-y-1.5">
-            <label class="text-xs font-medium text-slate-700 dark:text-slate-300">Satuan *</label>
-            <Input v-model="form.unit" placeholder="pcs / box / kg" class="text-xs" />
+            <label for="unit" class="text-xs font-medium text-slate-700 dark:text-slate-300">Satuan *</label>
+            <Input id="unit" name="unit" v-model="form.unit" placeholder="pcs / box / kg" class="text-xs" />
             <p v-if="form.errors.unit" class="text-xs text-red-600 dark:text-red-400">{{ form.errors.unit }}</p>
           </div>
 
           <div class="space-y-1.5">
-            <label class="text-xs font-medium text-slate-700 dark:text-slate-300">Harga Satuan *</label>
-            <Input v-model="form.unit_price" type="number" step="0.01" min="0" class="text-xs" />
+            <label for="unit_price" class="text-xs font-medium text-slate-700 dark:text-slate-300">Harga Satuan *</label>
+            <Input id="unit_price" name="unit_price" v-model="form.unit_price" type="number" step="0.01" min="0" class="text-xs" />
             <p v-if="form.errors.unit_price" class="text-xs text-red-600 dark:text-red-400">{{ form.errors.unit_price }}</p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="space-y-1.5">
-            <label class="text-xs font-medium text-slate-700 dark:text-slate-300">Stok Saat Ini *</label>
-            <Input v-model.number="form.current_stock" type="number" min="0" class="text-xs" />
+            <label for="current_stock" class="text-xs font-medium text-slate-700 dark:text-slate-300">Stok Saat Ini *</label>
+            <Input id="current_stock" name="current_stock" v-model.number="form.current_stock" type="number" min="0" class="text-xs" />
             <p v-if="form.errors.current_stock" class="text-xs text-red-600 dark:text-red-400">{{ form.errors.current_stock }}</p>
           </div>
 
           <div class="space-y-1.5">
-            <label class="text-xs font-medium text-slate-700 dark:text-slate-300">Batas Minimum *</label>
-            <Input v-model.number="form.minimum_stock" type="number" min="0" class="text-xs" />
+            <label for="minimum_stock" class="text-xs font-medium text-slate-700 dark:text-slate-300">Batas Minimum *</label>
+            <Input id="minimum_stock" name="minimum_stock" v-model.number="form.minimum_stock" type="number" min="0" class="text-xs" />
             <p v-if="form.errors.minimum_stock" class="text-xs text-red-600 dark:text-red-400">{{ form.errors.minimum_stock }}</p>
           </div>
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-xs font-medium text-slate-700 dark:text-slate-300">Deskripsi</label>
+          <label for="description" class="text-xs font-medium text-slate-700 dark:text-slate-300">Deskripsi</label>
           <textarea
+            id="description"
+            name="description"
             v-model="form.description"
             rows="2"
             class="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs px-3 py-2 text-slate-900 dark:text-slate-100 shadow-2xs transition-all duration-200 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 placeholder:text-slate-400 dark:placeholder:text-slate-500"

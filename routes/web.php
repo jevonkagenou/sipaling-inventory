@@ -116,3 +116,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+if (app()->environment('local')) {
+    Route::get('/pmpl-report', function () {
+        $path = base_path('cypress/reports/laporan_pengujian_pmpl.html');
+        if (file_exists($path)) {
+            return response()->file($path, ['Content-Type' => 'text/html; charset=UTF-8']);
+        }
+        abort(404, 'Laporan PMPL belum digenerate.');
+    })->name('pmpl.report');
+}

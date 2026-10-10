@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import {
   PackagePlus,
@@ -71,6 +71,8 @@ const props = defineProps<{
   }
   can_create?: boolean
 }>()
+
+const page = usePage()
 
 const search = ref(props.filters.search || '')
 const currentType = ref(props.filters.type || '')
@@ -156,6 +158,14 @@ function formatRupiah(val: number | string) {
     </template>
 
     <div class="mx-auto max-w-7xl space-y-6 pb-16">
+      <!-- Flash Alert Banner -->
+      <div v-if="page.props.flash?.success" class="flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-300 shadow-2xs backdrop-blur-md">
+        <div class="flex items-center gap-2.5">
+          <CheckCircle2 class="h-4 w-4 shrink-0 text-emerald-500" />
+          <span>{{ page.props.flash.success }}</span>
+        </div>
+      </div>
+
       <!-- Header Banner & Action Buttons -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>

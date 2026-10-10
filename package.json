@@ -4,7 +4,10 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "cypress:open": "cypress open",
+        "cypress:run": "cypress run --headless",
+        "cypress:report": "powershell -Command Start-Process cypress/reports/laporan_pengujian_pmpl.html"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^2.0.0",
@@ -14,6 +17,7 @@
         "@vitejs/plugin-vue": "^6.0.0",
         "autoprefixer": "^10.4.12",
         "concurrently": "^10.0.3",
+        "cypress": "^16.1.1",
         "laravel-vite-plugin": "^3.1",
         "postcss": "^8.4.31",
         "tailwindcss": "^3.2.1",

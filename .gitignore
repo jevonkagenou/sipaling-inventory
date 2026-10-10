@@ -28,3 +28,9 @@ Thumbs.db
 /test-results
 /.agents
 boost.json
+/cypress/reports/
+/cypress/screenshots/
+/cypress/videos/
+/cypress/support/report-generator.js
+/workflow-cypress-n8n.json
+/public/reports/

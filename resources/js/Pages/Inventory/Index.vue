@@ -213,6 +213,13 @@ const columns = columnHelper.columns([
 
   // 2. Nama Barang (Responsive Truncate with Native Tooltip)
   columnHelper.accessor('name', {
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue) return true
+      const q = String(filterValue).toLowerCase().trim()
+      const name = String(row.original.name || '').toLowerCase()
+      const sku = String(row.original.sku || '').toLowerCase()
+      return name.includes(q) || sku.includes(q)
+    },
     header: ({ column }) =>
       h(
         Button,

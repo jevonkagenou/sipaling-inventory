@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PasswordResetOtp;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -86,36 +87,44 @@ class TwoFactorResetService
      */
     public function verify(User $user, string $inputOtp): bool
     {
-        $this->ensureNotRateLimitedForVerification($user);
+        return DB::transaction(function () use ($user, $inputOtp) {
+            $this->ensureNotRateLimitedForVerification($user);
 
-        $latestOtp = $this->getActiveOtp($user);
+            // Ambil OTP aktif dengan row lock pesimistik (lockForUpdate) untuk mencegah race condition / replay attack
+            $latestOtp = $user->passwordResetOtps()
+                ->where('is_used', false)
+                ->where('expired_at', '>', now())
+                ->latest()
+                ->lockForUpdate()
+                ->first();
 
-        if (! $latestOtp || ! $this->matchesOtp($latestOtp->otp, $inputOtp)) {
-            RateLimiter::hit($this->getVerifyThrottleKey($user), self::VERIFY_LOCKOUT_SECONDS);
-            $remaining = $this->getRemainingVerifyAttempts($user);
+            if (! $latestOtp || ! $this->matchesOtp($latestOtp->otp, $inputOtp)) {
+                RateLimiter::hit($this->getVerifyThrottleKey($user), self::VERIFY_LOCKOUT_SECONDS);
+                $remaining = $this->getRemainingVerifyAttempts($user);
 
-            if ($remaining > 0) {
+                if ($remaining > 0) {
+                    throw ValidationException::withMessages([
+                        'otp' => "Kode OTP salah atau telah kedaluwarsa. Sisa percobaan: {$remaining}.",
+                    ]);
+                }
+
+                $seconds = $this->getVerifyLockoutRemainingSeconds($user);
                 throw ValidationException::withMessages([
-                    'otp' => "Kode OTP salah atau telah kedaluwarsa. Sisa percobaan: {$remaining}.",
+                    'otp' => "Batas percobaan terlampaui. Akses diverifikasi dikunci selama {$seconds} detik demi keamanan (anti-bruteforce).",
                 ]);
             }
 
-            $seconds = $this->getVerifyLockoutRemainingSeconds($user);
-            throw ValidationException::withMessages([
-                'otp' => "Batas percobaan terlampaui. Akses diverifikasi dikunci selama {$seconds} detik demi keamanan (anti-bruteforce).",
+            // Tandai OTP telah digunakan secara atomik
+            $latestOtp->update([
+                'is_used' => true,
+                'used_at' => now(),
             ]);
-        }
 
-        // Tandai OTP telah digunakan
-        $latestOtp->update([
-            'is_used' => true,
-            'used_at' => now(),
-        ]);
+            // Bersihkan batas percobaan verifikasi jika sukses
+            RateLimiter::clear($this->getVerifyThrottleKey($user));
 
-        // Bersihkan batas percobaan verifikasi jika sukses
-        RateLimiter::clear($this->getVerifyThrottleKey($user));
-
-        return true;
+            return true;
+        });
     }
 
     /**
