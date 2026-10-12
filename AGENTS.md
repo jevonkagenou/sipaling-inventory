@@ -12,3 +12,5 @@ Proyek PBL Kelompok 1 - SIB 3C, Jurusan Teknologi Informasi, Politeknik Negeri M
    - Neutral: `#0F172A` (Slate Navy)
 3. **Autentikasi**: Registrasi publik dinonaktifkan (`/register` dialihkan ke `/login`). Login menggunakan gaya ID Card / Namecard.
 4. **Perintah Build**: Gunakan `npm run build` untuk kompilasi frontend.
+5. **Prosedur Pengingat Sesi Baru**: Jika pengguna memulai chat/sesi baru pada hari berikutnya untuk membahas proyek, selalu ingatkan ringkasan status progres terkini, strategi pacing akademik (Minggu 8 / UTS), dan rencana arsitektur Multi-Item Restock.
+6. **Arsitektur Modul 5 (Restock Approval)**: Wajib menggunakan pola Multi-Item / Header-Detail (`restock_requests` dan `restock_request_details`) berelasi UUID v4, selaras dengan pola `stock_transactions`, dengan integrasi auto-generate draf Inbound pasca-persetujuan Komisaris.

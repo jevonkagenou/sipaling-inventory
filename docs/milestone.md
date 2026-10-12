@@ -129,8 +129,8 @@ Target Penyelesaian: Minggu ke-12 s.d. Minggu ke-13
 
 | ID | Lapisan | Rincian Tugas Teknis | Target Output / Deliverable | PIC | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| M5-BE-01 | Backend / Skema | Membuat migrasi restock_requests dengan status enum (pending, approved, rejected) | Skema tabel alur pengajuan `restock_requests` | Sultan | [ ] |
-| M5-BE-02 | Backend / Model | Membuat Model RestockRequest.php dengan relasi requester dan reviewer | Model alur persetujuan dengan relasi pengguna | Sultan | [ ] |
+| M5-BE-01 | Backend / Skema | Membuat migrasi restock_requests (header) & restock_request_details (detail multi-item UUID) | Skema tabel alur pengadaan multi-produk berelasi UUID | Sultan | [ ] |
+| M5-BE-02 | Backend / Model | Membuat Model RestockRequest.php & RestockRequestDetail.php dengan relasi requester, reviewer, & produk | Sepasang Model Eloquent alur persetujuan pengadaan | Sultan | [ ] |
 | M5-LC-01 | Logika / Policy | Membuat RestockRequestPolicy untuk otorisasi hak ajukan (Manajer) dan setujui (Komisaris) | Kebijakan otorisasi alur kerja approval | Sultan | [ ] |
 | M5-LC-02 | Logika / Service | Membangun RestockRequestService untuk mengelola transisi status dokumen pengadaan | Service alur kerja approval anti-bypass | Sultan | [ ] |
 | M5-LC-03 | Logika / Event | Mengaitkan persetujuan dokumen dengan opsi pembuatan draf transaksi Inbound | Integrasi otomatis restock ke transaksi masuk | Sultan | [ ] |
