@@ -125,4 +125,83 @@ describe('Modul 01: Autentikasi, Hak Akses Multi-Peran, & Keamanan Rute', () => 
     // Verifikasi pengguna ter-logout dan kembali ke /login
     cy.url().should('include', '/login');
   });
+
+  /*
+  |--------------------------------------------------------------------------
+  | PENGUJIAN MODUL 1 - ALUR PEMULIHAN KATA SANDI & 2-STEP FA OTP (SULTAN)
+  | SKPL / PMPL: TC_AUT_013 s/d TC_AUT_018
+  | Trello Task: [M1-BE-04], [M1-LC-04], [M1-LC-05]
+  |--------------------------------------------------------------------------
+  */
+
+  it('TC_AUT_013: Alur Pemulihan Sandi: Membuka formulir lupa kata sandi dari tautan login', () => {
+    cy.visit('/login');
+    cy.contains(/lupa kata sandi/i).should('be.visible').click();
+    cy.url().should('include', '/forgot-password');
+    cy.contains(/pemulihan kata sandi/i).should('be.visible');
+    cy.get('input#email').should('be.visible');
+    cy.contains('button', /lanjut ke verifikasi/i).should('be.visible');
+  });
+
+  it('TC_AUT_014: Negative Testing: Validasi form lupa sandi menolak email tidak terdaftar', () => {
+    cy.visit('/forgot-password');
+    cy.get('input#email').clear().type('akun.palsu.tidak.ada@sipaling.com');
+    cy.contains('button', /lanjut ke verifikasi/i).click();
+
+    // Memverifikasi penolakan validasi dari PasswordResetLinkController
+    cy.contains(/tidak terdaftar|not registered/i).should('be.visible');
+    cy.url().should('include', '/forgot-password');
+  });
+
+  it('TC_AUT_015: Proteksi Anti-Spam: Verifikasi cooldown timer tombol kirim ulang OTP 60 detik', () => {
+    // Akses halaman verifikasi OTP dengan parameter email terdaftar
+    cy.visit('/verify-otp?email=manajer@sipaling.com');
+    cy.url().should('include', '/verify-otp');
+    cy.contains(/masukkan kode verifikasi/i).should('be.visible');
+    cy.contains('manajer@sipaling.com').should('be.visible');
+
+    // Verifikasi timer cooldown aktif (00:XX)
+    cy.contains(/kirim ulang kode dalam/i).should('be.visible');
+    cy.contains(/00:\d{2}/).should('be.visible');
+
+    // Tombol kirim ulang harus berstatus disabled selama timer berjalan
+    cy.contains('button', /kirim ulang/i).should('be.disabled');
+  });
+
+  it('TC_AUT_016: Negative Testing 2FA: Verifikasi penolakan sistem saat kode OTP salah dimasukkan', () => {
+    cy.visit('/verify-otp?email=manajer@sipaling.com');
+
+    // Memasukkan kode OTP 6 digit acak yang salah
+    cy.get('input').filter('.text-center, [data-pin-input-input]').each(($el, index) => {
+      cy.wrap($el).clear().type(String(index));
+    });
+
+    // Klik tombol Verifikasi
+    cy.contains('button', /verifikasi/i).click();
+
+    // Memverifikasi penolakan error dari TwoFactorResetService
+    cy.contains(/tidak cocok|tidak valid|salah|kedaluwarsa|invalid/i).should('be.visible');
+  });
+
+  it('TC_AUT_017: Proteksi Brute-Force & Validasi Input OTP: Mencegah submit kode tidak lengkap', () => {
+    cy.visit('/verify-otp?email=manajer@sipaling.com');
+
+    // Coba klik tombol submit tanpa mengisi seluruh 6 digit
+    cy.contains('button', /verifikasi/i).click();
+
+    // Memverifikasi pesan validasi kode keamanan harus lengkap 6 digit
+    cy.contains(/6 digit kode keamanan|lengkap/i).should('be.visible');
+  });
+
+  it('TC_AUT_018: Navigasi Pemulihan: Tautan pengembalian rute ke lupa sandi dan halaman login', () => {
+    cy.visit('/verify-otp?email=manajer@sipaling.com');
+
+    // Menguji tombol Ubah Alamat Email mengembalikan pengguna ke step 1
+    cy.contains(/ubah alamat email/i).should('be.visible').click();
+    cy.url().should('include', '/forgot-password');
+
+    // Menguji tautan Kembali ke Halaman Masuk
+    cy.contains(/kembali ke halaman masuk/i).should('be.visible').click();
+    cy.url().should('include', '/login');
+  });
 });
