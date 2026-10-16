@@ -85,4 +85,50 @@ describe('Modul 04: Transaksi Operasional Gudang (Mutasi Stok Masuk & Keluar)', 
     cy.visit('/transactions/inbound');
     cy.get('button[type="submit"]').should('exist');
   });
+
+  /*
+  |--------------------------------------------------------------------------
+  | PENGUJIAN MODUL 3 - SERVICE MUTASI STOK ATOMIK & NOMOR TRANSAKSI (SULTAN)
+  | SKPL / PMPL: TC_TRX_007 (Outbound Sukses) & TC_TRX_008 (Nomor TRX)
+  | Trello Task: [M3-LC-01], [M3-LC-02], [M3-LC-03]
+  |--------------------------------------------------------------------------
+  */
+
+  it('TC_TRX_007: StockTransactionService: Pencatatan barang keluar (Happy Path Outbound) sukses memotong stok secara atomik', () => {
+    cy.visit('/transactions/outbound');
+    cy.url().should('include', '/transactions/outbound');
+
+    // Isi nama penerima barang keluar
+    cy.get('input[placeholder*="Toko"], input[placeholder*="Penerima"], input[placeholder*="PT"]').first().clear().type('Toko Mitra Utama Distribusi');
+
+    // Buka dropdown pemilihan produk dan pilih produk pertama yang punya stok
+    cy.get('input[placeholder*="Cari SKU"]').first().click();
+    cy.get('button').filter(':contains("SKU:"), :contains("Stok:")').first().click();
+
+    // Masukkan kuantitas keluar yang valid (1 unit)
+    cy.get('input[type="number"]').first().clear().type('1');
+
+    // Simpan transaksi barang keluar
+    cy.contains('button', /simpan barang keluar/i).should('not.be.disabled').click();
+
+    // Verifikasi kembali ke halaman riwayat transaksi dan muncul pesan sukses
+    cy.url().should('include', '/transactions');
+    cy.contains(/berhasil|sukses|stok telah diperbarui/i).should('be.visible');
+  });
+
+  it('TC_TRX_008: StockTransactionService: Nomor referensi dokumen mutasi ter-generate otomatis berformat unik standar', () => {
+    cy.visit('/transactions');
+    cy.get('body').should('be.visible');
+
+    // Memverifikasi adanya nomor referensi mutasi di tabel dengan format standar TRX-IN atau TRX-OUT
+    cy.get('table tbody').contains(/TRX-(IN|OUT)-\d{8}-\d{4}/).should('exist');
+  });
+
+  it('TC_TRX_009: Integritas Transaksi Mutasi: Validasi pencarian riwayat mutasi berdasarkan nomor referensi', () => {
+    cy.visit('/transactions');
+
+    // Cari riwayat berdasarkan prefix TRX
+    cy.get('input[placeholder*="Cari"], input[type="search"]').first().clear().type('TRX');
+    cy.get('table tbody tr').should('have.length.at.least', 1);
+  });
 });

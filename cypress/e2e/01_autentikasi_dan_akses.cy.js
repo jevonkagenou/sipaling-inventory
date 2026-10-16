@@ -86,7 +86,7 @@ describe('Modul 01: Autentikasi, Hak Akses Multi-Peran, & Keamanan Rute', () => 
 
   it('Autentikasi Multi-Peran: Masuk sebagai Auditor Internal & Navigasi Fisik Sidebar (Audit Forensik)', () => {
     cy.visit('/login');
-    cy.get('input#email').clear().type('luxoqwasery@gmail.com');
+    cy.get('input#email').clear().type('sultansyarif630@gmail.com');
     cy.get('input#password').clear().type('password');
     cy.get('button[type="submit"]').click();
 

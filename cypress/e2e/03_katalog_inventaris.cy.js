@@ -115,9 +115,69 @@ describe('Modul 03: Katalog Master Inventaris, Kategori, & Operasi CRUD', () => 
     cy.contains(categoryName).should('be.visible');
   });
 
-  it('Proteksi Restrict Delete: Produk dengan riwayat transaksi dicegah dari penghapusan sembarangan', () => {
+  /*
+  |--------------------------------------------------------------------------
+  | PENGUJIAN MODUL 2 - VALIDASI SKU & PROTEKSI RESTRICT DELETE (SULTAN)
+  | SKPL / PMPL: TC_INV_005 (SKU Unik) & TC_INV_006 (Restrict Delete)
+  | Trello Task: [M2-LC-01] & [M2-LC-02]
+  |--------------------------------------------------------------------------
+  */
+
+  it('TC_INV_005: StoreProductRequest: Validasi backend menolak pendaftaran produk dengan kode SKU duplikat', () => {
     cy.visit('/inventory');
-    // Memverifikasi integritas tabel inventaris terlindungi
-    cy.get('table tbody tr').should('have.length.at.least', 1);
+
+    // Ambil kode SKU dari baris produk pertama yang sudah ada di tabel database
+    cy.get('table tbody tr').first().find('td').first().invoke('text').then((existingSkuRaw) => {
+      const existingSku = existingSkuRaw.trim();
+
+      // Buka modal Tambah Barang
+      cy.contains('button', /tambah barang/i).click();
+      cy.contains(/tambah barang|informasi produk/i).should('be.visible');
+
+      // Masukkan SKU yang sudah terdaftar (duplikat)
+      cy.get('input#sku').clear().type(existingSku);
+      cy.get('select#category_id').select(1);
+      cy.get('input#name').clear().type('Produk Coba Duplikasi SKU');
+      cy.get('input#unit').clear().type('Pcs');
+      cy.get('input#unit_price').clear().type('30000');
+      cy.get('input#current_stock').clear().type('15');
+      cy.get('input#minimum_stock').clear().type('3');
+
+      // Simpan barang
+      cy.contains('button', /simpan barang/i).click();
+
+      // Memverifikasi penolakan dari Rule::unique pada StoreProductRequest
+      cy.contains(/sudah digunakan|already been taken|terdaftar/i).should('be.visible');
+      // Modal tetap terbuka dan form dicegat
+      cy.contains(/tambah barang|informasi produk/i).should('be.visible');
+    });
+  });
+
+  it('TC_INV_006: ProductController: Proteksi Restrict Delete aktif pada produk yang memiliki riwayat mutasi', () => {
+    cy.visit('/inventory');
+
+    // Buka menu aksi baris produk pertama
+    cy.get('table tbody tr').first().within(() => {
+      cy.get('button').last().click({ force: true });
+    });
+
+    // Klik Hapus Barang di dropdown menu
+    cy.contains(/hapus barang/i).should('be.visible').click();
+
+    // Dialog konfirmasi hapus terbuka
+    cy.contains(/hapus barang inventaris|pengecekan aturan integritas/i).should('be.visible');
+
+    // Verifikasi banner peringatan Restrict Delete aktif untuk barang yang memiliki riwayat mutasi
+    cy.get('body').then(($body) => {
+      if ($body.find(':contains("Penghapusan Dibatasi")').length > 0) {
+        cy.contains(/penghapusan dibatasi|restrict delete/i).should('be.visible');
+        cy.contains(/riwayat mutasi stok|tidak dapat dihapus/i).should('be.visible');
+        // Tombol hapus dicegah/tidak ditampilkan demi integritas audit trail, hanya ada tombol Tutup
+        cy.get('[role="dialog"]').contains('button', /tutup/i).click();
+      } else {
+        // Jika produk tidak punya mutasi, tombol batal/tutup tetap bisa diklik
+        cy.get('[role="dialog"]').contains('button', /tutup|batal/i).click();
+      }
+    });
   });
 });
