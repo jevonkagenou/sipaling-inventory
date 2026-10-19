@@ -98,10 +98,40 @@ function setTypeFilter(type: string) {
   applyFilter()
 }
 
+const startDateInput = ref<HTMLInputElement | null>(null)
+const endDateInput = ref<HTMLInputElement | null>(null)
+
+function formatDisplayDate(val: string): string {
+  if (!val) return ''
+  const [y, m, d] = val.split('-')
+  return (y && m && d) ? `${d}/${m}/${y}` : val
+}
+
+function openStartDatePicker() {
+  if (startDateInput.value) {
+    if (typeof startDateInput.value.showPicker === 'function') {
+      startDateInput.value.showPicker()
+    } else {
+      startDateInput.value.focus()
+    }
+  }
+}
+
+function openEndDatePicker() {
+  if (endDateInput.value) {
+    if (typeof endDateInput.value.showPicker === 'function') {
+      endDateInput.value.showPicker()
+    } else {
+      endDateInput.value.focus()
+    }
+  }
+}
+
 function clearDateFilter() {
   startDate.value = ''
   endDate.value = ''
 }
+
 
 function resetAllFilters() {
   search.value = ''
@@ -352,32 +382,62 @@ function formatRupiah(val: number | string) {
           <!-- Filters: Date Range & Search Input -->
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap xl:flex-nowrap">
             <!-- Date Range Filter -->
-            <div class="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-              <Calendar class="h-3.5 w-3.5 text-slate-400 shrink-0" />
-              <div class="flex items-center gap-1.5">
+            <div class="h-9 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/15 select-none">
+              <!-- Tanggal Mulai -->
+              <div
+                class="relative flex items-center gap-1.5 cursor-pointer group py-1"
+                @click="openStartDatePicker"
+                title="Dari Tanggal (Klik untuk memilih kalender)"
+              >
+                <Calendar class="h-3.5 w-3.5 text-slate-400 group-hover:text-[#2563EB] dark:group-hover:text-blue-400 transition-colors shrink-0" />
+                <span
+                  class="text-[11px] sm:text-xs font-medium tabular-nums transition-colors"
+                  :class="startDate ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-400 dark:text-slate-500'"
+                >
+                  {{ startDate ? formatDisplayDate(startDate) : 'dd/mm/yyyy' }}
+                </span>
                 <input
+                  ref="startDateInput"
                   v-model="startDate"
                   type="date"
                   :max="endDate || undefined"
                   aria-label="Filter Tanggal Mulai"
-                  class="h-7 w-28 sm:w-32 bg-transparent text-[11px] sm:text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
-                  title="Dari Tanggal"
+                  class="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
+                  tabindex="-1"
                 />
-                <span class="text-[11px] text-slate-400 font-medium select-none">s.d.</span>
+              </div>
+
+              <span class="text-[11px] text-slate-400 font-semibold select-none px-0.5">s.d.</span>
+
+              <!-- Tanggal Akhir -->
+              <div
+                class="relative flex items-center gap-1.5 cursor-pointer group py-1"
+                @click="openEndDatePicker"
+                title="Sampai Tanggal (Klik untuk memilih kalender)"
+              >
+                <Calendar class="h-3.5 w-3.5 text-slate-400 group-hover:text-[#2563EB] dark:group-hover:text-blue-400 transition-colors shrink-0" />
+                <span
+                  class="text-[11px] sm:text-xs font-medium tabular-nums transition-colors"
+                  :class="endDate ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-400 dark:text-slate-500'"
+                >
+                  {{ endDate ? formatDisplayDate(endDate) : 'dd/mm/yyyy' }}
+                </span>
                 <input
+                  ref="endDateInput"
                   v-model="endDate"
                   type="date"
                   :min="startDate || undefined"
                   aria-label="Filter Tanggal Akhir"
-                  class="h-7 w-28 sm:w-32 bg-transparent text-[11px] sm:text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
-                  title="Sampai Tanggal"
+                  class="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
+                  tabindex="-1"
                 />
               </div>
+
               <button
                 v-if="startDate || endDate"
                 type="button"
-                @click="clearDateFilter"
-                class="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                @click.stop="clearDateFilter"
+                class="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer ml-0.5"
                 title="Hapus filter tanggal"
               >
                 <X class="h-3.5 w-3.5" />
