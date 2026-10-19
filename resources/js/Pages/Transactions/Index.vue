@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import {
@@ -62,6 +62,8 @@ const props = defineProps<{
   filters: {
     type?: string
     search?: string
+    start_date?: string
+    end_date?: string
   }
   stats: {
     total_inbound: number
@@ -76,13 +78,19 @@ const page = usePage()
 
 const search = ref(props.filters.search || '')
 const currentType = ref(props.filters.type || '')
+const startDate = ref(props.filters.start_date || '')
+const endDate = ref(props.filters.end_date || '')
 
 let searchTimeout: any = null
-watch(search, (val) => {
+watch(search, () => {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {
     applyFilter()
   }, 350)
+})
+
+watch([startDate, endDate], () => {
+  applyFilter()
 })
 
 function setTypeFilter(type: string) {
@@ -90,12 +98,31 @@ function setTypeFilter(type: string) {
   applyFilter()
 }
 
+function clearDateFilter() {
+  startDate.value = ''
+  endDate.value = ''
+}
+
+function resetAllFilters() {
+  search.value = ''
+  currentType.value = ''
+  startDate.value = ''
+  endDate.value = ''
+  applyFilter()
+}
+
+const hasActiveFilters = computed(() => {
+  return Boolean(search.value || currentType.value || startDate.value || endDate.value)
+})
+
 function applyFilter() {
   router.get(
     route('transactions.index'),
     {
       search: search.value || undefined,
       type: currentType.value || undefined,
+      start_date: startDate.value || undefined,
+      end_date: endDate.value || undefined,
     },
     {
       preserveState: true,
@@ -279,14 +306,14 @@ function formatRupiah(val: number | string) {
       <!-- Main Data Table Card -->
       <div class="rounded-2xl border border-slate-200/80 bg-white shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md overflow-hidden">
         <!-- Toolbar & Filter Tabs -->
-        <div class="p-4 sm:p-5 border-b border-slate-200/80 dark:border-slate-800/80 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="p-4 sm:p-5 border-b border-slate-200/80 dark:border-slate-800/80 flex flex-col gap-3.5 xl:flex-row xl:items-center xl:justify-between">
           <!-- Type Filter Tabs -->
-          <div class="flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800 w-fit">
+          <div class="flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800 w-full sm:w-fit overflow-x-auto">
             <button
               type="button"
               @click="setTypeFilter('')"
               :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0',
                 !currentType
                   ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-900 dark:text-white'
                   : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
@@ -298,7 +325,7 @@ function formatRupiah(val: number | string) {
               type="button"
               @click="setTypeFilter('inbound')"
               :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
+                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0',
                 currentType === 'inbound'
                   ? 'bg-[#10B981] text-white shadow-2xs'
                   : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
@@ -311,7 +338,7 @@ function formatRupiah(val: number | string) {
               type="button"
               @click="setTypeFilter('outbound')"
               :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
+                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0',
                 currentType === 'outbound'
                   ? 'bg-amber-600 text-white shadow-2xs'
                   : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
@@ -322,15 +349,72 @@ function formatRupiah(val: number | string) {
             </button>
           </div>
 
-          <!-- Search Input -->
-          <div class="relative w-full sm:w-72">
-            <input
-              v-model="search"
-              type="text"
-              placeholder="Cari No Ref, Pihak, SKU..."
-              class="h-9 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
-            />
-            <Search class="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+          <!-- Filters: Date Range & Search Input -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap xl:flex-nowrap">
+            <!-- Date Range Filter -->
+            <div class="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+              <Calendar class="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <div class="flex items-center gap-1.5">
+                <input
+                  v-model="startDate"
+                  type="date"
+                  :max="endDate || undefined"
+                  aria-label="Filter Tanggal Mulai"
+                  class="h-7 w-28 sm:w-32 bg-transparent text-[11px] sm:text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+                  title="Dari Tanggal"
+                />
+                <span class="text-[11px] text-slate-400 font-medium select-none">s.d.</span>
+                <input
+                  v-model="endDate"
+                  type="date"
+                  :min="startDate || undefined"
+                  aria-label="Filter Tanggal Akhir"
+                  class="h-7 w-28 sm:w-32 bg-transparent text-[11px] sm:text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+                  title="Sampai Tanggal"
+                />
+              </div>
+              <button
+                v-if="startDate || endDate"
+                type="button"
+                @click="clearDateFilter"
+                class="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                title="Hapus filter tanggal"
+              >
+                <X class="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            <!-- Search Input -->
+            <div class="relative w-full sm:w-60 xl:w-64">
+              <input
+                v-model="search"
+                type="text"
+                placeholder="Cari No Ref, Pihak, SKU..."
+                class="h-9 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-8 py-1.5 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-900 dark:text-white shadow-2xs"
+              />
+              <Search class="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+              <button
+                v-if="search"
+                type="button"
+                @click="search = ''; applyFilter()"
+                class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                title="Hapus pencarian"
+              >
+                <X class="h-4 w-4" />
+              </button>
+            </div>
+
+            <!-- Reset All Filters Button -->
+            <button
+              v-if="hasActiveFilters"
+              type="button"
+              @click="resetAllFilters"
+              class="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-900/50 text-xs font-semibold shadow-2xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              title="Reset seluruh filter"
+            >
+              <X class="h-3.5 w-3.5" />
+              <span>Reset Filter</span>
+            </button>
           </div>
         </div>
 
@@ -352,7 +436,16 @@ function formatRupiah(val: number | string) {
               <tr v-if="transactions.data.length === 0">
                 <td colspan="7" class="px-3 py-12 text-center text-xs text-slate-400">
                   <Boxes class="h-8 w-8 mx-auto text-slate-300 dark:text-slate-600 mb-2 stroke-[1.5]" />
-                  Belum ada rekaman transaksi mutasi stok.
+                  <p v-if="hasActiveFilters">Tidak ada transaksi yang cocok dengan filter yang dipilih.</p>
+                  <p v-else>Belum ada rekaman transaksi mutasi stok.</p>
+                  <button
+                    v-if="hasActiveFilters"
+                    type="button"
+                    @click="resetAllFilters"
+                    class="mt-2 text-xs font-semibold text-[#2563EB] hover:underline cursor-pointer inline-flex items-center gap-1"
+                  >
+                    <span>Reset Filter</span>
+                  </button>
                 </td>
               </tr>
               <tr
