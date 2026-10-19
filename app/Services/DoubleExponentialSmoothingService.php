@@ -280,10 +280,15 @@ class DoubleExponentialSmoothingService
      */
     public function getClosedMonthlyPeriods(): array
     {
+        $driver = DB::connection()->getDriverName();
+        $dateExpr = $driver === 'sqlite'
+            ? "strftime('%Y-%m', transaction_date)"
+            : "DATE_FORMAT(transaction_date, '%Y-%m')";
+
         $systemMonthly = DB::table('stock_transactions')
             ->where('type', 'outbound')
             ->select(
-                DB::raw("DATE_FORMAT(transaction_date, '%Y-%m') as period"),
+                DB::raw("{$dateExpr} as period"),
                 DB::raw('COUNT(*) as tx_count'),
                 DB::raw('MAX(transaction_date) as max_date')
             )
@@ -329,12 +334,17 @@ class DoubleExponentialSmoothingService
      */
     public function getMonthlyOutboundSeries(string $productId, bool $onlyClosedPeriods = true): Collection
     {
+        $driver = DB::connection()->getDriverName();
+        $dateExpr = $driver === 'sqlite'
+            ? "strftime('%Y-%m', stock_transactions.transaction_date)"
+            : "DATE_FORMAT(stock_transactions.transaction_date, '%Y-%m')";
+
         $query = DB::table('stock_transaction_details')
             ->join('stock_transactions', 'stock_transaction_details.stock_transaction_id', '=', 'stock_transactions.id')
             ->where('stock_transaction_details.product_id', $productId)
             ->where('stock_transactions.type', 'outbound')
             ->select(
-                DB::raw("DATE_FORMAT(stock_transactions.transaction_date, '%Y-%m') as period"),
+                DB::raw("{$dateExpr} as period"),
                 DB::raw('SUM(stock_transaction_details.quantity) as total_quantity')
             )
             ->groupBy('period')
@@ -343,7 +353,7 @@ class DoubleExponentialSmoothingService
         if ($onlyClosedPeriods) {
             $closed = $this->getClosedMonthlyPeriods();
             if (! empty($closed)) {
-                $query->whereIn(DB::raw("DATE_FORMAT(stock_transactions.transaction_date, '%Y-%m')"), $closed);
+                $query->whereIn(DB::raw($dateExpr), $closed);
             }
         }
 

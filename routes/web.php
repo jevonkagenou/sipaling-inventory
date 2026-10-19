@@ -69,6 +69,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 2. Modul Analitik & Mesin Peramalan DES (Mode Referensi & Pengujian Terbuka untuk Seluruh Tim)
     Route::middleware(['role:manajer-operasional|komisaris|staf-gudang|auditor-internal'])->prefix('analytics')->name('analytics.')->group(function () {
         Route::get('/', [AnalyticsController::class, 'index'])->name('index');
+        Route::get('/export-restock', [AnalyticsController::class, 'exportRestock'])->name('export-restock');
     });
 
     // 3. Modul Alur Persetujuan Pengadaan (Restock Approval Workflow)
