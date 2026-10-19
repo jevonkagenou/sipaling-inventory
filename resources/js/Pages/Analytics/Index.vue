@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { Head, router } from '@inertiajs/vue3'
+import { Head, router, usePage } from '@inertiajs/vue3'
+import RestockRequestDialog from '@/Components/Restock/RestockRequestDialog.vue'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import {
   TrendingUp,
@@ -16,6 +17,7 @@ import {
   Boxes,
   Sliders,
   ShieldCheck,
+  Send,
 } from 'lucide-vue-next'
 import DemandForecastChart from '@/Components/Inventory/DemandForecastChart.vue'
 
@@ -227,6 +229,30 @@ const chartData = computed(() => {
 })
 
 const hoveredPoint = ref(null)
+// Multi-restock: pilihan produk dan modal pengajuan
+const page = usePage()
+const roles = computed(() => {
+  const auth = page.props.auth || {}
+  const raw = auth.roles ?? auth.user?.roles ?? []
+  return raw.map((r) => (typeof r === 'string' ? r : r?.name))
+})
+const canRequestRestock = computed(() => roles.value.includes('manajer-operasional'))
+
+const selectedIds = ref([])
+const isRestockDialogOpen = ref(false)
+
+const allSelected = computed(
+  () => props.restockAlerts.length > 0 && selectedIds.value.length === props.restockAlerts.length,
+)
+const someSelected = computed(() => selectedIds.value.length > 0 && !allSelected.value)
+const selectedItems = computed(() => props.restockAlerts.filter((i) => selectedIds.value.includes(i.id)))
+
+function toggleAll() {
+  selectedIds.value = allSelected.value ? [] : props.restockAlerts.map((i) => i.id)
+}
+function onRestockSubmitted() {
+  selectedIds.value = []
+}
 </script>
 
 <template>
@@ -508,15 +534,36 @@ const hoveredPoint = ref(null)
               Diurutkan berdasarkan prioritas urgensi pengadaan (safety stock deficit).
             </p>
           </div>
-          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-            {{ restockAlerts.length }} Produk
-          </span>
+                   <div class="flex items-center gap-2">
+            <button
+              v-if="canRequestRestock && selectedIds.length > 0"
+              type="button"
+              @click="isRestockDialogOpen = true"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            >
+              <Send class="w-3.5 h-3.5" />
+              Ajukan Restock ({{ selectedIds.length }})
+            </button>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+              {{ restockAlerts.length }} Produk
+            </span>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full text-xs">
             <thead class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
               <tr class="h-10">
+                              <th v-if="canRequestRestock" class="px-3 py-2.5 w-10">
+                  <input
+                    type="checkbox"
+                    :checked="allSelected"
+                    :indeterminate="someSelected"
+                    @change="toggleAll"
+                    class="h-3.5 w-3.5 rounded border-slate-300 text-[#2563EB] cursor-pointer"
+                    title="Pilih semua"
+                  />
+                </th>
                 <th class="px-3 py-2.5 text-left whitespace-nowrap">SKU</th>
                 <th class="px-3 py-2.5 text-left whitespace-nowrap">Nama Barang</th>
                 <th class="px-3 py-2.5 text-right whitespace-nowrap">Stok Aktual</th>
@@ -534,6 +581,14 @@ const hoveredPoint = ref(null)
                 class="group hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
                 :class="item.id === selectedProductId ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''"
               >
+                  <td v-if="canRequestRestock" class="px-3 py-2.5">
+                  <input
+                    v-model="selectedIds"
+                    :value="item.id"
+                    type="checkbox"
+                    class="h-3.5 w-3.5 rounded border-slate-300 text-[#2563EB] cursor-pointer"
+                  />
+                </td>
                 <td class="px-3 py-2.5 whitespace-nowrap">
                   <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono tracking-wider text-[11px] font-semibold">
                     {{ item.sku }}
@@ -583,5 +638,11 @@ const hoveredPoint = ref(null)
         </div>
       </div>
     </div>
+
+    <RestockRequestDialog
+      v-model:open="isRestockDialogOpen"
+      :items="selectedItems"
+      @submitted="onRestockSubmitted"
+    />
   </AuthenticatedLayout>
 </template>
