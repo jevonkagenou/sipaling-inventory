@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StockTransaction;
+use App\Models\StockTransactionDetail;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -151,21 +153,21 @@ class StockTransactionControllerTest extends TestCase
 
     public function test_staff_can_filter_transactions_by_type_and_date_range(): void
     {
-        $tx1 = \App\Models\StockTransaction::create([
+        $tx1 = StockTransaction::create([
             'reference_no' => 'TRX-FILTER-001',
             'type' => 'inbound',
             'transaction_date' => '2026-10-01 10:00:00',
             'created_by' => $this->staff->id,
         ]);
 
-        $tx2 = \App\Models\StockTransaction::create([
+        $tx2 = StockTransaction::create([
             'reference_no' => 'TRX-FILTER-002',
             'type' => 'outbound',
             'transaction_date' => '2026-10-15 14:00:00',
             'created_by' => $this->staff->id,
         ]);
 
-        $tx3 = \App\Models\StockTransaction::create([
+        $tx3 = StockTransaction::create([
             'reference_no' => 'TRX-FILTER-003',
             'type' => 'inbound',
             'transaction_date' => '2026-10-25 09:00:00',
@@ -189,5 +191,72 @@ class StockTransactionControllerTest extends TestCase
         $response2->assertInertia(fn ($page) => $page
             ->has('transactions.data', 2)
         );
+    }
+
+    public function test_authorized_user_can_download_receipt_pdf(): void
+    {
+        $transaction = StockTransaction::create([
+            'reference_no' => 'TRX-IN-PDF-001',
+            'type' => 'inbound',
+            'transaction_date' => now(),
+            'party_name' => 'PT Distributor Utama',
+            'notes' => 'Catatan pengujian PDF',
+            'created_by' => $this->staff->id,
+        ]);
+
+        StockTransactionDetail::create([
+            'stock_transaction_id' => $transaction->id,
+            'product_id' => $this->product->id,
+            'quantity' => 10,
+            'unit_price' => 3200000,
+            'notes' => 'Kondisi barang baik',
+        ]);
+
+        $response = $this->actingAs($this->staff)->get("/transactions/{$transaction->id}/receipt");
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_authorized_user_can_batch_download_receipt_pdf(): void
+    {
+        $tx1 = StockTransaction::create([
+            'reference_no' => 'TRX-IN-BATCH-001',
+            'type' => 'inbound',
+            'transaction_date' => now(),
+            'party_name' => 'Supplier A',
+            'created_by' => $this->staff->id,
+        ]);
+        StockTransactionDetail::create([
+            'stock_transaction_id' => $tx1->id,
+            'product_id' => $this->product->id,
+            'quantity' => 5,
+            'unit_price' => 100000,
+        ]);
+
+        $tx2 = StockTransaction::create([
+            'reference_no' => 'TRX-OUT-BATCH-002',
+            'type' => 'outbound',
+            'transaction_date' => now(),
+            'party_name' => 'Toko B',
+            'created_by' => $this->staff->id,
+        ]);
+        StockTransactionDetail::create([
+            'stock_transaction_id' => $tx2->id,
+            'product_id' => $this->product->id,
+            'quantity' => 2,
+            'unit_price' => 100000,
+        ]);
+
+        $response = $this->actingAs($this->staff)->get("/transactions/batch-receipt?ids[]={$tx1->id}&ids[]={$tx2->id}");
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_batch_receipt_pdf_requires_valid_ids(): void
+    {
+        $response = $this->actingAs($this->staff)->get('/transactions/batch-receipt');
+        $response->assertSessionHasErrors('ids');
     }
 }

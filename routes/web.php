@@ -54,6 +54,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('transactions')->name('transactions.')->group(function () {
         Route::middleware(['role_or_permission:staf-gudang|manajer-operasional|komisaris|auditor-internal|transactions.view'])->group(function () {
             Route::get('/', [StockTransactionController::class, 'index'])->name('index');
+            Route::get('/batch-receipt', [StockTransactionController::class, 'batchReceiptPdf'])->name('batch-receipt');
             Route::get('/{transaction}/receipt', [StockTransactionController::class, 'receiptPdf'])->name('receipt');
         });
 

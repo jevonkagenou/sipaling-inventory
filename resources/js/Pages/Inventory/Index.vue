@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, ref, computed } from 'vue'
-import { Head, router } from '@inertiajs/vue3'
+import { Head, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import {
   columnFilteringFeature,
@@ -101,6 +101,17 @@ const props = defineProps<{
     aman_count: number
   }
 }>()
+
+const page = usePage()
+const canManage = computed(() => {
+  const roles: string[] = (page.props.auth as any)?.roles || []
+  const permissions: string[] = (page.props.auth as any)?.permissions || []
+  return (
+    roles.includes('manajer-operasional') ||
+    roles.includes('komisaris') ||
+    permissions.includes('inventory.manage')
+  )
+})
 
 // Currency Formatter
 const formatCurrency = (val: number | string) => {
@@ -585,16 +596,18 @@ function onDeleteError(message: string) {
             <Copy v-else class="mr-2 h-3.5 w-3.5 text-slate-400" />
             <span>{{ copiedId === product.id ? 'Tersalin' : 'Salin Kode UUID' }}</span>
           </DropdownMenuItem>
-          <DropdownMenuItem @click="openEditDialog(product)" class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs">
-            <Pencil class="mr-2 h-3.5 w-3.5 text-slate-400" /> Edit Barang
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            @click="confirmDelete(product)"
-            class="cursor-pointer text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs focus:text-rose-600 focus:bg-rose-50"
-          >
-            <Trash2 class="mr-2 h-3.5 w-3.5 text-rose-500" /> Hapus Barang
-          </DropdownMenuItem>
+          <template v-if="canManage">
+            <DropdownMenuItem @click="openEditDialog(product)" class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs">
+              <Pencil class="mr-2 h-3.5 w-3.5 text-slate-400" /> Edit Barang
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              @click="confirmDelete(product)"
+              class="cursor-pointer text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs focus:text-rose-600 focus:bg-rose-50"
+            >
+              <Trash2 class="mr-2 h-3.5 w-3.5 text-rose-500" /> Hapus Barang
+            </DropdownMenuItem>
+          </template>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -643,6 +656,7 @@ function onDeleteError(message: string) {
           :column-names="columnNames"
           :categories="categories"
           :selected-category-id="selectedCategoryId"
+          :can-manage="canManage"
           @update:search-query="table.getColumn('name')?.setFilterValue($event)"
           @update:status-filter="setStatusFilter"
           @update:selected-category-id="onCategoryFilterChange"
@@ -731,7 +745,7 @@ function onDeleteError(message: string) {
                 size="sm"
                 :disabled="!table.getCanPreviousPage()"
                 @click="table.previousPage()"
-                class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-40 h-8 px-3"
+                class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-40 h-8 px-3 shadow-2xs"
               >
                 Sebelumnya
               </Button>
@@ -740,7 +754,7 @@ function onDeleteError(message: string) {
                 size="sm"
                 :disabled="!table.getCanNextPage()"
                 @click="table.nextPage()"
-                class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-40 h-8 px-3"
+                class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-40 h-8 px-3 shadow-2xs"
               >
                 Berikutnya
               </Button>

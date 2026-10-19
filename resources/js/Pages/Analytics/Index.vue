@@ -581,6 +581,16 @@ const hoveredPoint = ref(null)
             </tbody>
           </table>
         </div>
+
+        <!-- Table Total Counter (Konsisten Standar SIPALING) -->
+        <div class="flex items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 text-xs">
+          <div class="text-xs text-slate-500 dark:text-slate-400">
+            Menampilkan <span class="font-semibold text-slate-700 dark:text-slate-300">{{ restockAlerts.length }}</span> produk yang memerlukan perhatian stok
+          </div>
+          <div class="text-[11px] text-slate-400">
+            Algoritma: Double Exponential Smoothing (DES)
+          </div>
+        </div>
       </div>
     </div>
   </AuthenticatedLayout>

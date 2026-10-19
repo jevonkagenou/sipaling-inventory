@@ -146,6 +146,7 @@ const hasActiveFilters = computed(() => {
 })
 
 function applyFilter() {
+  selectedIds.value = []
   router.get(
     route('transactions.index'),
     {
@@ -160,6 +161,40 @@ function applyFilter() {
       replace: true,
     }
   )
+}
+
+// Fitur Cetak Masal / Batch Print PDF
+const selectedIds = ref<string[]>([])
+
+const isAllSelected = computed(() => {
+  if (!props.transactions.data || props.transactions.data.length === 0) return false
+  return props.transactions.data.every((tx) => selectedIds.value.includes(tx.id))
+})
+
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    const currentIds = props.transactions.data.map((tx) => tx.id)
+    selectedIds.value = selectedIds.value.filter((id) => !currentIds.includes(id))
+  } else {
+    const currentIds = props.transactions.data.map((tx) => tx.id)
+    const set = new Set([...selectedIds.value, ...currentIds])
+    selectedIds.value = Array.from(set)
+  }
+}
+
+function toggleSelectOne(id: string) {
+  if (selectedIds.value.includes(id)) {
+    selectedIds.value = selectedIds.value.filter((item) => item !== id)
+  } else {
+    selectedIds.value.push(id)
+  }
+}
+
+function printBatchReceipts() {
+  if (selectedIds.value.length === 0) return
+  const params = new URLSearchParams()
+  selectedIds.value.forEach((id) => params.append('ids[]', id))
+  window.open(`${route('transactions.batch-receipt')}?${params.toString()}`, '_blank')
 }
 
 // Modal Detail View
@@ -197,6 +232,58 @@ function formatRupiah(val: number | string) {
     maximumFractionDigits: 0,
   }).format(num || 0)
 }
+
+const prevPageUrl = computed(() => {
+  if (!props.transactions.links || props.transactions.links.length === 0) return null
+  const first = props.transactions.links[0]
+  return first?.url || null
+})
+
+const nextPageUrl = computed(() => {
+  if (!props.transactions.links || props.transactions.links.length === 0) return null
+  const last = props.transactions.links[props.transactions.links.length - 1]
+  return last?.url || null
+})
+
+const visiblePages = computed(() => {
+  const current = props.transactions.current_page
+  const last = props.transactions.last_page
+  if (last <= 1) return []
+
+  const pages: Array<{ page: number; url: string; active: boolean } | '...'> = []
+  const getUrl = (p: number) => {
+    const match = props.transactions.links.find((l) => l.label == String(p))
+    return match?.url || `?page=${p}`
+  }
+
+  if (last <= 7) {
+    for (let i = 1; i <= last; i++) {
+      pages.push({ page: i, url: getUrl(i), active: i === current })
+    }
+    return pages
+  }
+
+  pages.push({ page: 1, url: getUrl(1), active: current === 1 })
+
+  if (current > 3) {
+    pages.push('...')
+  }
+
+  const start = Math.max(2, current - 1)
+  const end = Math.min(last - 1, current + 1)
+
+  for (let i = start; i <= end; i++) {
+    pages.push({ page: i, url: getUrl(i), active: i === current })
+  }
+
+  if (current < last - 2) {
+    pages.push('...')
+  }
+
+  pages.push({ page: last, url: getUrl(last), active: current === last })
+
+  return pages
+})
 </script>
 
 <template>
@@ -475,6 +562,18 @@ function formatRupiah(val: number | string) {
               <X class="h-3.5 w-3.5" />
               <span>Reset Filter</span>
             </button>
+
+            <!-- Tombol Cetak PDF Terpilih -->
+            <button
+              v-if="selectedIds.length > 0"
+              type="button"
+              @click="printBatchReceipts"
+              class="h-9 px-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              title="Cetak bukti transaksi terpilih dalam 1 berkas PDF"
+            >
+              <Printer class="h-3.5 w-3.5" />
+              <span>Cetak Terpilih ({{ selectedIds.length }})</span>
+            </button>
           </div>
         </div>
 
@@ -483,6 +582,15 @@ function formatRupiah(val: number | string) {
           <table class="w-full text-left text-xs">
             <thead class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
               <tr class="h-10">
+                <th class="w-10 px-3 py-2.5 text-center">
+                  <input
+                    type="checkbox"
+                    :checked="isAllSelected"
+                    @change="toggleSelectAll"
+                    class="rounded border-slate-300 dark:border-slate-700 text-[#2563EB] focus:ring-[#2563EB]/20 h-4 w-4 cursor-pointer"
+                    title="Pilih Semua di Halaman Ini"
+                  />
+                </th>
                 <th class="px-3 py-2.5 whitespace-nowrap">No. Referensi</th>
                 <th class="px-3 py-2.5 whitespace-nowrap">Tipe Mutasi</th>
                 <th class="px-3 py-2.5 whitespace-nowrap">Tanggal</th>
@@ -494,7 +602,7 @@ function formatRupiah(val: number | string) {
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
               <tr v-if="transactions.data.length === 0">
-                <td colspan="7" class="px-3 py-12 text-center text-xs text-slate-400">
+                <td colspan="8" class="px-3 py-12 text-center text-xs text-slate-400">
                   <Boxes class="h-8 w-8 mx-auto text-slate-300 dark:text-slate-600 mb-2 stroke-[1.5]" />
                   <p v-if="hasActiveFilters">Tidak ada transaksi yang cocok dengan filter yang dipilih.</p>
                   <p v-else>Belum ada rekaman transaksi mutasi stok.</p>
@@ -511,8 +619,23 @@ function formatRupiah(val: number | string) {
               <tr
                 v-for="tx in transactions.data"
                 :key="tx.id"
-                class="group hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                :class="[
+                  'group transition-colors',
+                  selectedIds.includes(tx.id)
+                    ? 'bg-blue-50/60 dark:bg-blue-950/30'
+                    : 'hover:bg-slate-50/60 dark:hover:bg-slate-800/40'
+                ]"
               >
+                <!-- Checkbox Selection -->
+                <td class="w-10 px-3 py-2.5 text-center">
+                  <input
+                    type="checkbox"
+                    :checked="selectedIds.includes(tx.id)"
+                    @change="toggleSelectOne(tx.id)"
+                    class="rounded border-slate-300 dark:border-slate-700 text-[#2563EB] focus:ring-[#2563EB]/20 h-4 w-4 cursor-pointer"
+                  />
+                </td>
+
                 <!-- Reference No -->
                 <td class="px-3 py-2.5 whitespace-nowrap">
                   <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono tracking-wider text-[11px] font-semibold">
@@ -567,60 +690,133 @@ function formatRupiah(val: number | string) {
 
                 <!-- Action -->
                 <td class="px-3 py-2.5 text-right whitespace-nowrap">
-                  <button
-                    type="button"
-                    @click="openDetail(tx)"
-                    class="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs inline-flex items-center gap-1 cursor-pointer transition-colors"
-                  >
-                    <Eye class="h-3.5 w-3.5 text-slate-400" />
-                    Detail
-                  </button>
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      @click="openDetail(tx)"
+                      class="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs inline-flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Lihat Rincian Bukti Transaksi"
+                    >
+                      <Eye class="h-3.5 w-3.5 text-slate-400" />
+                      Detail
+                    </button>
+                    <a
+                      :href="route('transactions.receipt', tx.id)"
+                      target="_blank"
+                      class="h-7 px-2.5 rounded-lg border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/40 text-xs font-medium text-[#2563EB] dark:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/60 shadow-2xs inline-flex items-center gap-1 transition-colors"
+                      title="Unduh / Cetak Bukti PDF Langsung"
+                    >
+                      <Printer class="h-3.5 w-3.5" />
+                      PDF
+                    </a>
+                  </div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Pagination -->
-        <div
-          v-if="transactions.last_page > 1"
-          class="p-4 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500"
-        >
-          <span>Menampilkan {{ transactions.data.length }} dari {{ transactions.total }} transaksi</span>
-          <div class="flex items-center gap-1">
-            <template v-for="(link, i) in transactions.links" :key="i">
-              <Link
-                v-if="link.url"
-                :href="link.url"
-                v-html="link.label"
-                :class="[
-                  'px-3 py-1.5 rounded-lg font-medium transition-colors',
-                  link.active
-                    ? 'bg-[#2563EB] text-white font-bold'
-                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
-                ]"
-              />
-            </template>
+        <!-- Table Pagination & Total Counter (Konsisten Standar SIPALING) -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 text-xs">
+          <div class="text-xs text-slate-500 dark:text-slate-400">
+            Menampilkan <span class="font-semibold text-slate-700 dark:text-slate-300">{{ transactions.data.length }}</span> dari <span class="font-semibold text-slate-700 dark:text-slate-300">{{ transactions.total }}</span> transaksi terdaftar
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span v-if="transactions.last_page > 1" class="text-xs text-slate-500 dark:text-slate-400 mr-1 hidden sm:inline">
+              Halaman <span class="font-semibold text-slate-700 dark:text-slate-300">{{ transactions.current_page }}</span> dari <span class="font-semibold text-slate-700 dark:text-slate-300">{{ transactions.last_page }}</span>
+            </span>
+
+            <!-- Tombol Sebelumnya -->
+            <Link
+              v-if="prevPageUrl"
+              :href="prevPageUrl"
+              preserve-state
+              preserve-scroll
+              class="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs h-8 px-3 rounded-lg inline-flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              Sebelumnya
+            </Link>
+            <button
+              v-else
+              disabled
+              class="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 opacity-40 cursor-not-allowed shadow-2xs h-8 px-3 rounded-lg inline-flex items-center gap-1"
+            >
+              Sebelumnya
+            </button>
+
+            <!-- Navigasi Nomor Halaman Pintar (Layar md+) -->
+            <div v-if="visiblePages.length > 0" class="hidden md:flex items-center gap-1">
+              <template v-for="(pItem, idx) in visiblePages" :key="idx">
+                <span v-if="pItem === '...'" class="px-1 text-slate-400 select-none">...</span>
+                <Link
+                  v-else
+                  :href="pItem.url"
+                  preserve-state
+                  preserve-scroll
+                  :class="[
+                    'h-8 min-w-[32px] px-2 rounded-lg text-xs font-semibold flex items-center justify-center transition-colors',
+                    pItem.active
+                      ? 'bg-[#2563EB] text-white shadow-2xs'
+                      : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  ]"
+                >
+                  {{ pItem.page }}
+                </Link>
+              </template>
+            </div>
+
+            <!-- Tombol Berikutnya -->
+            <Link
+              v-if="nextPageUrl"
+              :href="nextPageUrl"
+              preserve-state
+              preserve-scroll
+              class="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs h-8 px-3 rounded-lg inline-flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              Berikutnya
+            </Link>
+            <button
+              v-else
+              disabled
+              class="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 opacity-40 cursor-not-allowed shadow-2xs h-8 px-3 rounded-lg inline-flex items-center gap-1"
+            >
+              Berikutnya
+            </button>
           </div>
         </div>
       </div>
 
       <!-- Modal Detail Bukti Transaksi -->
       <Teleport to="body">
-        <Transition
-          enter-active-class="transition duration-200 ease-out"
-          enter-from-class="opacity-0 scale-95"
-          enter-to-class="opacity-100 scale-100"
-          leave-active-class="transition duration-150 ease-in"
-          leave-from-class="opacity-100 scale-100"
-          leave-to-class="opacity-0 scale-95"
+        <div
+          v-if="isDetailModalOpen && selectedTransaction"
+          class="receipt-modal-root fixed inset-0 z-50 flex items-center justify-center p-4"
         >
-          <div
-    v-if="isDetailModalOpen && selectedTransaction"
-    class="receipt-modal-root fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
-    @click.self="closeDetail"
-    >
-           <div class="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800">
+          <!-- Fixed Backdrop with Pure Opacity Fade (No Scale Glitch) -->
+          <Transition
+            enter-active-class="transition-opacity duration-200 ease-out"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition-opacity duration-150 ease-in"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+            appear
+          >
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" @click="closeDetail" />
+          </Transition>
+
+          <!-- Modal Card with Smooth Scale & Opacity Popup -->
+          <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="opacity-0 scale-95 translate-y-2"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+            leave-active-class="transition-all duration-150 ease-in"
+            leave-from-class="opacity-100 scale-100 translate-y-0"
+            leave-to-class="opacity-0 scale-95 translate-y-2"
+            appear
+          >
+            <div class="relative z-10 w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800">
            <div id="receipt-print-area" class="p-6 space-y-5">
             <div class="hidden print:block text-center mb-4 pb-3 border-b-2 border-slate-900">
               <h2 class="text-lg font-bold">SIPALING — Bukti Serah Terima Barang</h2>
@@ -740,9 +936,49 @@ function formatRupiah(val: number | string) {
                            </div>
             </div>
           </div>
-        </div>
         </Transition>
-      </Teleport>
+      </div>
+    </Teleport>
+
+    <!-- Floating Action Pill untuk Cetak Masal Terpilih -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="transform translate-y-6 opacity-0"
+      enter-to-class="transform translate-y-0 opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="transform translate-y-0 opacity-100"
+      leave-to-class="transform translate-y-6 opacity-0"
+    >
+      <div
+        v-if="selectedIds.length > 0"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 text-white dark:bg-slate-800/95 dark:text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md border border-slate-700/80 flex items-center gap-4"
+      >
+        <div class="flex items-center gap-2 text-xs font-semibold">
+          <span class="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white font-bold">
+            {{ selectedIds.length }}
+          </span>
+          <span>Transaksi Terpilih</span>
+        </div>
+        <div class="h-4 w-px bg-slate-700"></div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            @click="selectedIds = []"
+            class="h-8 px-3 rounded-xl hover:bg-slate-800 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            @click="printBatchReceipts"
+            class="h-8 px-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold shadow-md inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Printer class="h-3.5 w-3.5" />
+            Cetak {{ selectedIds.length }} PDF Sekaligus
+          </button>
+        </div>
+      </div>
+    </Transition>
     </div>
   </AuthenticatedLayout>
 </template>

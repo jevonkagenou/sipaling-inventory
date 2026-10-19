@@ -3,8 +3,13 @@ import { ref, computed, onMounted } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import AppSidebar from '@/Components/Layout/AppSidebar.vue'
 import LogoutConfirmDialog from '@/Components/Layout/LogoutConfirmDialog.vue'
-import Dropdown from '@/Components/Dropdown.vue'
-import DropdownLink from '@/Components/DropdownLink.vue'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/Components/ui/dropdown-menu'
 import { useTheme } from '@/Composables/useTheme'
 import {
   Menu,
@@ -137,44 +142,58 @@ onMounted(() => {
             <Moon v-else class="h-4 w-4 text-slate-400" />
           </button>
 
-          <!-- Compact User Avatar Dropdown (Eliminates Header Redundancy) -->
-          <Dropdown align="right" width="48">
-            <template #trigger>
+          <!-- Compact User Avatar Dropdown (Shadcn Vue / Reka UI Portal) -->
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
               <button
                 type="button"
-                class="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800/80 focus:outline-none transition-all cursor-pointer"
+                class="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800/80 focus:outline-none transition-all cursor-pointer select-none"
+                title="Buka menu profil dan keluar"
               >
                 <div class="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-950/80 text-[#2563EB] dark:text-blue-400 font-bold text-xs flex items-center justify-center uppercase">
                   {{ (user.name || 'U').slice(0, 2) }}
                 </div>
                 <ChevronDown class="h-3.5 w-3.5 text-slate-400" />
               </button>
-            </template>
+            </DropdownMenuTrigger>
 
-            <template #content>
-              <div class="px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800">
-                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{{ user.name }}</p>
-                <p class="text-[11px] text-slate-400 truncate">{{ user.email }}</p>
+            <DropdownMenuContent
+              align="end"
+              class="w-56 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xl rounded-2xl p-1.5 z-50"
+            >
+              <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800/80">
+                <p class="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{{ user.name || 'Pengguna' }}</p>
+                <p class="text-[11px] text-slate-400 truncate">{{ user.email || '' }}</p>
                 <div class="mt-1">
                   <span :class="['inline-flex text-[10px] font-semibold px-1.5 py-0.2 rounded border uppercase tracking-wider', roleBadge.cls]">
                     {{ roleBadge.label }}
                   </span>
                 </div>
               </div>
-              <DropdownLink :href="route('profile.edit')" class="text-xs flex items-center gap-2">
-                <UserIcon class="h-3.5 w-3.5 text-slate-400" />
-                Akun
-              </DropdownLink>
-              <button
-                type="button"
-                class="w-full text-left px-4 py-2 text-xs text-rose-600 dark:text-rose-400 font-medium hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2 transition-colors cursor-pointer"
-                @click="isLogoutModalOpen = true"
-              >
-                <LogOut class="h-3.5 w-3.5 text-rose-500" />
-                Keluar
-              </button>
-            </template>
-          </Dropdown>
+
+              <div class="pt-1 space-y-0.5">
+                <DropdownMenuItem as-child>
+                  <Link
+                    :href="route('profile.edit')"
+                    class="w-full text-xs flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer transition-colors"
+                  >
+                    <UserIcon class="h-3.5 w-3.5 text-slate-400" />
+                    <span>Akun</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800/80" />
+
+                <DropdownMenuItem
+                  class="w-full text-xs flex items-center gap-2 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer focus:text-rose-600 focus:bg-rose-50 transition-colors"
+                  @click="isLogoutModalOpen = true"
+                >
+                  <LogOut class="h-3.5 w-3.5 text-rose-500" />
+                  <span>Keluar</span>
+                </DropdownMenuItem>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

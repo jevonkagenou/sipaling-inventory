@@ -15,6 +15,7 @@ import {
   FileSpreadsheet,
   Download,
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   X,
   FileText,
@@ -151,6 +152,17 @@ function submitImport() {
 
       <!-- Body Content -->
       <div class="p-6 space-y-4">
+        <!-- Peringatan Impor Katalog -->
+        <div class="p-3.5 rounded-xl border border-amber-300/80 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 text-xs space-y-1">
+          <div class="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
+            <AlertTriangle class="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>Peringatan Impor Katalog Produk</span>
+          </div>
+          <p class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-300/90">
+            Data produk yang diimpor akan langsung disimpan ke database master inventaris. Pastikan data SKU, harga, dan kuantitas awal valid sebelum memulai proses impor.
+          </p>
+        </div>
+
         <!-- Download Template Banner -->
         <div class="flex items-center justify-between p-3.5 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20">
           <div class="flex items-center gap-2.5 min-w-0">
