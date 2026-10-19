@@ -247,9 +247,10 @@ onUnmounted(() => {
                 </div>
 
                 <div v-if="currentStep < 4" class="mb-6 pt-1">
-                    <div class="flex items-center justify-between relative">
-                        <div class="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-0.5 bg-slate-200 dark:bg-slate-800 -z-0"></div>
-                        <div class="absolute top-1/2 left-0 -translate-y-1/2 h-0.5 bg-gradient-to-r from-[#2563EB] to-[#4F46E5] transition-all duration-300 -z-0" :style="{ width: currentStep === 1 ? '15%' : currentStep === 2 ? '50%' : '100%' }"></div>
+                    <div class="flex items-start justify-between relative">
+                        <div class="absolute top-4 left-4 right-4 -translate-y-1/2 h-0.5 bg-slate-200 dark:bg-slate-800">
+                            <div class="h-full bg-gradient-to-r from-[#2563EB] to-[#4F46E5] transition-all duration-300" :style="{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%' }"></div>
+                        </div>
 
                         <button type="button" class="relative z-10 flex flex-col items-center group focus:outline-none">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all shadow-sm" :class="[ currentStep >= 1 ? 'bg-[#2563EB] text-white ring-4 ring-blue-100 dark:ring-blue-950/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-slate-700' ]">
