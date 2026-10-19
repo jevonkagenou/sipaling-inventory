@@ -23,7 +23,7 @@ class AnalyticsController extends Controller
         $products = Product::query()
             ->with('category:id,name')
             ->orderBy('name')
-            ->get(['id', 'category_id', 'sku', 'name', 'unit', 'current_stock', 'minimum_stock']);
+            ->get(['id', 'category_id', 'sku', 'name', 'unit', 'unit_price', 'current_stock', 'minimum_stock']);
 
         $selectedProductId = $request->query('product_id', $products->first()?->id);
         $selectedProduct = $products->firstWhere('id', $selectedProductId) ?? $products->first();
@@ -54,6 +54,7 @@ class AnalyticsController extends Controller
                 'current_stock' => (int) $p->current_stock,
                 'minimum_stock' => (int) $p->minimum_stock,
                 'unit' => $p->unit,
+                'unit_price' => (float) $p->unit_price,
                 'next_forecast' => (int) round($forecast['future_forecasts'][0] ?? 0),
                 'suggested_quantity' => $rec['suggested_quantity'],
                 'status' => $rec['status'],
