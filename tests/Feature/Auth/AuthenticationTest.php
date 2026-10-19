@@ -42,6 +42,21 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_users_can_authenticate_with_remember_me(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+            'remember' => true,
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertCookie(\Illuminate\Support\Facades\Auth::guard()->getRecallerName());
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();
@@ -49,6 +64,24 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->post('/logout');
 
         $this->assertGuest();
-        $response->assertRedirect('/');
+        $response->assertRedirect('/login');
+    }
+
+    public function test_users_can_logout_via_get_request(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/logout');
+
+        $this->assertGuest();
+        $response->assertRedirect('/login');
+    }
+
+    public function test_guest_accessing_logout_redirects_to_login(): void
+    {
+        $response = $this->get('/logout');
+
+        $this->assertGuest();
+        $response->assertRedirect('/login');
     }
 }

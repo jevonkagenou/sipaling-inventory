@@ -188,12 +188,42 @@ class StockTransactionController extends Controller
      */
     public function receiptPdf(StockTransaction $transaction)
     {
-        $transaction->load(['details.product', 'creator']);
+        $transaction->load(['details.product.category', 'creator']);
 
         $pdf = Pdf::loadView('receipts.transaction', compact('transaction'))
             ->setPaper('a4', 'portrait');
 
         $filename = 'Bukti-'.$transaction->reference_no.'.pdf';
+
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Mengunduh beberapa bukti transaksi sekaligus (Batch / Multi-Page PDF).
+     */
+    public function batchReceiptPdf(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'uuid', 'exists:stock_transactions,id'],
+        ], [
+            'ids.required' => 'Pilih minimal satu transaksi untuk dicetak.',
+            'ids.min' => 'Pilih minimal satu transaksi untuk dicetak.',
+        ]);
+
+        $transactions = StockTransaction::with(['details.product.category', 'creator'])
+            ->whereIn('id', $validated['ids'])
+            ->orderBy('transaction_date', 'desc')
+            ->get();
+
+        if ($transactions->isEmpty()) {
+            abort(404, 'Tidak ada transaksi yang ditemukan.');
+        }
+
+        $pdf = Pdf::loadView('receipts.batch', compact('transactions'))
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'Bukti-Mutasi-Batch-'.now()->format('YmdHis').'.pdf';
 
         return $pdf->stream($filename);
     }

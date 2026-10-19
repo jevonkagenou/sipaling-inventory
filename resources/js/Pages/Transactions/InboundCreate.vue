@@ -3,6 +3,15 @@ import { ref, computed } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/Components/ui/dialog'
+import { Button } from '@/Components/ui/button'
+import {
   ArrowLeft,
   Plus,
   Trash2,
@@ -11,10 +20,18 @@ import {
   Building2,
   FileText,
   AlertCircle,
+  AlertTriangle,
   TrendingUp,
   CheckCircle2,
   Search,
   ArrowRight,
+  PackagePlus,
+  Coins,
+  FileSpreadsheet,
+  Upload,
+  Download,
+  ShieldAlert,
+  Loader2,
 } from 'lucide-vue-next'
 
 export interface Category {
@@ -124,6 +141,37 @@ const totalValue = computed(() => {
 })
 
 const isSubmitting = ref(false)
+const isConfirmModalOpen = ref(false)
+const validationError = ref<string | null>(null)
+
+function promptSubmit() {
+  validationError.value = null
+  if (!form.reference_no.trim()) {
+    validationError.value = 'Nomor referensi / bukti surat jalan wajib diisi.'
+    return
+  }
+  if (!form.transaction_date) {
+    validationError.value = 'Tanggal transaksi penerimaan barang wajib diisi.'
+    return
+  }
+  for (let i = 0; i < form.items.length; i++) {
+    const item = form.items[i]
+    if (!item.product_id) {
+      validationError.value = `Baris produk #${i + 1}: Silakan pilih SKU produk dari katalog.`
+      return
+    }
+    if (!item.quantity || Number(item.quantity) <= 0) {
+      validationError.value = `Baris produk #${i + 1}: Kuantitas barang masuk minimal bernilai 1 unit.`
+      return
+    }
+  }
+  isConfirmModalOpen.value = true
+}
+
+function handleConfirmSubmit() {
+  isConfirmModalOpen.value = false
+  submit()
+}
 
 function submit() {
   isSubmitting.value = true
@@ -132,6 +180,158 @@ function submit() {
       isSubmitting.value = false
     },
   })
+}
+
+// Fitur Impor CSV Inbound
+const isCsvModalOpen = ref(false)
+const csvInputRef = ref<HTMLInputElement | null>(null)
+const csvFile = ref<File | null>(null)
+const csvErrorMessage = ref<string | null>(null)
+const csvParsedRows = ref<Array<{ product: ProductItem; quantity: number; unit_price: number; notes: string }>>([])
+const isParsingCsv = ref(false)
+
+function openCsvModal() {
+  csvFile.value = null
+  csvErrorMessage.value = null
+  csvParsedRows.value = []
+  if (csvInputRef.value) {
+    csvInputRef.value.value = ''
+  }
+  isCsvModalOpen.value = true
+}
+
+function downloadCsvTemplate() {
+  const sample1 = props.products[0] || { sku: 'PRD-001', unit_price: 25000 }
+  const sample2 = props.products[1] || { sku: 'PRD-002', unit_price: 50000 }
+  const csvContent = `sku,quantity,unit_price,notes\n${sample1.sku},10,${sample1.unit_price},Penerimaan supplier batch 1\n${sample2.sku},25,${sample2.unit_price},Restock gudang utama\n`
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', 'template_inbound_sipaling.csv')
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+function handleCsvFileSelect(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    parseCsv(target.files[0])
+  }
+}
+
+function handleCsvDrop(e: DragEvent) {
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    parseCsv(e.dataTransfer.files[0])
+  }
+}
+
+function parseCsv(file: File) {
+  csvFile.value = file
+  csvErrorMessage.value = null
+  csvParsedRows.value = []
+  isParsingCsv.value = true
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const text = e.target?.result as string
+      if (!text) {
+        csvErrorMessage.value = 'Berkas CSV kosong.'
+        isParsingCsv.value = false
+        return
+      }
+
+      const lines = text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0)
+      if (lines.length < 2) {
+        csvErrorMessage.value = 'Berkas CSV harus memiliki baris header dan minimal 1 baris data.'
+        isParsingCsv.value = false
+        return
+      }
+
+      const headerLine = lines[0]
+      const sep = headerLine.includes(';') ? ';' : ','
+      const rawHeaders = headerLine.split(sep).map((h) => h.trim().toLowerCase().replace(/^["']|["']$/g, ''))
+
+      const skuIdx = rawHeaders.findIndex((h) => h === 'sku' || h === 'kode' || h === 'kode_barang')
+      const qtyIdx = rawHeaders.findIndex((h) => h === 'quantity' || h === 'qty' || h === 'jumlah' || h === 'kuantitas')
+      const priceIdx = rawHeaders.findIndex((h) => h === 'unit_price' || h === 'price' || h === 'harga' || h === 'harga_satuan')
+      const notesIdx = rawHeaders.findIndex((h) => h === 'notes' || h === 'catatan' || h === 'keterangan')
+
+      if (skuIdx === -1 || qtyIdx === -1) {
+        csvErrorMessage.value = 'Header CSV harus memiliki kolom "sku" dan "quantity" (atau "qty").'
+        isParsingCsv.value = false
+        return
+      }
+
+      const parsed: Array<{ product: ProductItem; quantity: number; unit_price: number; notes: string }> = []
+      const errors: string[] = []
+
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(sep).map((col) => col.trim().replace(/^["']|["']$/g, ''))
+        const skuVal = row[skuIdx]?.trim()
+        if (!skuVal) continue
+
+        const product = props.products.find((p) => p.sku.toLowerCase() === skuVal.toLowerCase())
+        if (!product) {
+          errors.push(`Baris ${i + 1}: SKU "${skuVal}" tidak terdaftar di katalog produk.`)
+          continue
+        }
+
+        const qtyVal = parseInt(row[qtyIdx], 10)
+        if (isNaN(qtyVal) || qtyVal <= 0) {
+          errors.push(`Baris ${i + 1}: Kuantitas untuk SKU "${skuVal}" tidak valid (harus angka > 0).`)
+          continue
+        }
+
+        let priceVal = priceIdx !== -1 && row[priceIdx] ? parseFloat(row[priceIdx]) : Number(product.unit_price) || 0
+        if (isNaN(priceVal) || priceVal < 0) {
+          priceVal = Number(product.unit_price) || 0
+        }
+
+        const notesVal = notesIdx !== -1 && row[notesIdx] ? row[notesIdx] : ''
+
+        parsed.push({
+          product,
+          quantity: qtyVal,
+          unit_price: priceVal,
+          notes: notesVal,
+        })
+      }
+
+      if (errors.length > 0) {
+        csvErrorMessage.value = errors.slice(0, 3).join(' ') + (errors.length > 3 ? ` ...dan ${errors.length - 3} kesalahan lainnya.` : '')
+      }
+
+      if (parsed.length === 0 && !csvErrorMessage.value) {
+        csvErrorMessage.value = 'Tidak ada baris data produk valid yang ditemukan dalam berkas.'
+      }
+
+      csvParsedRows.value = parsed
+    } catch (err: any) {
+      csvErrorMessage.value = 'Gagal membaca berkas CSV: ' + (err?.message || 'Format tidak valid')
+    } finally {
+      isParsingCsv.value = false
+    }
+  }
+  reader.readAsText(file)
+}
+
+function applyCsvToForm() {
+  if (csvParsedRows.value.length === 0) return
+
+  form.items = csvParsedRows.value.map((item) => ({
+    product_id: item.product.id,
+    quantity: item.quantity,
+    unit_price: item.unit_price,
+    notes: item.notes,
+    searchQuery: `${item.product.sku} - ${item.product.name}`,
+    isDropdownOpen: false,
+  }))
+
+  isCsvModalOpen.value = false
 }
 </script>
 
@@ -173,16 +373,17 @@ function submit() {
       </div>
 
       <!-- Form Container -->
-      <form @submit.prevent="submit" class="space-y-6">
+      <form @submit.prevent="promptSubmit" class="space-y-6">
         <!-- Error Banner jika ada error validasi -->
         <div
-          v-if="Object.keys(form.errors).length > 0"
+          v-if="validationError || Object.keys(form.errors).length > 0"
           class="rounded-2xl border border-rose-200 bg-rose-50/70 p-4 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300 flex items-start gap-3"
         >
           <AlertCircle class="h-5 w-5 shrink-0 text-rose-500 mt-0.5" />
           <div class="text-xs sm:text-sm space-y-1">
             <p class="font-bold">Terdapat kesalahan pada formulir transaksi:</p>
-            <ul class="list-disc pl-5 space-y-0.5">
+            <p v-if="validationError" class="font-medium text-rose-600 dark:text-rose-400">{{ validationError }}</p>
+            <ul v-if="Object.keys(form.errors).length > 0" class="list-disc pl-5 space-y-0.5">
               <li v-for="(err, key) in form.errors" :key="key">{{ err }}</li>
             </ul>
           </div>
@@ -262,24 +463,34 @@ function submit() {
 
         <!-- Section 2: Daftar Item Barang Masuk -->
         <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md space-y-4">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                 <Boxes class="h-4 w-4 text-[#10B981]" />
                 2. Rincian Barang Masuk
               </h3>
               <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Pilih SKU produk dan tentukan kuantitas barang yang diterima.
+                Pilih SKU produk atau unggah berkas CSV untuk mencatat penerimaan barang.
               </p>
             </div>
-            <button
-              type="button"
-              @click="addItem"
-              class="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-[#2563EB] hover:bg-blue-100 transition-colors border border-blue-200/60 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60 cursor-pointer"
-            >
-              <Plus class="h-3.5 w-3.5" />
-              Tambah Baris Produk
-            </button>
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                @click="openCsvModal"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors border border-slate-200/80 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700/80 cursor-pointer shadow-2xs"
+              >
+                <FileSpreadsheet class="h-3.5 w-3.5 text-[#2563EB]" />
+                Impor dari CSV
+              </button>
+              <button
+                type="button"
+                @click="addItem"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-[#2563EB] hover:bg-blue-100 transition-colors border border-blue-200/60 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60 cursor-pointer shadow-2xs"
+              >
+                <Plus class="h-3.5 w-3.5" />
+                Tambah Baris Produk
+              </button>
+            </div>
           </div>
 
           <!-- Items Row -->
@@ -430,24 +641,45 @@ function submit() {
         <!-- Section 3: Ringkasan & Aksi Submit -->
         <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div>
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Item SKU</p>
-                <p class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-                  {{ form.items.length }} Barang
-                </p>
+            <!-- Summary Stats Mini Cards (Harmonious & Professional) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:w-auto">
+              <!-- Item 1: Total SKU -->
+              <div class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                <div class="h-8 w-8 rounded-lg bg-slate-200/70 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0">
+                  <Boxes class="h-4 w-4" />
+                </div>
+                <div>
+                  <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Item SKU</span>
+                  <span class="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
+                    {{ form.items.length }} <span class="text-xs font-normal text-slate-500">Barang</span>
+                  </span>
+                </div>
               </div>
-              <div>
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Kuantitas Masuk</p>
-                <p class="text-base sm:text-lg font-bold text-[#10B981]">
-                  + {{ totalQuantity }} Unit
-                </p>
+
+              <!-- Item 2: Kuantitas Masuk -->
+              <div class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-950/20">
+                <div class="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-[#10B981] flex items-center justify-center shrink-0">
+                  <PackagePlus class="h-4 w-4" />
+                </div>
+                <div>
+                  <span class="block text-[10px] font-bold uppercase tracking-wider text-emerald-700/80 dark:text-emerald-400/80">Kuantitas Masuk</span>
+                  <span class="text-sm font-bold text-[#10B981] tabular-nums">
+                    +{{ totalQuantity }} <span class="text-xs font-normal opacity-80">Unit</span>
+                  </span>
+                </div>
               </div>
-              <div>
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Estimasi Nilai Total</p>
-                <p class="text-base sm:text-lg font-bold text-[#2563EB] dark:text-blue-400">
-                  {{ formatRupiah(totalValue) }}
-                </p>
+
+              <!-- Item 3: Estimasi Nilai Total -->
+              <div class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                <div class="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <Coins class="h-4 w-4" />
+                </div>
+                <div>
+                  <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Estimasi Nilai Total</span>
+                  <span class="text-sm font-bold text-slate-900 dark:text-white tabular-nums font-mono">
+                    {{ formatRupiah(totalValue) }}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -472,5 +704,233 @@ function submit() {
         </div>
       </form>
     </div>
+
+    <!-- Modal Konfirmasi Mutasi Permanen -->
+    <Dialog :open="isConfirmModalOpen" @update:open="isConfirmModalOpen = $event">
+      <DialogContent class="sm:max-w-lg bg-white dark:bg-[#0F172A] border-slate-200 dark:border-slate-800 p-0 overflow-hidden shadow-2xl">
+        <div class="p-6 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-2xs">
+              <AlertTriangle class="h-5 w-5" />
+            </div>
+            <div>
+              <DialogTitle class="text-base font-bold text-slate-900 dark:text-white">
+                Konfirmasi Barang Masuk
+              </DialogTitle>
+              <DialogDescription class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Pastikan data yang diinput telah sesuai dengan fisik barang yang diterima.
+              </DialogDescription>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <!-- Critical Immutability Warning Alert Banner -->
+          <div class="p-4 rounded-xl border border-amber-300/80 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 text-xs space-y-1.5">
+            <div class="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+              <ShieldAlert class="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span>PERINGATAN INTEGRITAS AUDIT LOG</span>
+            </div>
+            <p class="leading-relaxed">
+              Transaksi mutasi stok ini bersifat <strong>permanen dan TIDAK BISA DIUBAH ATAU DIHAPUS</strong> setelah disimpan. Seluruh kuantitas barang masuk akan langsung menambah stok fisik gudang dan dicatat dalam riwayat audit forensik.
+            </p>
+          </div>
+
+          <!-- Transaction Summary Card -->
+          <div class="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 p-3.5 space-y-2 text-xs">
+            <div class="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800/60">
+              <span class="text-slate-500 dark:text-slate-400">No. Referensi:</span>
+              <span class="font-mono font-bold text-slate-900 dark:text-white">{{ form.reference_no }}</span>
+            </div>
+            <div class="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800/60">
+              <span class="text-slate-500 dark:text-slate-400">Pengirim / Supplier:</span>
+              <span class="font-medium text-slate-900 dark:text-white">{{ form.party_name || '-' }}</span>
+            </div>
+            <div class="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800/60">
+              <span class="text-slate-500 dark:text-slate-400">Waktu Transaksi:</span>
+              <span class="font-medium text-slate-900 dark:text-white">{{ form.transaction_date }}</span>
+            </div>
+            <div class="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800/60">
+              <span class="text-slate-500 dark:text-slate-400">Total Item SKU:</span>
+              <span class="font-bold text-slate-900 dark:text-white">{{ form.items.length }} Barang</span>
+            </div>
+            <div class="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800/60">
+              <span class="text-slate-500 dark:text-slate-400">Total Kuantitas Masuk:</span>
+              <span class="font-bold text-[#10B981]">+{{ totalQuantity }} Unit</span>
+            </div>
+            <div class="flex justify-between items-center pt-1">
+              <span class="text-slate-500 dark:text-slate-400">Estimasi Nilai Total:</span>
+              <span class="font-mono font-bold text-slate-900 dark:text-white">{{ formatRupiah(totalValue) }}</span>
+            </div>
+          </div>
+
+          <p class="text-center text-xs text-slate-500 dark:text-slate-400">
+            Apakah Anda yakin ingin memproses dan membukukan mutasi masuk ini sekarang?
+          </p>
+        </div>
+
+        <DialogFooter class="px-6 py-3.5 bg-slate-50/80 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex flex-row items-center justify-end gap-2.5">
+          <Button
+            type="button"
+            variant="outline"
+            class="h-9 px-4 rounded-xl text-xs font-semibold border-slate-200 dark:border-slate-800"
+            @click="isConfirmModalOpen = false"
+          >
+            Batal / Periksa Kembali
+          </Button>
+          <Button
+            type="button"
+            class="h-9 px-4 rounded-xl text-xs font-semibold bg-[#10B981] hover:bg-emerald-700 text-white shadow-2xs inline-flex items-center gap-1.5"
+            :disabled="form.processing || isSubmitting"
+            @click="handleConfirmSubmit"
+          >
+            <CheckCircle2 class="h-3.5 w-3.5" />
+            {{ form.processing ? 'Menyimpan...' : 'Ya, Konfirmasi & Simpan' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Modal Impor CSV Inbound -->
+    <Dialog :open="isCsvModalOpen" @update:open="isCsvModalOpen = $event">
+      <DialogContent class="sm:max-w-xl bg-white dark:bg-[#0F172A] border-slate-200 dark:border-slate-800 p-0 overflow-hidden shadow-2xl">
+        <div class="p-6 pb-4 border-b border-slate-100 dark:border-slate-800/80">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
+              <FileSpreadsheet class="h-5 w-5" />
+            </div>
+            <div>
+              <DialogTitle class="text-base font-bold text-slate-900 dark:text-white">
+                Impor Rincian Barang Masuk dari CSV
+              </DialogTitle>
+              <DialogDescription class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Unggah berkas CSV untuk mengisi daftar produk masuk secara otomatis.
+              </DialogDescription>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <!-- Alert Peringatan Tidak Bisa Diedit/Dihapus -->
+          <div class="p-4 rounded-xl border border-amber-300/80 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 text-xs space-y-1.5">
+            <div class="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+              <AlertTriangle class="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span>PERINGATAN IMPOR TRANSAKSI</span>
+            </div>
+            <p class="leading-relaxed">
+              Data dari CSV akan dimasukkan ke dalam draf transaksi barang masuk. Perhatikan bahwa mutasi stok yang disimpan bersifat <strong>permanen dan TIDAK DAPAT DIHAPUS atau DIUBAH</strong>. Pastikan data SKU dan kuantitas fisik sudah akurat sebelum disimpan.
+            </p>
+          </div>
+
+          <!-- Download Template Banner -->
+          <div class="flex items-center justify-between p-3.5 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <FileText class="h-4 w-4 text-[#2563EB] shrink-0" />
+              <div class="min-w-0">
+                <p class="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                  Format Berkas CSV Inbound
+                </p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  Kolom: <code>sku,quantity,unit_price,notes</code>
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="downloadCsvTemplate"
+              class="h-8 px-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900 text-xs font-semibold text-[#2563EB] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors shadow-2xs inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
+            >
+              <Download class="h-3.5 w-3.5" />
+              Unduh Template
+            </button>
+          </div>
+
+          <!-- Upload Dropzone -->
+          <div
+            class="border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30"
+            @click="csvInputRef?.click()"
+            @dragover.prevent
+            @drop.prevent="handleCsvDrop"
+          >
+            <input
+              ref="csvInputRef"
+              type="file"
+              accept=".csv,text/csv"
+              class="hidden"
+              @change="handleCsvFileSelect"
+            />
+            <div class="flex flex-col items-center justify-center gap-2">
+              <div class="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                <Upload class="h-5 w-5" />
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  <span v-if="csvFile">{{ csvFile.name }} ({{ (csvFile.size / 1024).toFixed(1) }} KB)</span>
+                  <span v-else>Klik atau seret berkas CSV ke area ini</span>
+                </p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Mendukung berkas CSV bertanda koma atau titik koma</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Alert jika parse gagal -->
+          <div v-if="csvErrorMessage" class="flex items-start gap-2.5 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs">
+            <AlertCircle class="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
+            <p class="leading-relaxed">{{ csvErrorMessage }}</p>
+          </div>
+
+          <!-- Preview Parsed Items -->
+          <div v-if="csvParsedRows.length > 0" class="space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-700 dark:text-slate-300">
+                Preview Data Terbaca ({{ csvParsedRows.length }} Item):
+              </span>
+              <span class="text-emerald-600 dark:text-emerald-400 font-semibold">
+                Total Kuantitas: +{{ csvParsedRows.reduce((sum, r) => sum + r.quantity, 0) }} Unit
+              </span>
+            </div>
+            <div class="max-h-40 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+              <div
+                v-for="(row, idx) in csvParsedRows.slice(0, 10)"
+                :key="idx"
+                class="p-2.5 flex items-center justify-between bg-white dark:bg-slate-900"
+              >
+                <div>
+                  <p class="font-bold text-slate-900 dark:text-white">{{ row.product.name }}</p>
+                  <p class="text-[11px] font-mono text-slate-400">SKU: {{ row.product.sku }}</p>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold text-emerald-600 dark:text-emerald-400">+{{ row.quantity }} {{ row.product.unit }}</p>
+                  <p class="text-[11px] text-slate-400">{{ formatRupiah(row.unit_price) }}</p>
+                </div>
+              </div>
+              <div v-if="csvParsedRows.length > 10" class="p-2 text-center text-[11px] text-slate-400 bg-slate-50 dark:bg-slate-900/80">
+                ...dan {{ csvParsedRows.length - 10 }} item lainnya
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter class="px-6 py-3.5 bg-slate-50/80 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex flex-row items-center justify-end gap-2.5">
+          <Button
+            type="button"
+            variant="outline"
+            class="h-9 px-4 rounded-xl text-xs font-semibold border-slate-200 dark:border-slate-800"
+            @click="isCsvModalOpen = false"
+          >
+            Batal
+          </Button>
+          <Button
+            type="button"
+            class="h-9 px-4 rounded-xl text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white shadow-2xs inline-flex items-center gap-1.5"
+            :disabled="csvParsedRows.length === 0"
+            @click="applyCsvToForm"
+          >
+            <CheckCircle2 class="h-3.5 w-3.5" />
+            Terapkan ke Formulir ({{ csvParsedRows.length }} Baris)
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </AuthenticatedLayout>
 </template>

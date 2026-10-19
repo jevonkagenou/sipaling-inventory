@@ -697,9 +697,9 @@ function resetAllFilters() {
         </Table>
 
         <!-- Table Pagination & Total Counter -->
-        <div class="flex items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 text-xs">
           <div class="text-xs text-slate-500 dark:text-slate-400">
-            Menampilkan <span class="font-semibold text-slate-700 dark:text-slate-300">{{ table.getFilteredRowModel().rows.length }}</span> dari {{ users.length }} pengguna
+            Menampilkan <span class="font-semibold text-slate-700 dark:text-slate-300">{{ table.getFilteredRowModel().rows.length }}</span> dari {{ users.length }} pengguna terdaftar
           </div>
           <div class="flex items-center space-x-2">
             <Button
@@ -707,7 +707,7 @@ function resetAllFilters() {
               size="sm"
               :disabled="!table.getCanPreviousPage()"
               @click="table.previousPage()"
-              class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 rounded-xl cursor-pointer disabled:opacity-40 h-8 px-3"
+              class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-40 h-8 px-3 shadow-2xs"
             >
               Sebelumnya
             </Button>
@@ -716,7 +716,7 @@ function resetAllFilters() {
               size="sm"
               :disabled="!table.getCanNextPage()"
               @click="table.nextPage()"
-              class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 rounded-xl cursor-pointer disabled:opacity-40 h-8 px-3"
+              class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer disabled:opacity-40 h-8 px-3 shadow-2xs"
             >
               Berikutnya
             </Button>

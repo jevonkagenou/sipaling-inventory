@@ -173,7 +173,7 @@ function formatDate(dateStr: string) {
             </Link>
             <Link
               :href="route('transactions.outbound.create')"
-              class="h-9 px-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+              class="h-9 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
             >
               <PackageMinus class="w-3.5 h-3.5" />
               Catat Keluar (Outbound)
@@ -438,7 +438,7 @@ function formatDate(dateStr: string) {
                     class="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold"
                     :class="tx.type === 'inbound'
                       ? 'bg-emerald-100 text-[#10B981] dark:bg-emerald-950/80'
-                      : 'bg-blue-100 text-[#2563EB] dark:bg-blue-950/80'"
+                      : 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-400'"
                   >
                     <PackagePlus v-if="tx.type === 'inbound'" class="w-3.5 h-3.5" />
                     <PackageMinus v-else class="w-3.5 h-3.5" />
@@ -458,7 +458,7 @@ function formatDate(dateStr: string) {
                     class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase"
                     :class="tx.type === 'inbound'
                       ? 'bg-emerald-50 text-[#10B981] dark:bg-emerald-950/60'
-                      : 'bg-blue-50 text-[#2563EB] dark:bg-blue-950/60'"
+                      : 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'"
                   >
                     {{ tx.type }}
                   </span>

@@ -86,6 +86,58 @@ function getEventBadgeClass(event: string) {
       return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300'
   }
 }
+
+const prevPageUrl = computed(() => {
+  if (!props.logs.links || props.logs.links.length === 0) return null
+  const first = props.logs.links[0]
+  return first?.url || null
+})
+
+const nextPageUrl = computed(() => {
+  if (!props.logs.links || props.logs.links.length === 0) return null
+  const last = props.logs.links[props.logs.links.length - 1]
+  return last?.url || null
+})
+
+const visiblePages = computed(() => {
+  const current = props.logs.current_page
+  const last = props.logs.last_page
+  if (last <= 1) return []
+
+  const pages: Array<{ page: number; url: string; active: boolean } | '...'> = []
+  const getUrl = (p: number) => {
+    const match = props.logs.links.find((l) => l.label == String(p))
+    return match?.url || `?page=${p}`
+  }
+
+  if (last <= 7) {
+    for (let i = 1; i <= last; i++) {
+      pages.push({ page: i, url: getUrl(i), active: i === current })
+    }
+    return pages
+  }
+
+  pages.push({ page: 1, url: getUrl(1), active: current === 1 })
+
+  if (current > 3) {
+    pages.push('...')
+  }
+
+  const start = Math.max(2, current - 1)
+  const end = Math.min(last - 1, current + 1)
+
+  for (let i = start; i <= end; i++) {
+    pages.push({ page: i, url: getUrl(i), active: i === current })
+  }
+
+  if (current < last - 2) {
+    pages.push('...')
+  }
+
+  pages.push({ page: last, url: getUrl(last), active: current === last })
+
+  return pages
+})
 </script>
 
 <template>
@@ -260,6 +312,76 @@ function getEventBadgeClass(event: string) {
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Table Pagination & Total Counter (Konsisten Standar SIPALING) -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 text-xs">
+          <div class="text-xs text-slate-500 dark:text-slate-400">
+            Menampilkan <span class="font-semibold text-slate-700 dark:text-slate-300">{{ logs.data.length }}</span> dari <span class="font-semibold text-slate-700 dark:text-slate-300">{{ logs.total }}</span> rekaman jejak audit
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span v-if="logs.last_page > 1" class="text-xs text-slate-500 dark:text-slate-400 mr-1 hidden sm:inline">
+              Halaman <span class="font-semibold text-slate-700 dark:text-slate-300">{{ logs.current_page }}</span> dari <span class="font-semibold text-slate-700 dark:text-slate-300">{{ logs.last_page }}</span>
+            </span>
+
+            <!-- Tombol Sebelumnya -->
+            <Link
+              v-if="prevPageUrl"
+              :href="prevPageUrl"
+              preserve-state
+              preserve-scroll
+              class="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs h-8 px-3 rounded-lg inline-flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              Sebelumnya
+            </Link>
+            <button
+              v-else
+              disabled
+              class="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 opacity-40 cursor-not-allowed shadow-2xs h-8 px-3 rounded-lg inline-flex items-center gap-1"
+            >
+              Sebelumnya
+            </button>
+
+            <!-- Navigasi Nomor Halaman Pintar (Layar md+) -->
+            <div v-if="visiblePages.length > 0" class="hidden md:flex items-center gap-1">
+              <template v-for="(pItem, idx) in visiblePages" :key="idx">
+                <span v-if="pItem === '...'" class="px-1 text-slate-400 select-none">...</span>
+                <Link
+                  v-else
+                  :href="pItem.url"
+                  preserve-state
+                  preserve-scroll
+                  :class="[
+                    'h-8 min-w-[32px] px-2 rounded-lg text-xs font-semibold flex items-center justify-center transition-colors',
+                    pItem.active
+                      ? 'bg-[#2563EB] text-white shadow-2xs'
+                      : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  ]"
+                >
+                  {{ pItem.page }}
+                </Link>
+              </template>
+            </div>
+
+            <!-- Tombol Berikutnya -->
+            <Link
+              v-if="nextPageUrl"
+              :href="nextPageUrl"
+              preserve-state
+              preserve-scroll
+              class="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs h-8 px-3 rounded-lg inline-flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              Berikutnya
+            </Link>
+            <button
+              v-else
+              disabled
+              class="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 opacity-40 cursor-not-allowed shadow-2xs h-8 px-3 rounded-lg inline-flex items-center gap-1"
+            >
+              Berikutnya
+            </button>
+          </div>
         </div>
       </div>
     </div>
