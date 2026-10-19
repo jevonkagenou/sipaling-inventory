@@ -148,4 +148,46 @@ class StockTransactionControllerTest extends TestCase
             'reference_no' => 'TRX-OUT-EXCEED-001',
         ]);
     }
+
+    public function test_staff_can_filter_transactions_by_type_and_date_range(): void
+    {
+        $tx1 = \App\Models\StockTransaction::create([
+            'reference_no' => 'TRX-FILTER-001',
+            'type' => 'inbound',
+            'transaction_date' => '2026-10-01 10:00:00',
+            'created_by' => $this->staff->id,
+        ]);
+
+        $tx2 = \App\Models\StockTransaction::create([
+            'reference_no' => 'TRX-FILTER-002',
+            'type' => 'outbound',
+            'transaction_date' => '2026-10-15 14:00:00',
+            'created_by' => $this->staff->id,
+        ]);
+
+        $tx3 = \App\Models\StockTransaction::create([
+            'reference_no' => 'TRX-FILTER-003',
+            'type' => 'inbound',
+            'transaction_date' => '2026-10-25 09:00:00',
+            'created_by' => $this->staff->id,
+        ]);
+
+        // Filter by date range: 2026-10-10 to 2026-10-20 -> should only find tx2
+        $response = $this->actingAs($this->staff)->get('/transactions?start_date=2026-10-10&end_date=2026-10-20');
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Transactions/Index')
+            ->where('filters.start_date', '2026-10-10')
+            ->where('filters.end_date', '2026-10-20')
+            ->has('transactions.data', 1)
+            ->where('transactions.data.0.reference_no', 'TRX-FILTER-002')
+        );
+
+        // Filter by type: inbound and date range: 2026-10-01 to 2026-10-30 -> should find tx1 and tx3
+        $response2 = $this->actingAs($this->staff)->get('/transactions?type=inbound&start_date=2026-10-01&end_date=2026-10-30');
+        $response2->assertOk();
+        $response2->assertInertia(fn ($page) => $page
+            ->has('transactions.data', 2)
+        );
+    }
 }

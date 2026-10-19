@@ -28,6 +28,8 @@ class StockTransactionController extends Controller
     {
         $type = $request->input('type'); // inbound, outbound, or null (all)
         $search = $request->input('search');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
 
         $query = StockTransaction::query()
             ->with(['creator:id,name', 'details.product:id,sku,name,unit,unit_price'])
@@ -35,6 +37,14 @@ class StockTransactionController extends Controller
 
         if ($type && in_array($type, ['inbound', 'outbound'])) {
             $query->where('type', $type);
+        }
+
+        if ($startDate) {
+            $query->whereDate('transaction_date', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $query->whereDate('transaction_date', '<=', $endDate);
         }
 
         if ($search) {
@@ -69,6 +79,8 @@ class StockTransactionController extends Controller
             'filters' => [
                 'type' => $type ?? '',
                 'search' => $search ?? '',
+                'start_date' => $startDate ?? '',
+                'end_date' => $endDate ?? '',
             ],
             'stats' => $stats,
             'can_create' => Auth::user()?->hasAnyRole(['staf-gudang', 'manajer-operasional']) || Auth::user()?->can('transactions.create'),
