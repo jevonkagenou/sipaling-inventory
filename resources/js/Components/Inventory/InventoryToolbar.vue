@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu'
-import { ChevronDown, Plus, Search, FolderTree } from 'lucide-vue-next'
+import { ChevronDown, Plus, Search, FolderTree, Upload, Filter } from 'lucide-vue-next'
 
 const props = defineProps<{
   searchQuery: string
@@ -20,12 +20,16 @@ const props = defineProps<{
   reorderCount: number
   table: any
   columnNames: Record<string, string>
+  categories?: { id: string; name: string }[]
+  selectedCategoryId?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'update:searchQuery', val: string): void
   (e: 'update:statusFilter', status: 'all' | 'Aman' | 'Reorder'): void
+  (e: 'update:selectedCategoryId', categoryId: string): void
   (e: 'create'): void
+  (e: 'import'): void
   (e: 'manageCategories'): void
 }>()
 
@@ -48,6 +52,20 @@ const hideableColumns = computed(() => {
           :model-value="searchQuery"
           @update:model-value="emit('update:searchQuery', String($event))"
         />
+      </div>
+
+      <!-- Dropdown Filter Kategori -->
+      <div v-if="categories && categories.length > 0" class="shrink-0">
+        <select
+          :value="selectedCategoryId || 'all'"
+          @change="emit('update:selectedCategoryId', ($event.target as HTMLSelectElement).value)"
+          class="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 font-medium shadow-2xs hover:border-[#2563EB]/40 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer"
+        >
+          <option value="all">Semua Kategori</option>
+          <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+            {{ cat.name }}
+          </option>
+        </select>
       </div>
 
       <!-- Tab Status Filter -->
@@ -85,8 +103,18 @@ const hideableColumns = computed(() => {
       </div>
     </div>
 
-    <!-- Actions: Column Selector & Add Product -->
+    <!-- Actions: Column Selector, Import, Category, Add Product -->
     <div class="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
+      <!-- Impor CSV Button -->
+      <Button
+        variant="outline"
+        @click="emit('import')"
+        class="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 font-medium shadow-2xs transition-all text-xs h-9 px-3 cursor-pointer"
+        title="Impor katalog produk massal dari berkas CSV"
+      >
+        <Upload class="w-3.5 h-3.5 mr-1.5 text-slate-500" /> Impor CSV
+      </Button>
+
       <!-- Dropdown Opsi Kolom -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>

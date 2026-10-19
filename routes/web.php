@@ -28,6 +28,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Operasi CRUD Master Produk & Kategori (Khusus Manajer Operasional & Komisaris)
     Route::middleware(['role_or_permission:manajer-operasional|komisaris|inventory.manage'])->group(function () {
+        Route::get('/inventory/import-template', [ProductController::class, 'downloadTemplate'])->name('inventory.import-template');
+        Route::post('/inventory/import', [ProductController::class, 'importCsv'])->name('inventory.import');
+
         Route::post('/inventory', [ProductController::class, 'store'])->name('inventory.store');
         Route::put('/inventory/{product}', [ProductController::class, 'update'])->name('inventory.update');
         Route::delete('/inventory/{product}', [ProductController::class, 'destroy'])->name('inventory.destroy');

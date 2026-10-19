@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import AppSidebar from '@/Components/Layout/AppSidebar.vue'
+import LogoutConfirmDialog from '@/Components/Layout/LogoutConfirmDialog.vue'
 import Dropdown from '@/Components/Dropdown.vue'
 import DropdownLink from '@/Components/DropdownLink.vue'
 import { useTheme } from '@/Composables/useTheme'
@@ -22,6 +23,7 @@ const { isDark, toggleTheme, initTheme } = useTheme()
 const isSidebarOpen = ref(false)
 const isSidebarCollapsed = ref(false)
 const sidebarRef = ref(null)
+const isLogoutModalOpen = ref(false)
 
 function toggleDesktopSidebar() {
   if (sidebarRef.value) {
@@ -86,6 +88,7 @@ onMounted(() => {
       @update:model-value-collapsed="isSidebarCollapsed = $event"
       @update:is-open="isSidebarOpen = $event"
       @close="isSidebarOpen = false"
+      @confirm-logout="isLogoutModalOpen = true"
     />
 
     <!-- Main Content Shell -->
@@ -162,15 +165,14 @@ onMounted(() => {
                 <UserIcon class="h-3.5 w-3.5 text-slate-400" />
                 Akun
               </DropdownLink>
-              <DropdownLink
-                :href="route('logout')"
-                method="post"
-                as="button"
-                class="text-xs text-rose-600 dark:text-rose-400 font-medium hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2"
+              <button
+                type="button"
+                class="w-full text-left px-4 py-2 text-xs text-rose-600 dark:text-rose-400 font-medium hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2 transition-colors cursor-pointer"
+                @click="isLogoutModalOpen = true"
               >
                 <LogOut class="h-3.5 w-3.5 text-rose-500" />
                 Keluar
-              </DropdownLink>
+              </button>
             </template>
           </Dropdown>
         </div>
@@ -189,5 +191,8 @@ onMounted(() => {
         </p>
       </footer>
     </div>
+
+    <!-- Safety Confirmation Modal Before Session Termination -->
+    <LogoutConfirmDialog v-model:open="isLogoutModalOpen" />
   </div>
 </template>

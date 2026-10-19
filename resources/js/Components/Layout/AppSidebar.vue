@@ -28,7 +28,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:isOpen', 'update:modelValueCollapsed', 'close'])
+const emit = defineEmits(['update:isOpen', 'update:modelValueCollapsed', 'close', 'confirmLogout'])
 
 const page = usePage()
 const { isDark, toggleTheme } = useTheme()
@@ -398,20 +398,19 @@ function closeSidebar() {
         <span v-show="!isCollapsed" class="truncate">Akun</span>
       </Link>
 
-      <!-- Logout Button -->
-      <Link
-        :href="route('logout')"
-        method="post"
-        as="button"
+      <!-- Logout Button (Triggers Safe Confirmation Dialog) -->
+      <button
+        type="button"
         :title="isCollapsed ? 'Keluar' : undefined"
         :class="[
-          'w-full flex items-center gap-3 py-2 rounded-xl text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer',
+          'w-full flex items-center gap-3 py-2 rounded-xl text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer text-left',
           isCollapsed ? 'justify-center px-0' : 'px-3',
         ]"
+        @click="closeSidebar(); emit('confirmLogout')"
       >
         <LogOut class="h-4 w-4 text-rose-500 shrink-0" />
         <span v-show="!isCollapsed">Keluar</span>
-      </Link>
+      </button>
     </div>
   </aside>
 </template>

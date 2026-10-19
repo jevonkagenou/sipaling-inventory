@@ -286,4 +286,48 @@ class ProductControllerTest extends TestCase
             'causer_id' => $this->manager->id,
         ]);
     }
+
+    public function test_manager_can_download_import_csv_template(): void
+    {
+        $response = $this->actingAs($this->manager)->get('/inventory/import-template');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Disposition', 'attachment; filename="template_import_produk_sipaling.csv"');
+    }
+
+    public function test_manager_can_import_products_from_csv(): void
+    {
+        $csvContent = "sku,name,category,unit,unit_price,current_stock,minimum_stock,description\n"
+            ."BRG-TEST-001,Test Keyboard Mech,Aksesoris Komputer,unit,450000,20,5,Mechanical Keyboard Blue Switch\n"
+            ."BRG-TEST-002,Test Mouse Wireless,Aksesoris Komputer,unit,250000,30,5,Wireless Mouse 2.4Ghz\n";
+
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('products.csv', $csvContent);
+
+        $response = $this->actingAs($this->manager)->post('/inventory/import', [
+            'file' => $file,
+        ]);
+
+        $response->assertRedirect('/inventory');
+        $this->assertDatabaseHas('products', ['sku' => 'BRG-TEST-001', 'name' => 'Test Keyboard Mech']);
+        $this->assertDatabaseHas('products', ['sku' => 'BRG-TEST-002', 'name' => 'Test Mouse Wireless']);
+        $this->assertDatabaseHas('categories', ['name' => 'Aksesoris Komputer']);
+
+        // Verifikasi activity log tercatat
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'inventory',
+            'event' => 'created',
+            'causer_id' => $this->manager->id,
+        ]);
+    }
+
+    public function test_staff_cannot_import_csv(): void
+    {
+        $file = \Illuminate\Http\UploadedFile::fake()->create('products.csv', 10);
+
+        $response = $this->actingAs($this->staff)->post('/inventory/import', [
+            'file' => $file,
+        ]);
+
+        $response->assertForbidden();
+    }
 }

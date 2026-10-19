@@ -51,6 +51,7 @@ import ProductFormDialog from '@/Components/Inventory/ProductFormDialog.vue'
 import ProductForecastDialog from '@/Components/Inventory/ProductForecastDialog.vue'
 import ProductDeleteDialog from '@/Components/Inventory/ProductDeleteDialog.vue'
 import CategoryManageDialog from '@/Components/Inventory/CategoryManageDialog.vue'
+import ProductImportDialog from '@/Components/Inventory/ProductImportDialog.vue'
 
 // Lucide Icons
 import {
@@ -90,7 +91,7 @@ export interface ProductItem {
 const props = defineProps<{
   products: ProductItem[]
   categories: { id: string; name: string }[]
-  filters: { search?: string }
+  filters: { search?: string; category_id?: string }
   stats: {
     total_products: number
     total_categories: number
@@ -472,8 +473,33 @@ const dialogMode = ref<'create' | 'edit'>('create')
 const selectedProduct = ref<ProductItem | null>(null)
 
 const isCategoryDialogOpen = ref(false)
+const isImportDialogOpen = ref(false)
 const isDeleteDialogOpen = ref(false)
 const deletingProduct = ref<ProductItem | null>(null)
+
+const selectedCategoryId = ref<string>(props.filters?.category_id || 'all')
+
+function onCategoryFilterChange(catId: string) {
+  selectedCategoryId.value = catId
+  router.get(
+    route('inventory.index'),
+    {
+      category_id: catId !== 'all' ? catId : undefined,
+      search: props.filters?.search || undefined,
+    },
+    {
+      preserveState: true,
+      preserveScroll: true,
+      replace: true,
+      only: ['products', 'filters'],
+    }
+  )
+}
+
+function onImported() {
+  router.reload({ only: ['products', 'categories', 'stats'] })
+  showToast('Impor Berhasil', 'Data produk baru dari file CSV berhasil ditambahkan ke katalog.')
+}
 
 function openCreateDialog() {
   dialogMode.value = 'create'
@@ -615,9 +641,13 @@ function onDeleteError(message: string) {
           :reorder-count="stats.reorder_count"
           :table="table"
           :column-names="columnNames"
+          :categories="categories"
+          :selected-category-id="selectedCategoryId"
           @update:search-query="table.getColumn('name')?.setFilterValue($event)"
           @update:status-filter="setStatusFilter"
+          @update:selected-category-id="onCategoryFilterChange"
           @create="openCreateDialog"
+          @import="isImportDialogOpen = true"
           @manage-categories="isCategoryDialogOpen = true"
         />
 
@@ -741,6 +771,11 @@ function onDeleteError(message: string) {
       :categories="categories"
       @saved="onCategorySaved"
       @toast="showToast"
+    />
+
+    <ProductImportDialog
+      v-model:open="isImportDialogOpen"
+      @imported="onImported"
     />
 
     <ProductForecastDialog
