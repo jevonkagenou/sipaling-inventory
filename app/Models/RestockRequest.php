@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,10 +23,18 @@ class RestockRequest extends Model
         'general_notes',
     ];
 
-    protected $casts = [
-        'reviewed_at' => 'datetime',
-        'total_estimated_cost' => 'decimal:2',
-    ];
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'reviewed_at' => 'datetime',
+            'total_estimated_cost' => 'decimal:2',
+        ];
+    }
 
     /**
      * Pengaju berkas pengadaan (Manajer Operasional)
@@ -41,5 +50,53 @@ class RestockRequest extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * Scope kueri untuk memfilter berkas berstatus pending
+     */
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where('status', 'pending');
+    }
+
+    /**
+     * Scope kueri untuk memfilter berkas berstatus approved
+     */
+    public function scopeApproved(Builder $query): Builder
+    {
+        return $query->where('status', 'approved');
+    }
+
+    /**
+     * Scope kueri untuk memfilter berkas berstatus rejected
+     */
+    public function scopeRejected(Builder $query): Builder
+    {
+        return $query->where('status', 'rejected');
+    }
+
+    /**
+     * Periksa apakah pengajuan masih berstatus pending
+     */
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    /**
+     * Periksa apakah pengajuan telah disetujui Komisaris
+     */
+    public function isApproved(): bool
+    {
+        return $this->status === 'approved';
+    }
+
+    /**
+     * Periksa apakah pengajuan ditolak Komisaris
+     */
+    public function isRejected(): bool
+    {
+        return $this->status === 'rejected';
     }
 }

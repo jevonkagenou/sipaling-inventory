@@ -61,4 +61,69 @@ class RestockRequestSchemaTest extends TestCase
             $this->assertEquals($status, $req->status);
         }
     }
+
+    public function test_restock_request_requester_and_reviewer_relationships(): void
+    {
+        $request = RestockRequest::create([
+            'request_no' => 'REQ-REL-0001',
+            'requested_by' => $this->manager->id,
+            'status' => 'approved',
+            'reviewed_by' => $this->commissioner->id,
+            'reviewed_at' => now(),
+            'review_notes' => 'Disetujui untuk PO batch 1',
+            'total_estimated_cost' => 7500000,
+        ]);
+
+        // Verifikasi relasi dari RestockRequest ke User
+        $this->assertInstanceOf(User::class, $request->requester);
+        $this->assertEquals($this->manager->id, $request->requester->id);
+        $this->assertEquals('Manajer Operasional', $request->requester->name);
+
+        $this->assertInstanceOf(User::class, $request->reviewer);
+        $this->assertEquals($this->commissioner->id, $request->reviewer->id);
+        $this->assertEquals('Komisaris SIPALING', $request->reviewer->name);
+
+        // Verifikasi relasi timbal balik (reciprocal) dari User ke RestockRequest
+        $this->assertTrue($this->manager->requestedRestocks()->where('id', $request->id)->exists());
+        $this->assertTrue($this->commissioner->reviewedRestocks()->where('id', $request->id)->exists());
+    }
+
+    public function test_restock_request_scopes_and_status_helpers(): void
+    {
+        $pendingReq = RestockRequest::create([
+            'request_no' => 'REQ-SCP-001',
+            'requested_by' => $this->manager->id,
+            'status' => 'pending',
+        ]);
+
+        $approvedReq = RestockRequest::create([
+            'request_no' => 'REQ-SCP-002',
+            'requested_by' => $this->manager->id,
+            'status' => 'approved',
+            'reviewed_by' => $this->commissioner->id,
+            'reviewed_at' => now(),
+        ]);
+
+        $rejectedReq = RestockRequest::create([
+            'request_no' => 'REQ-SCP-003',
+            'requested_by' => $this->manager->id,
+            'status' => 'rejected',
+            'reviewed_by' => $this->commissioner->id,
+            'reviewed_at' => now(),
+            'review_notes' => 'Alasan penolakan anggaran',
+        ]);
+
+        // Uji query scopes
+        $this->assertEquals(1, RestockRequest::pending()->where('id', $pendingReq->id)->count());
+        $this->assertEquals(1, RestockRequest::approved()->where('id', $approvedReq->id)->count());
+        $this->assertEquals(1, RestockRequest::rejected()->where('id', $rejectedReq->id)->count());
+
+        // Uji helper methods
+        $this->assertTrue($pendingReq->isPending());
+        $this->assertFalse($pendingReq->isApproved());
+        $this->assertTrue($approvedReq->isApproved());
+        $this->assertFalse($approvedReq->isRejected());
+        $this->assertTrue($rejectedReq->isRejected());
+        $this->assertFalse($rejectedReq->isPending());
+    }
 }
