@@ -532,6 +532,28 @@ function onRestockSubmitted() {
           :unit="currentProduct?.unit || 'unit'"
           :height="260"
         />
+      </div><div v-else class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-2xs flex flex-col items-center justify-center text-center min-h-[350px]">
+        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-4">
+          <AlertCircle class="w-10 h-10 text-[#2563EB] dark:text-blue-400" />
+        </div>
+        
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
+          Data Peramalan Belum Cukup
+        </h3>
+        
+        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+          Grafik peramalan (Double Exponential Smoothing) tidak dapat ditampilkan. Sistem membutuhkan <strong>minimal 2-3 bulan data tutup buku</strong> untuk memproyeksikan tren dengan akurat.
+        </p>
+        
+        <div class="flex items-start bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-4 rounded-xl text-left max-w-md">
+          <ShieldCheck class="w-5 h-5 text-amber-500 mt-0.5 mr-3 flex-shrink-0" />
+          <div>
+            <h4 class="text-sm font-semibold text-amber-800 dark:text-amber-400">Rekomendasi Saat Ini</h4>
+            <p class="text-xs text-amber-700 dark:text-amber-500/80 mt-1">
+              Sementara riwayat transaksi sedang dikumpulkan, rekomendasi persediaan untuk barang ini akan mengacu pada batas <strong>Safety Stock</strong>.
+            </p>
+          </div>
+        </div>
       </div>
 
       <!-- Section: Matriks Peringatan Restock Seluruh Master Produk -->
@@ -546,8 +568,9 @@ function onRestockSubmitted() {
               Diurutkan berdasarkan prioritas urgensi pengadaan (safety stock deficit).
             </p>
           </div>
-<div class="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
-            <!-- Tombol Ajukan Restock (Fitur Najwa) -->
+
+          <div class="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
+            <!-- Tombol Ajukan Restock -->
             <button
               v-if="canRequestRestock && selectedIds.length > 0"
               type="button"
@@ -558,7 +581,7 @@ function onRestockSubmitted() {
               Ajukan Restock ({{ selectedIds.length }})
             </button>
 
-            <!-- Dropdown Pilihan Format Unduh (Fitur Felix) -->
+            <!-- Dropdown Pilihan Format Unduh -->
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
                 <button
@@ -607,11 +630,12 @@ function onRestockSubmitted() {
             </span>
           </div>
         </div>
+
         <div class="overflow-x-auto">
           <table class="w-full text-xs">
             <thead class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
               <tr class="h-10">
-                              <th v-if="canRequestRestock" class="px-3 py-2.5 w-10">
+                <th v-if="canRequestRestock" class="px-3 py-2.5 w-10">
                   <input
                     type="checkbox"
                     :checked="allSelected"
@@ -638,7 +662,7 @@ function onRestockSubmitted() {
                 class="group hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
                 :class="item.id === selectedProductId ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''"
               >
-                  <td v-if="canRequestRestock" class="px-3 py-2.5">
+                <td v-if="canRequestRestock" class="px-3 py-2.5">
                   <input
                     v-model="selectedIds"
                     :value="item.id"
