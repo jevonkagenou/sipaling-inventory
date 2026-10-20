@@ -65,4 +65,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(PasswordResetOtp::class);
     }
+
+    /**
+     * Berkas pengajuan restock yang diajukan oleh pengguna ini (Manajer)
+     */
+    public function requestedRestocks(): HasMany
+    {
+        return $this->hasMany(RestockRequest::class, 'requested_by');
+    }
+
+    /**
+     * Berkas pengajuan restock yang ditinjau/dievaluasi oleh pengguna ini (Komisaris)
+     */
+    public function reviewedRestocks(): HasMany
+    {
+        return $this->hasMany(RestockRequest::class, 'reviewed_by');
+    }
 }
