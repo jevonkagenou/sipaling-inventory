@@ -36,6 +36,25 @@ const passwordForm = useForm({
     password_confirmation: '',
 });
 
+// indikator kekuatan sandi
+const passwordStrength = computed(() => {
+    const pwd = passwordForm.password;
+    if (!pwd) return { label: '', color: 'bg-transparent', textColor: '', width: 'w-0' };
+
+    let score = 0;
+    if (pwd.length >= 8) score += 1;            // minimal 8 karakter
+    if (/\d/.test(pwd)) score += 1;             // mengandung angka
+    if (/[^A-Za-z0-9]/.test(pwd)) score += 1;   // mengandung simbol
+
+    if (score <= 1){
+        return { label: 'Lemah', color: 'bg-red-500', textColor: 'text-red-500 dark:text-red-400', width: 'w-1/3' };
+    } else if (score === 2) {
+        return { label: 'Sedang', color: 'bg-amber-500', textColor: 'text-amber-500 dark:text-amber-400', width: 'w-2/3' };
+    } else {
+        return { label: 'Kuat', color: 'bg-emerald-500', textColor: 'text-emerald-500 dark:text-emerald-400', width: 'w-full' };
+    }
+});
+
 const isChangingPassword = computed(() => {
     return !!(passwordForm.current_password || passwordForm.password || passwordForm.password_confirmation);
 });
@@ -236,6 +255,20 @@ function submitAll() {
                                 </svg>
                             </button>
                         </div>
+
+                        <!-- visual kekuatan sandi -->
+                        <div v-if="passwordForm.password" class="mt-2 space-y-1">
+                            <div class="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div
+                                    class="h-full transition-all duration-300"
+                                    :class="[passwordStrength.width, passwordStrength.color]"
+                                ></div>
+                            </div>
+                            <p class="text-[11px] font-medium" :class="[passwordStrength.textColor]">
+                                Kekuatan Sandi: {{ passwordStrength.label }}
+                            </p>
+                        </div>
+
                         <InputError class="mt-1.5" :message="passwordForm.errors.password" />
                     </div>
 
