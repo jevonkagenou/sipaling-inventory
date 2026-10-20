@@ -1,15 +1,14 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RestockController;
 use App\Http\Controllers\StockTransactionController;
 use App\Http\Controllers\UserController;
-use App\Models\ActivityLog;
-use App\Models\ForecastingLog;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -77,74 +76,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('restock')->name('restock.')->group(function () {
         // Monitoring & Pengajuan Draf (Manajer Operasional & Komisaris)
         Route::middleware(['role:manajer-operasional|komisaris'])->group(function () {
-            Route::get('/', function () {
-                return Inertia::render('Restock/Index');
-            })->name('index');
+            Route::get('/', [RestockController::class, 'index'])->name('index');
         });
 
         // Otorisasi Persetujuan Khusus (Komisaris Only)
         Route::middleware(['role:komisaris'])->group(function () {
-            Route::get('/approval', function () {
-                return Inertia::render('Restock/Approval');
-            })->name('approval');
+            Route::get('/approval', [RestockController::class, 'approval'])->name('approval');
         });
     });
 
     // 4. Modul Jejak Audit & Investigasi Forensik (Auditor Internal & Komisaris)
     Route::middleware(['role:auditor-internal|komisaris'])->prefix('audit')->name('audit.')->group(function () {
-        Route::get('/', function (Request $request) {
-            $query = ActivityLog::with('causer:id,name,email');
-
-            if ($request->filled('search')) {
-                $search = trim($request->input('search'));
-                $query->where(function ($q) use ($search) {
-                    $q->where('description', 'like', "%{$search}%")
-                      ->orWhere('event', 'like', "%{$search}%")
-                      ->orWhere('log_name', 'like', "%{$search}%")
-                      ->orWhereHas('causer', function ($cq) use ($search) {
-                          $cq->where('name', 'like', "%{$search}%")
-                             ->orWhere('email', 'like', "%{$search}%");
-                      });
-                });
-            }
-
-            if ($request->filled('event') && $request->input('event') !== 'all') {
-                $query->where('event', $request->input('event'));
-            }
-
-            if ($request->filled('log_name') && $request->input('log_name') !== 'all') {
-                $query->where('log_name', $request->input('log_name'));
-            }
-
-            if ($request->filled('start_date')) {
-                $query->whereDate('created_at', '>=', $request->input('start_date'));
-            }
-
-            if ($request->filled('end_date')) {
-                $query->whereDate('created_at', '<=', $request->input('end_date'));
-            }
-
-            $logs = $query->latest()->paginate(15)->withQueryString();
-
-            $stats = [
-                'total_logs' => ActivityLog::count(),
-                'inventory_logs' => ActivityLog::where('log_name', 'inventory')->count(),
-                'user_logs' => ActivityLog::where('log_name', 'users')->count(),
-                'forecast_logs' => ForecastingLog::count(),
-            ];
-
-            return Inertia::render('Audit/Index', [
-                'logs' => $logs,
-                'stats' => $stats,
-                'filters' => [
-                    'search' => $request->input('search', ''),
-                    'event' => $request->input('event', ''),
-                    'log_name' => $request->input('log_name', ''),
-                    'start_date' => $request->input('start_date', ''),
-                    'end_date' => $request->input('end_date', ''),
-                ],
-            ]);
-        })->name('index');
+        Route::get('/', [AuditLogController::class, 'index'])->name('index');
     });
 
     // 5. Modul Manajemen Pengguna & Aktivasi Akun (Manajer Operasional & Komisaris)
