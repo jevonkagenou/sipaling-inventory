@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
 import RestockRequestDialog from '@/Components/Restock/RestockRequestDialog.vue'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
@@ -265,6 +265,53 @@ function toggleAll() {
 function onRestockSubmitted() {
   selectedIds.value = []
 }
+
+// Auto-scroll ke bagian Ringkasan Rekomendasi jika diarahkan dari 'Ajukan via Analitik DES'
+const isSectionHighlighted = ref(false)
+
+function scrollToRecommendations() {
+  nextTick(() => {
+    setTimeout(() => {
+      const el = document.getElementById('ringkasan-rekomendasi')
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        isSectionHighlighted.value = true
+        setTimeout(() => {
+          isSectionHighlighted.value = false
+        }, 2500)
+      }
+    }, 120)
+  })
+}
+
+function checkAndScroll() {
+  if (typeof window === 'undefined') return
+  const url = page.url || ''
+  const hash = window.location.hash
+  const urlParams = new URLSearchParams(window.location.search)
+
+  const isTargeted =
+    hash === '#ringkasan-rekomendasi' ||
+    urlParams.get('section') === 'rekomendasi' ||
+    urlParams.get('scroll') === 'rekomendasi' ||
+    url.includes('section=rekomendasi') ||
+    url.includes('#ringkasan-rekomendasi')
+
+  if (isTargeted) {
+    scrollToRecommendations()
+  }
+}
+
+onMounted(() => {
+  checkAndScroll()
+})
+
+watch(
+  () => page.url,
+  () => {
+    checkAndScroll()
+  }
+)
 </script>
 
 <template>
@@ -557,7 +604,11 @@ function onRestockSubmitted() {
       </div>
 
       <!-- Section: Matriks Peringatan Restock Seluruh Master Produk -->
-      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden">
+      <div
+        id="ringkasan-rekomendasi"
+        class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden scroll-mt-20 transition-all duration-700"
+        :class="{ 'ring-2 ring-[#2563EB] shadow-lg border-blue-400 dark:border-blue-500': isSectionHighlighted }"
+      >
         <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">

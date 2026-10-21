@@ -299,7 +299,7 @@ function formatDate(dateStr: string) {
 
         <!-- Card 4: Perlu Restock Segera (Amber Alert) -->
         <Link
-          :href="route('analytics.index')"
+          :href="route('analytics.index', { section: 'rekomendasi' }) + '#ringkasan-rekomendasi'"
           class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
         >
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">

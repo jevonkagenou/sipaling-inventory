@@ -387,7 +387,7 @@ function formatDate(dateStr: string) {
         <div class="flex items-center gap-2.5 flex-wrap">
           <Link
             v-if="isManager"
-            :href="route('analytics.index')"
+            :href="route('analytics.index', { section: 'rekomendasi' }) + '#ringkasan-rekomendasi'"
             class="h-9 px-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
             title="Pilih produk dari analitik DES untuk mengajukan restock"
           >
