@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import {
@@ -129,6 +129,23 @@ function filteredProducts(query?: string) {
     .filter((p) => p.sku.toLowerCase().includes(q) || p.name.toLowerCase().includes(q))
     .slice(0, 50)
 }
+
+function handleDocumentClick(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (!target.closest('.product-search-container')) {
+    form.items.forEach((item) => {
+      item.isDropdownOpen = false
+    })
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleDocumentClick)
+})
 
 // Validasi apakah ada item yang kuantitasnya melebihi stok yang ada
 const hasStockExceededError = computed(() => {
@@ -494,7 +511,7 @@ function applyCsvToForm() {
         </div>
 
         <!-- Section 2: Daftar Item Barang Keluar -->
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md space-y-4">
+        <div class="relative z-20 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
@@ -531,7 +548,8 @@ function applyCsvToForm() {
               v-for="(item, index) in form.items"
               :key="index"
               :class="[
-                'relative rounded-2xl border p-4 transition-all',
+                'rounded-2xl border p-4 transition-all',
+                item.isDropdownOpen ? 'relative z-30 ring-2 ring-amber-500/20 shadow-md' : 'relative z-10',
                 getSelectedProduct(item.product_id) && Number(item.quantity) > (getSelectedProduct(item.product_id)?.current_stock || 0)
                   ? 'border-rose-300 bg-rose-50/40 dark:border-rose-800 dark:bg-rose-950/30'
                   : 'border-slate-200/90 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/40',
@@ -539,7 +557,7 @@ function applyCsvToForm() {
             >
               <div class="grid grid-cols-1 gap-3 sm:grid-cols-12 items-start">
                 <!-- Dropdown Search Produk (Col 5) -->
-                <div class="sm:col-span-5 relative">
+                <div class="sm:col-span-5 relative product-search-container">
                   <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Produk / SKU #{{ index + 1 }} <span class="text-rose-500">*</span>
                   </label>
@@ -549,6 +567,7 @@ function applyCsvToForm() {
                       type="text"
                       v-model="item.searchQuery"
                       @focus="item.isDropdownOpen = true"
+                      @click="item.isDropdownOpen = true"
                       placeholder="Cari SKU atau Nama Produk..."
                       class="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
                     />
@@ -558,7 +577,7 @@ function applyCsvToForm() {
                   <!-- Dropdown Search Result Popup -->
                   <div
                     v-if="item.isDropdownOpen"
-                    class="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-800 custom-scrollbar"
+                    class="absolute left-0 right-0 top-full z-50 mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl dark:border-slate-800 dark:bg-slate-800 custom-scrollbar ring-1 ring-black/5 dark:ring-white/10"
                   >
                     <div
                       v-if="filteredProducts(item.searchQuery).length === 0"
@@ -703,7 +722,7 @@ function applyCsvToForm() {
         </div>
 
         <!-- Section 3: Ringkasan & Aksi Submit -->
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md">
+        <div class="relative z-10 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <!-- Summary Stats Mini Cards (Harmonious & Professional) -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:w-auto">
