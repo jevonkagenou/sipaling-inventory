@@ -2,13 +2,21 @@
 
 namespace App\Services;
 
+use App\Events\RestockRequestApproved;
 use App\Models\RestockRequest;
+use App\Models\StockTransaction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RestockRequestService
 {
+    public function __construct(
+        protected ?StockTransactionService $stockTransactionService = null
+    ) {
+        $this->stockTransactionService = $stockTransactionService ?? app(StockTransactionService::class);
+    }
+
     /**
      * Menghasilkan nomor referensi pengadaan restock otomatis (REQ-YYYYMM-XXXX).
      */
@@ -84,10 +92,19 @@ class RestockRequestService
 
     /**
      * Menyetujui berkas pengadaan restock oleh Komisaris (Anti-Bypass).
+     * Opsi autoGenerateInbound akan memicu event pembuatan transaksi masuk (Inbound) otomatis.
+     *
+     * @param  array<array{product_id: string, quantity: int, unit_price?: float|null, notes?: string|null}>  $inboundItems
      */
-    public function approve(RestockRequest $request, User $reviewer, ?string $notes = null, array $meta = []): RestockRequest
-    {
-        return DB::transaction(function () use ($request, $reviewer, $notes, $meta) {
+    public function approve(
+        RestockRequest $request,
+        User $reviewer,
+        ?string $notes = null,
+        array $meta = [],
+        bool $autoGenerateInbound = false,
+        array $inboundItems = []
+    ): RestockRequest {
+        $approvedRequest = DB::transaction(function () use ($request, $reviewer, $notes, $meta) {
             // Validasi Anti-Bypass: Hanya dokumen berstatus pending yang boleh disetujui
             if (! $this->canTransitionTo($request, 'approved')) {
                 throw ValidationException::withMessages([
@@ -106,6 +123,41 @@ class RestockRequestService
 
             return $request->load(['requester', 'reviewer']);
         });
+
+        // Memicu Event persetujuan dokumen pengadaan restock
+        event(new RestockRequestApproved(
+            request: $approvedRequest,
+            reviewer: $reviewer,
+            autoGenerateInbound: $autoGenerateInbound,
+            items: $inboundItems,
+            meta: $meta
+        ));
+
+        return $approvedRequest;
+    }
+
+    /**
+     * Menerbitkan draf transaksi Inbound secara langsung dari pengadaan restock yang disetujui.
+     *
+     * @param  array<array{product_id: string, quantity: int, unit_price?: float|null, notes?: string|null}>  $items
+     */
+    public function generateInboundDraft(
+        RestockRequest $request,
+        User $actor,
+        array $items,
+        array $meta = []
+    ): StockTransaction {
+        if (! $request->isApproved()) {
+            throw ValidationException::withMessages([
+                'status' => ["Draf Inbound hanya dapat diterbitkan untuk pengadaan berstatus 'approved'. Status saat ini: {$request->status}."],
+            ]);
+        }
+
+        return $this->stockTransactionService->createInbound([
+            'party_name' => "Pengadaan Restock {$request->request_no}",
+            'notes' => "Draf transaksi masuk (Inbound) otomatis dari persetujuan restock {$request->request_no}",
+            'items' => $items,
+        ], $actor, $meta);
     }
 
     /**
