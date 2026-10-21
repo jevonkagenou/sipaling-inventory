@@ -32,7 +32,7 @@ import {
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu'
 import DemandForecastChart from '@/Components/Inventory/DemandForecastChart.vue'
-
+import AlgorithmPerformanceCard from '@/Components/Analytics/AlgorithmPerformanceCard.vue'
 
 const props = defineProps({
   products: {
@@ -77,7 +77,24 @@ const betaInput = ref(
     ? Number(props.filters.beta)
     : props.forecastData?.optimal_beta ?? 0.1
 )
+// Synchronize local slider state when Inertia props change (e.g. after reset to optimal)
+watch(
+  () => [props.filters, props.forecastData],
+  () => {
+    if (props.filters?.alpha !== null && props.filters?.alpha !== undefined && props.filters?.alpha !== '') {
+      alphaInput.value = Number(props.filters.alpha)
+    } else if (props.forecastData?.optimal_alpha !== undefined) {
+      alphaInput.value = Number(props.forecastData.optimal_alpha)
+    }
 
+    if (props.filters?.beta !== null && props.filters?.beta !== undefined && props.filters?.beta !== '') {
+      betaInput.value = Number(props.filters.beta)
+    } else if (props.forecastData?.optimal_beta !== undefined) {
+      betaInput.value = Number(props.forecastData.optimal_beta)
+    }
+  },
+  { deep: true }
+)
 function onProductChange(productId) {
   router.get(
     route('analytics.index'),
@@ -103,9 +120,6 @@ function applyCustomParams() {
 }
 
 function resetToOptimal() {
-  if (!props.forecastData) return
-  alphaInput.value = props.forecastData.optimal_alpha
-  betaInput.value = props.forecastData.optimal_beta
   router.get(
     route('analytics.index'),
     {
@@ -239,7 +253,23 @@ const chartData = computed(() => {
     getY,
   }
 })
-
+// Parameter yang benar-benar dipakai pada hasil saat ini
+// (nilai query bila disimulasikan manual, selain itu hasil grid search)
+const appliedAlpha = computed(() => {
+  const f = props.filters?.alpha
+  return f !== null && f !== undefined && f !== '' ? Number(f) : props.forecastData?.optimal_alpha ?? null
+})
+const appliedBeta = computed(() => {
+  const f = props.filters?.beta
+  return f !== null && f !== undefined && f !== '' ? Number(f) : props.forecastData?.optimal_beta ?? null
+})
+const isOptimalParams = computed(() => {
+  const hasAlphaFilter = props.filters?.alpha !== null && props.filters?.alpha !== undefined && props.filters?.alpha !== ''
+  const hasBetaFilter = props.filters?.beta !== null && props.filters?.beta !== undefined && props.filters?.beta !== ''
+  
+  // Jika ada query filter alpha/beta di URL, artinya sedang dalam mode simulasi manual
+  return !hasAlphaFilter && !hasBetaFilter
+})
 const hoveredPoint = ref(null)
 // Multi-restock: pilihan produk dan modal pengajuan
 const page = usePage()
@@ -555,7 +585,17 @@ watch(
           </p>
         </div>
       </div>
-
+          <!-- Section: Ringkasan Performa Algoritma (M4-FE-03) -->
+      <AlgorithmPerformanceCard
+        v-if="forecastData"
+        :alpha="appliedAlpha"
+        :beta="appliedBeta"
+        :mape="forecastData.mape"
+        :rmse="forecastData.rmse"
+        :optimal-alpha="forecastData.optimal_alpha"
+        :optimal-beta="forecastData.optimal_beta"
+        :is-optimal="isOptimalParams"
+      />
       <!-- Section: Visualisasi Kurva Tren DES -->
       <div v-if="forecastData && forecastData.has_sufficient_data" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
