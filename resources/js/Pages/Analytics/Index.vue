@@ -623,13 +623,26 @@ watch(
           <div class="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
             <!-- Tombol Ajukan Restock -->
             <button
-              v-if="canRequestRestock && selectedIds.length > 0"
+              v-if="canRequestRestock"
               type="button"
+              :disabled="selectedIds.length === 0"
               @click="isRestockDialogOpen = true"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              class="h-8 sm:h-9 px-3.5 rounded-xl inline-flex items-center gap-1.5 text-xs font-semibold shadow-2xs transition-all"
+              :class="selectedIds.length > 0
+                ? 'bg-[#2563EB] hover:bg-blue-700 text-white cursor-pointer active:scale-[0.98]'
+                : 'bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-800 cursor-not-allowed opacity-80'"
+              :title="selectedIds.length > 0
+                ? `Ajukan restock untuk ${selectedIds.length} produk terpilih`
+                : 'Centang minimal satu barang pada tabel di bawah untuk mengajukan restock'"
             >
-              <Send class="w-3.5 h-3.5" />
-              Ajukan Restock ({{ selectedIds.length }})
+              <Send class="w-3.5 h-3.5" :class="selectedIds.length > 0 ? 'text-white' : 'text-slate-400 dark:text-slate-500'" />
+              <span>Ajukan Restock</span>
+              <span
+                v-if="selectedIds.length > 0"
+                class="ml-0.5 px-1.5 py-0.5 rounded-md bg-blue-800/60 text-white text-[10px] font-bold tabular-nums"
+              >
+                {{ selectedIds.length }}
+              </span>
             </button>
 
             <!-- Dropdown Pilihan Format Unduh -->
