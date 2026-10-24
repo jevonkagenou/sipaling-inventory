@@ -2,21 +2,19 @@
 import { computed } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import InboundOutboundChart, { type TrendItem } from '@/Components/Dashboard/InboundOutboundChart.vue'
+import UserStatusDonutChart, { type UserStatsProps } from '@/Components/Dashboard/UserStatusDonutChart.vue'
 import {
   Boxes,
   ArrowLeftRight,
   TrendingUp,
   AlertTriangle,
-  CheckCircle2,
   PackagePlus,
   PackageMinus,
   ShieldCheck,
-  History,
+  CheckCircle2,
   ArrowRight,
-  Clock,
-  Layers,
-  Sparkles,
-  ExternalLink,
+  BarChart3,
   Users,
 } from 'lucide-vue-next'
 
@@ -68,6 +66,14 @@ const props = defineProps<{
   criticalProducts: ProductItem[]
   recentTransactions: TransactionItem[]
   recentLogs: LogItem[]
+  mutationTrends?: TrendItem[]
+  userStats?: UserStatsProps
+  // Analitik DES
+  products?: ProductItem[]
+  selectedProductId?: string
+  forecastData?: Record<string, any> | null
+  restockAlerts?: Array<Record<string, any>>
+  filters?: { alpha?: string | null; beta?: string | null }
 }>()
 
 const page = usePage()
@@ -187,14 +193,14 @@ function formatDate(dateStr: string) {
               class="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
             >
               <Boxes class="w-3.5 h-3.5 text-slate-500" />
-              Katalog Inventaris
+              Katalog Master
             </Link>
             <Link
               :href="route('analytics.index')"
               class="h-9 px-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
             >
               <TrendingUp class="w-3.5 h-3.5" />
-              Peramalan DES
+              Analisis DES & Restock
             </Link>
           </template>
 
@@ -271,7 +277,7 @@ function formatDate(dateStr: string) {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">transaksi</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.inbound_transactions }} Inbound • {{ stats.outbound_transactions }} Outbound
+            {{ stats.inbound_transactions }} Inbound &bull; {{ stats.outbound_transactions }} Outbound
           </p>
         </Link>
 
@@ -318,6 +324,79 @@ function formatDate(dateStr: string) {
             Mencapai batas safety stock &bull; Evaluasi DES
           </p>
         </Link>
+      </div>
+
+      <!-- ===== SECTION GRAFIK OPERASIONAL & KELOLA PENGGUNA (Manajer Operasional & Komisaris) ===== -->
+      <div v-if="primaryRole === 'manajer-operasional' || primaryRole === 'komisaris'" class="space-y-4">
+        <!-- Divider Header -->
+        <div class="flex items-center gap-3 pt-2">
+          <div class="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+          <span class="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">
+            <BarChart3 class="w-3.5 h-3.5 text-[#2563EB]" />
+            Operasional Mutasi & Tata Kelola Pengguna
+          </span>
+          <div class="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- 1. Grafik Tren Mutasi: Inbound vs Outbound (8 Cols) -->
+          <div class="lg:col-span-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <ArrowLeftRight class="w-4 h-4 text-[#2563EB]" />
+                  Tren Pergerakan Mutasi Stok (14 Hari Terakhir)
+                </h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Perbandingan volume barang masuk (Inbound) dan barang keluar (Outbound) harian.
+                </p>
+              </div>
+
+              <!-- Action Link: Seluruh Mutasi -->
+              <div class="flex items-center gap-2">
+                <Link
+                  :href="route('transactions.index')"
+                  class="h-8 px-3 rounded-lg bg-[#2563EB]/10 hover:bg-[#2563EB]/20 text-[#2563EB] dark:text-blue-400 text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+                >
+                  Semua Mutasi <ArrowRight class="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+
+            <!-- Inbound vs Outbound SVG Chart Component -->
+            <InboundOutboundChart :trends="props.mutationTrends || []" :height="220" />
+          </div>
+
+          <!-- 2. Pie/Donut Chart Status Akun Pengguna (4 Cols) -->
+          <div class="lg:col-span-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div class="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Users class="w-4 h-4 text-[#2563EB]" />
+                    Status Akun Pengguna
+                  </h3>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Rasio akun aktif vs diblokir sistem.
+                  </p>
+                </div>
+                <Link
+                  :href="route('users.index')"
+                  class="text-xs text-[#2563EB] dark:text-blue-400 hover:underline font-medium inline-flex items-center gap-0.5"
+                >
+                  Kelola <ArrowRight class="w-3 h-3" />
+                </Link>
+              </div>
+
+              <!-- Donut Chart Component -->
+              <div class="pt-4">
+                <UserStatusDonutChart
+                  :user-stats="props.userStats || { total: 0, active: 0, blocked: 0, active_percentage: 0 }"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- 3. Operational Highlights & Actionable Lists -->
@@ -485,7 +564,6 @@ function formatDate(dateStr: string) {
         </div>
       </div>
 
-      <!-- 4. Quick Governance & Audit Trail Strip (For Auditor & Executive roles) -->
       <div v-if="primaryRole === 'auditor-internal' || primaryRole === 'komisaris'" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-3">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
           <div class="flex items-center gap-2">
