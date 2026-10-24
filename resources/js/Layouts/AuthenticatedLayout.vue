@@ -99,7 +99,7 @@ onMounted(() => {
     <!-- Main Content Shell -->
     <div class="flex-1 flex flex-col min-w-0">
       <!-- Clean Minimal Top Header Navbar (No Redundant Badges) -->
-      <header class="sticky top-0 z-30 h-14 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-colors">
+      <header class="sticky top-0 z-30 h-16 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-colors">
         <!-- Left: Mobile Trigger & Desktop Sidebar Trigger & Header Title -->
         <div class="flex items-center gap-2.5 min-w-0">
           <!-- Mobile Menu Toggle Button -->
