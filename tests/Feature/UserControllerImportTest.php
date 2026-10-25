@@ -8,6 +8,8 @@ use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
 
 class UserControllerImportTest extends TestCase
@@ -64,23 +66,73 @@ class UserControllerImportTest extends TestCase
     }
 
     /**
-     * Skenario 3: Komisaris dan Manajer Operasional dapat mengunduh berkas template CSV pengguna.
+     * Skenario 3: Komisaris dan Manajer Operasional dapat mengunduh berkas template CSV dan Excel pengguna.
      */
     public function test_commissioner_and_manager_can_download_user_import_template(): void
     {
-        // Komisaris
+        // Komisaris (Default CSV)
         $resCommissioner = $this->actingAs($this->commissioner)->get('/users/import-template');
         $resCommissioner->assertOk();
         $resCommissioner->assertHeader('Content-Disposition', 'attachment; filename="template_import_pengguna_sipaling.csv"');
 
-        // Manajer Operasional
+        // Manajer Operasional (CSV)
         $resManager = $this->actingAs($this->manager)->get('/users/import-template');
         $resManager->assertOk();
         $resManager->assertHeader('Content-Disposition', 'attachment; filename="template_import_pengguna_sipaling.csv"');
+
+        // Manajer Operasional (Excel .xlsx)
+        $resManagerXlsx = $this->actingAs($this->manager)->get('/users/import-template?format=xlsx');
+        $resManagerXlsx->assertOk();
+        $resManagerXlsx->assertHeader('Content-Disposition', 'attachment; filename="template_import_pengguna_sipaling.xlsx"');
     }
 
     /**
-     * Skenario 4: Manajer Operasional berhasil mengimpor data pengguna baru secara massal dari CSV.
+     * Skenario 4: Manajer Operasional berhasil mengimpor data pengguna baru secara massal dari Excel (.xlsx).
+     */
+    public function test_manager_can_bulk_import_users_from_xlsx_file(): void
+    {
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->fromArray([
+            ['name', 'email', 'phone', 'role', 'password'],
+            ['Excel User One', 'excel.user1@sipaling.com', '081211112222', 'staf-gudang', 'ExcelPass123!'],
+            ['Excel User Two', 'excel.user2@sipaling.com', '081233334444', 'manajer-operasional', 'ExcelPass456!'],
+        ]);
+
+        $tempPath = tempnam(sys_get_temp_dir(), 'test_users_').'.xlsx';
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempPath);
+
+        $file = new UploadedFile(
+            $tempPath,
+            'users_test.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true
+        );
+
+        $response = $this->actingAs($this->manager)->post('/users/import', [
+            'file' => $file,
+        ]);
+
+        if (file_exists($tempPath)) {
+            @unlink($tempPath);
+        }
+
+        $response->assertRedirect('/users');
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', ['email' => 'excel.user1@sipaling.com', 'name' => 'Excel User One']);
+        $this->assertDatabaseHas('users', ['email' => 'excel.user2@sipaling.com', 'name' => 'Excel User Two']);
+
+        $u1 = User::where('email', 'excel.user1@sipaling.com')->first();
+        $this->assertNotNull($u1);
+        $this->assertTrue($u1->hasRole('staf-gudang'));
+        $this->assertTrue(Hash::check('ExcelPass123!', $u1->password));
+    }
+
+    /**
+     * Skenario 5: Manajer Operasional berhasil mengimpor data pengguna baru secara massal dari CSV.
      */
     public function test_manager_can_bulk_import_users_from_csv(): void
     {

@@ -15,6 +15,9 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -109,10 +112,47 @@ class UserController extends Controller
     }
 
     /**
-     * Mengunduh berkas template CSV untuk impor massal pengguna.
+     * Mengunduh berkas template spreadsheet (Excel / CSV) untuk impor massal pengguna.
      */
-    public function downloadTemplate(): StreamedResponse
+    public function downloadTemplate(Request $request): StreamedResponse
     {
+        $format = strtolower($request->query('format', 'csv'));
+
+        if ($format === 'xlsx') {
+            $spreadsheet = new Spreadsheet;
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Template Pengguna');
+
+            // Header Kolom & Data Contoh
+            $sheet->fromArray([
+                ['name', 'email', 'phone', 'role', 'password'],
+                ['Ahmad Fauzi', 'ahmad.fauzi@sipaling.com', '081234567890', 'staf-gudang', 'Password123!'],
+                ['Budi Santoso', 'budi.santoso@sipaling.com', '081298765432', 'manajer-operasional', 'Password123!'],
+                ['Citra Lestari', 'citra.lestari@sipaling.com', '081311223344', 'auditor-internal', 'Password123!'],
+                ['Dewi Sartika', 'dewi.sartika@sipaling.com', '081355667788', 'komisaris', 'Password123!'],
+            ], null, 'A1');
+
+            // Format Header Styling
+            $sheet->getStyle('A1:E1')->getFont()->setBold(true);
+
+            foreach (range('A', 'E') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $headers = [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="template_import_pengguna_sipaling.xlsx"',
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0',
+            ];
+
+            return response()->stream(function () use ($spreadsheet) {
+                $writer = new XlsxWriter($spreadsheet);
+                $writer->save('php://output');
+            }, 200, $headers);
+        }
+
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="template_import_pengguna_sipaling.csv"',
@@ -142,48 +182,91 @@ class UserController extends Controller
     }
 
     /**
-     * Mengimpor data pengguna massal dari berkas CSV.
+     * Mengekstrak seluruh baris dari berkas spreadsheet (.xlsx, .xls, .csv, .txt).
+     *
+     * @return array<int, array<int, mixed>>
      */
-    public function importCsv(Request $request): RedirectResponse|JsonResponse
+    protected function extractSpreadsheetRows(string $filePath, string $extension): array
     {
-        $request->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
-        ], [
-            'file.required' => 'Berkas CSV wajib dipilih.',
-            'file.mimes' => 'Berkas harus berformat .csv atau teks berpemisah koma.',
-            'file.max' => 'Ukuran berkas CSV maksimal 5 MB.',
-        ]);
+        if (in_array(strtolower($extension), ['xlsx', 'xls'])) {
+            $spreadsheet = IOFactory::load($filePath);
+            $sheet = $spreadsheet->getActiveSheet();
 
-        $file = $request->file('file');
-        $filePath = $file->getRealPath();
+            return $sheet->toArray(null, true, true, false);
+        }
 
         $handle = fopen($filePath, 'r');
         if (! $handle) {
-            return back()->withErrors(['file' => 'Gagal membaca berkas CSV.'])->with('error', 'Gagal membaca berkas CSV.');
+            return [];
         }
 
-        // Baca baris pertama (header) dan bersihkan BOM jika ada
         $firstLine = fgets($handle);
         if (! $firstLine) {
             fclose($handle);
 
-            return back()->withErrors(['file' => 'Berkas CSV kosong.'])->with('error', 'Berkas CSV kosong.');
+            return [];
         }
 
         $firstLine = str_replace("\xEF\xBB\xBF", '', $firstLine);
-        // Deteksi delimiter (koma atau titik koma)
         $delimiter = str_contains($firstLine, ';') ? ';' : ',';
-        $headerColumns = array_map(fn ($col) => strtolower(trim($col)), str_getcsv($firstLine, $delimiter));
+        rewind($handle);
+
+        $rows = [];
+        $isFirst = true;
+        while (($row = fgetcsv($handle, 4096, $delimiter)) !== false) {
+            if ($isFirst) {
+                if (isset($row[0])) {
+                    $row[0] = str_replace("\xEF\xBB\xBF", '', (string) $row[0]);
+                }
+                $isFirst = false;
+            }
+            $rows[] = $row;
+        }
+
+        fclose($handle);
+
+        return $rows;
+    }
+
+    /**
+     * Mengimpor data pengguna massal dari berkas spreadsheet (Excel / CSV).
+     */
+    public function importCsv(Request $request): RedirectResponse|JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt,xlsx,xls', 'max:5120'],
+        ], [
+            'file.required' => 'Berkas Excel atau CSV wajib dipilih.',
+            'file.mimes' => 'Berkas harus berformat .xlsx, .xls, .csv, atau .txt.',
+            'file.max' => 'Ukuran berkas spreadsheet maksimal 5 MB.',
+        ]);
+
+        $file = $request->file('file');
+        $filePath = $file->getRealPath();
+        $extension = $file->getClientOriginalExtension() ?: pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
+
+        try {
+            $rows = $this->extractSpreadsheetRows($filePath, (string) $extension);
+        } catch (\Throwable $e) {
+            return back()->withErrors(['file' => 'Gagal membaca berkas: '.$e->getMessage()])
+                ->with('error', 'Gagal memproses berkas spreadsheet.');
+        }
+
+        if (empty($rows)) {
+            return back()->withErrors(['file' => 'Berkas spreadsheet kosong.'])
+                ->with('error', 'Berkas spreadsheet kosong.');
+        }
+
+        $headerRow = array_shift($rows);
+        $headerColumns = array_map(fn ($col) => strtolower(trim((string) $col)), $headerRow);
 
         $colMap = array_flip($headerColumns);
         $requiredKeys = ['name', 'email', 'role'];
 
         foreach ($requiredKeys as $reqKey) {
             if (! isset($colMap[$reqKey])) {
-                fclose($handle);
-
-                return back()->withErrors(['file' => "Format CSV tidak valid. Kolom '{$reqKey}' tidak ditemukan pada baris judul."])
-                    ->with('error', "Kolom wajib '{$reqKey}' tidak ditemukan pada berkas CSV.");
+                return back()->withErrors(['file' => "Format spreadsheet tidak valid. Kolom '{$reqKey}' tidak ditemukan pada baris judul."])
+                    ->with('error', "Kolom wajib '{$reqKey}' tidak ditemukan pada berkas.");
             }
         }
 
@@ -198,16 +281,16 @@ class UserController extends Controller
 
         DB::beginTransaction();
         try {
-            while (($row = fgetcsv($handle, 4096, $delimiter)) !== false) {
-                if (empty($row) || (count($row) === 1 && empty($row[0]))) {
+            foreach ($rows as $row) {
+                if (empty($row) || (count(array_filter($row, fn ($val) => ! is_null($val) && trim((string) $val) !== '')) === 0)) {
                     continue;
                 }
 
-                $name = isset($colMap['name']) && isset($row[$colMap['name']]) ? trim($row[$colMap['name']]) : '';
-                $email = isset($colMap['email']) && isset($row[$colMap['email']]) ? strtolower(trim($row[$colMap['email']])) : '';
-                $rawRole = isset($colMap['role']) && isset($row[$colMap['role']]) ? trim($row[$colMap['role']]) : '';
-                $phone = isset($colMap['phone']) && isset($row[$colMap['phone']]) ? trim($row[$colMap['phone']]) : null;
-                $rawPassword = isset($colMap['password']) && isset($row[$colMap['password']]) ? trim($row[$colMap['password']]) : '';
+                $name = isset($colMap['name']) && isset($row[$colMap['name']]) ? trim((string) $row[$colMap['name']]) : '';
+                $email = isset($colMap['email']) && isset($row[$colMap['email']]) ? strtolower(trim((string) $row[$colMap['email']])) : '';
+                $rawRole = isset($colMap['role']) && isset($row[$colMap['role']]) ? trim((string) $row[$colMap['role']]) : '';
+                $phone = isset($colMap['phone']) && isset($row[$colMap['phone']]) && trim((string) $row[$colMap['phone']]) !== '' ? trim((string) $row[$colMap['phone']]) : null;
+                $rawPassword = isset($colMap['password']) && isset($row[$colMap['password']]) ? trim((string) $row[$colMap['password']]) : '';
 
                 if (empty($name) || empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $skippedCount++;
@@ -248,11 +331,9 @@ class UserController extends Controller
                 $importedCount++;
             }
 
-            fclose($handle);
-
             ActivityLog::create([
                 'log_name' => 'users',
-                'description' => "Mengimpor {$importedCount} pengguna baru dari berkas CSV ({$file->getClientOriginalName()})",
+                'description' => "Mengimpor {$importedCount} pengguna baru dari berkas ({$file->getClientOriginalName()})",
                 'subject_type' => User::class,
                 'causer_type' => Auth::user() ? get_class(Auth::user()) : null,
                 'causer_id' => Auth::id(),
@@ -261,6 +342,7 @@ class UserController extends Controller
                     'imported_count' => $importedCount,
                     'skipped_count' => $skippedCount,
                     'filename' => $file->getClientOriginalName(),
+                    'extension' => $extension,
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ],
@@ -285,11 +367,8 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
-            if (is_resource($handle)) {
-                fclose($handle);
-            }
 
-            return back()->withErrors(['file' => 'Gagal memproses berkas CSV: '.$e->getMessage()])
+            return back()->withErrors(['file' => 'Gagal memproses berkas: '.$e->getMessage()])
                 ->with('error', 'Terjadi kesalahan saat menyimpan data pengguna.');
         }
     }
