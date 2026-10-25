@@ -129,15 +129,15 @@ Target Penyelesaian: Minggu ke-12 s.d. Minggu ke-13
 
 | ID | Lapisan | Rincian Tugas Teknis | Target Output / Deliverable | PIC | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| M5-BE-01 | Backend / Skema | Membuat migrasi restock_requests (header) & restock_request_details (detail multi-item UUID) | Skema tabel alur pengadaan multi-produk berelasi UUID | Sultan | [ ] |
-| M5-BE-02 | Backend / Model | Membuat Model RestockRequest.php & RestockRequestDetail.php dengan relasi requester, reviewer, & produk | Sepasang Model Eloquent alur persetujuan pengadaan | Sultan | [ ] |
-| M5-LC-01 | Logika / Policy | Membuat RestockRequestPolicy untuk otorisasi hak ajukan (Manajer) dan setujui (Komisaris) | Kebijakan otorisasi alur kerja approval | Sultan | [ ] |
-| M5-LC-02 | Logika / Service | Membangun RestockRequestService untuk mengelola transisi status dokumen pengadaan | Service alur kerja approval anti-bypass | Sultan | [ ] |
-| M5-LC-03 | Logika / Event | Mengaitkan persetujuan dokumen dengan opsi pembuatan draf transaksi Inbound | Integrasi otomatis restock ke transaksi masuk | Sultan | [ ] |
-| M5-FE-01 | Frontend / UI | Membangun halaman daftar pengajuan Restock/Index.vue dengan tab status | Monitoring pengajuan restock multi-status | Desy | [ ] |
-| M5-FE-02 | Frontend / UI | Membuat formulir dialog pengajuan restock terisi otomatis dari rekomendasi DES | Form pengajuan cepat bagi Manajer Operasional | Najwa | [ ] |
-| M5-FE-03 | Frontend / UI | Membangun Dasbor Otorisasi Komisaris (Restock/Approval.vue) dengan kartu evaluasi | Halaman tinjauan khusus Komisaris | Meutia | [ ] |
-| M5-FE-04 | Frontend / UI | Membuat dialog persetujuan (approve) dan penolakan (reject wajib mengisi alasan) | Modal aksi keputusan Komisaris | Najwa | [ ] |
+| M5-BE-01 | Backend / Skema | Membuat migrasi restock_requests (header) & restock_request_details (detail multi-item UUID) | Skema tabel alur pengadaan multi-produk berelasi UUID | Sultan | [x] |
+| M5-BE-02 | Backend / Model | Membuat Model RestockRequest.php & RestockRequestDetail.php dengan relasi requester, reviewer, & produk | Sepasang Model Eloquent alur persetujuan pengadaan | Sultan | [x] |
+| M5-LC-01 | Logika / Policy | Membuat RestockRequestPolicy untuk otorisasi hak ajukan (Manajer) dan setujui (Komisaris) | Kebijakan otorisasi alur kerja approval | Sultan | [x] |
+| M5-LC-02 | Logika / Service | Membangun RestockRequestService untuk mengelola transisi status dokumen pengadaan | Service alur kerja approval anti-bypass | Sultan | [x] |
+| M5-LC-03 | Logika / Event | Mengaitkan persetujuan dokumen dengan opsi pembuatan draf transaksi Inbound | Integrasi otomatis restock ke transaksi masuk | Sultan | [x] |
+| M5-FE-01 | Frontend / UI | Membangun halaman daftar pengajuan Restock/Index.vue dengan tab status | Monitoring pengajuan restock multi-status | Desy | [x] |
+| M5-FE-02 | Frontend / UI | Membuat formulir dialog pengajuan restock terisi otomatis dari rekomendasi DES | Form pengajuan cepat bagi Manajer Operasional | Najwa | [x] |
+| M5-FE-03 | Frontend / UI | Membangun Dasbor Otorisasi Komisaris (Restock/Approval.vue) dengan kartu evaluasi | Halaman tinjauan khusus Komisaris | Meutia | [x] |
+| M5-FE-04 | Frontend / UI | Membuat dialog persetujuan (approve) dan penolakan (reject wajib mengisi alasan) | Modal aksi keputusan Komisaris | Najwa | [x] |
 
 ---
 

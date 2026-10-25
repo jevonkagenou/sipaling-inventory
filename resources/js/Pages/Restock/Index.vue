@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Head, Link, usePage } from '@inertiajs/vue3'
+import { ref, computed, watch } from 'vue'
+import { Head, Link, usePage, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { ClipboardCheck, Clock, CheckCircle2, XCircle, Eye, Search, X, TrendingUp, FileText, Boxes, ShieldCheck, PackagePlus, AlertTriangle, RotateCcw,
 } from 'lucide-vue-next'
@@ -212,9 +212,19 @@ const initialData = computed<RestockRequest[]>(() => {
 })
 
 const requestsList = ref<RestockRequest[]>([...initialData.value])
+
+watch(
+  () => props.requests,
+  () => {
+    requestsList.value = [...initialData.value]
+  },
+  { deep: true }
+)
+
 const search = ref('')
 const selectedStatus = ref<'all' | 'pending' | 'approved' | 'rejected'>('all')
 const flashMessage = ref('')
+const isSubmitting = ref(false)
 
 // Filter logic
 const filteredRequests = computed(() => {
@@ -268,33 +278,92 @@ function closeDetail() {
 
 // Otorisasi Komisaris
 function handleApprove(req: RestockRequest) {
-  if (!isKomisaris.value) return
-  req.status = 'approved'
-  req.reviewed_by = currentUser.value?.name || 'Komisaris'
-  req.reviewer = { id: currentUser.value?.id || 'kom', name: req.reviewed_by }
-  req.reviewed_at = new Date().toISOString()
-  req.review_notes = reviewNotesInput.value.trim() || 'Disetujui penuh oleh Komisaris sesuai rekomendasi model Holt DES.'
-  req.details?.forEach((d) => { d.approved_quantity = d.requested_quantity })
+  if (!isKomisaris.value || isSubmitting.value) return
 
-  flashMessage.value = `Berkas ${req.request_no} telah disetujui!`
-  setTimeout(() => { flashMessage.value = '' }, 4000)
+  // Jika item dummy sampel
+  if (req.id.startsWith('req-')) {
+    req.status = 'approved'
+    req.reviewed_by = currentUser.value?.name || 'Komisaris'
+    req.reviewer = { id: currentUser.value?.id || 'kom', name: req.reviewed_by }
+    req.reviewed_at = new Date().toISOString()
+    req.review_notes = reviewNotesInput.value.trim() || 'Disetujui penuh oleh Komisaris sesuai rekomendasi model Holt DES.'
+    req.details?.forEach((d) => { d.approved_quantity = d.requested_quantity })
+
+    flashMessage.value = `Berkas ${req.request_no} telah disetujui!`
+    setTimeout(() => { flashMessage.value = '' }, 4000)
+    return
+  }
+
+  isSubmitting.value = true
+  router.post(
+    route('restock.approve', req.id),
+    {
+      review_notes: reviewNotesInput.value.trim() || 'Disetujui penuh oleh Komisaris sesuai rekomendasi peramalan Holt DES.',
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeDetail()
+        isSubmitting.value = false
+      },
+      onError: () => {
+        isSubmitting.value = false
+      },
+    }
+  )
 }
 
 function handleReject(req: RestockRequest) {
-  if (!isKomisaris.value) return
+  if (!isKomisaris.value || isSubmitting.value) return
   if (!reviewNotesInput.value.trim()) {
     alert('Harap lampirkan alasan penolakan pada catatan evaluasi.')
     return
   }
-  req.status = 'rejected'
-  req.reviewed_by = currentUser.value?.name || 'Komisaris'
-  req.reviewer = { id: currentUser.value?.id || 'kom', name: req.reviewed_by }
-  req.reviewed_at = new Date().toISOString()
-  req.review_notes = reviewNotesInput.value.trim()
-  req.details?.forEach((d) => { d.approved_quantity = 0 })
 
-  flashMessage.value = `Berkas ${req.request_no} ditolak dengan catatan evaluasi.`
-  setTimeout(() => { flashMessage.value = '' }, 4000)
+  // Jika item dummy sampel
+  if (req.id.startsWith('req-')) {
+    req.status = 'rejected'
+    req.reviewed_by = currentUser.value?.name || 'Komisaris'
+    req.reviewer = { id: currentUser.value?.id || 'kom', name: req.reviewed_by }
+    req.reviewed_at = new Date().toISOString()
+    req.review_notes = reviewNotesInput.value.trim()
+    req.details?.forEach((d) => { d.approved_quantity = 0 })
+
+    flashMessage.value = `Berkas ${req.request_no} ditolak dengan catatan evaluasi.`
+    setTimeout(() => { flashMessage.value = '' }, 4000)
+    return
+  }
+
+  isSubmitting.value = true
+  router.post(
+    route('restock.reject', req.id),
+    {
+      review_notes: reviewNotesInput.value.trim(),
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeDetail()
+        isSubmitting.value = false
+      },
+      onError: () => {
+        isSubmitting.value = false
+      },
+    }
+  )
+}
+
+function dismissSuccess() {
+  flashMessage.value = ''
+  if (page.props.flash) {
+    (page.props.flash as any).success = null
+  }
+}
+
+function dismissError() {
+  if (page.props.flash) {
+    (page.props.flash as any).error = null
+  }
 }
 
 function resetFilters() {
@@ -360,14 +429,37 @@ function formatDate(dateStr: string) {
         leave-to-class="opacity-0 -translate-y-2"
       >
         <div
-          v-if="flashMessage"
+          v-if="flashMessage || (page.props.flash as any)?.success"
           class="flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs sm:text-sm font-semibold text-emerald-800 dark:text-emerald-300 shadow-2xs backdrop-blur-md"
         >
           <div class="flex items-center gap-2.5">
             <CheckCircle2 class="h-4 w-4 shrink-0 text-[#10B981]" />
-            <span>{{ flashMessage }}</span>
+            <span>{{ flashMessage || (page.props.flash as any)?.success }}</span>
           </div>
-          <button type="button" @click="flashMessage = ''" class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 cursor-pointer p-1">
+          <button type="button" @click="dismissSuccess" class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 cursor-pointer p-1">
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+      </Transition>
+
+      <!-- Error Alert -->
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0 -translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-2"
+      >
+        <div
+          v-if="(page.props.flash as any)?.error"
+          class="flex items-center justify-between gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs sm:text-sm font-semibold text-rose-800 dark:text-rose-300 shadow-2xs backdrop-blur-md"
+        >
+          <div class="flex items-center gap-2.5">
+            <AlertTriangle class="h-4 w-4 shrink-0 text-rose-600" />
+            <span>{{ (page.props.flash as any)?.error }}</span>
+          </div>
+          <button type="button" @click="dismissError" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 cursor-pointer p-1">
             <X class="w-4 h-4" />
           </button>
         </div>
@@ -869,19 +961,21 @@ function formatDate(dateStr: string) {
                   <div class="flex items-center justify-end gap-2.5 pt-1">
                     <button
                       type="button"
+                      :disabled="isSubmitting"
                       @click="handleReject(selectedRequest)"
-                      class="h-8 px-3 rounded-lg border border-rose-300 text-rose-600 dark:border-rose-800 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950 text-xs font-semibold cursor-pointer inline-flex items-center gap-1.5"
+                      class="h-8 px-3 rounded-lg border border-rose-300 text-rose-600 dark:border-rose-800 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950 text-xs font-semibold cursor-pointer inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
                     >
                       <XCircle class="w-3.5 h-3.5" />
-                      <span>Tolak Pengajuan</span>
+                      <span>{{ isSubmitting ? 'Memproses...' : 'Tolak Pengajuan' }}</span>
                     </button>
                     <button
                       type="button"
+                      :disabled="isSubmitting"
                       @click="handleApprove(selectedRequest)"
-                      class="h-8 px-3.5 rounded-lg bg-[#10B981] hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer inline-flex items-center gap-1.5"
+                      class="h-8 px-3.5 rounded-lg bg-[#10B981] hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 transition-colors shadow-2xs disabled:opacity-50"
                     >
                       <CheckCircle2 class="w-3.5 h-3.5" />
-                      <span>Setujui Pengajuan</span>
+                      <span>{{ isSubmitting ? 'Memproses...' : 'Setujui Pengajuan' }}</span>
                     </button>
                   </div>
                 </div>

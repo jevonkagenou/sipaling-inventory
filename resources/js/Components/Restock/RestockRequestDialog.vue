@@ -42,7 +42,7 @@ watch(() => props.open, (isOpen) => {
 })
 
 const formatMoney = (val) =>
-  new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(Number(val) || 0)
+  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(val) || 0)
 
 const subtotal = (row) =>
   (Number(row.requested_quantity) || 0) * (Number(row.estimated_unit_price) || 0)
@@ -72,6 +72,8 @@ function submit() {
       general_notes: data.general_notes,
       items: data.items.map((r) => ({
         product_id: r.product_id,
+        current_stock: r.current_stock,
+        safety_stock: r.safety_stock,
         suggested_quantity: r.suggested_quantity,
         requested_quantity: Number(r.requested_quantity),
         estimated_unit_price: Number(r.estimated_unit_price),

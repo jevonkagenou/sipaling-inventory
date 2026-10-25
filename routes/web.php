@@ -77,11 +77,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Monitoring & Pengajuan Draf (Manajer Operasional & Komisaris)
         Route::middleware(['role:manajer-operasional|komisaris'])->group(function () {
             Route::get('/', [RestockController::class, 'index'])->name('index');
+            Route::post('/', [RestockController::class, 'store'])->name('store');
         });
 
         // Otorisasi Persetujuan Khusus (Komisaris Only)
         Route::middleware(['role:komisaris'])->group(function () {
             Route::get('/approval', [RestockController::class, 'approval'])->name('approval');
+            Route::post('/{restockRequest}/approve', [RestockController::class, 'approve'])->name('approve');
+            Route::post('/{restockRequest}/reject', [RestockController::class, 'reject'])->name('reject');
         });
     });
 
