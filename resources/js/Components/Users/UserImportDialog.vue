@@ -70,8 +70,9 @@ function onDrop(e: DragEvent) {
 function processFile(file: File) {
   errorMessage.value = null
   const extension = file.name.split('.').pop()?.toLowerCase()
-  if (extension !== 'csv' && extension !== 'txt') {
-    errorMessage.value = 'Berkas harus memiliki format .csv atau .txt'
+  const validExtensions = ['csv', 'txt', 'xlsx', 'xls']
+  if (!validExtensions.includes(extension || '')) {
+    errorMessage.value = 'Berkas harus memiliki format .xlsx, .xls, .csv, atau .txt'
     return
   }
   if (file.size > 5 * 1024 * 1024) {
@@ -131,28 +132,26 @@ function submitImport() {
 
 <template>
   <Dialog :open="open" @update:open="handleClose">
-    <DialogContent class="sm:max-w-lg bg-white dark:bg-[#0F172A] border-slate-200 dark:border-slate-800 p-0 overflow-hidden shadow-2xl">
+    <DialogContent class="sm:max-w-xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-[#0F172A] border-slate-200 dark:border-slate-800 shadow-2xl">
       <!-- Header -->
-      <div class="p-6 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-        <div class="flex items-start justify-between gap-3">
-          <div class="flex items-center gap-3.5">
-            <div class="h-10 w-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
-              <Users class="h-5 w-5" />
-            </div>
-            <div>
-              <DialogTitle class="text-base font-bold text-slate-900 dark:text-white">
-                Impor Data Pengguna dari CSV
-              </DialogTitle>
-              <DialogDescription class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Daftarkan akun pengguna baru secara massal menggunakan berkas CSV terstruktur.
-              </DialogDescription>
-            </div>
+      <div class="p-5 sm:p-6 pb-4 border-b border-slate-100 dark:border-slate-800/80 shrink-0 pr-12">
+        <div class="flex items-center gap-3.5">
+          <div class="h-10 w-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
+            <Users class="h-5 w-5" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <DialogTitle class="text-base font-bold text-slate-900 dark:text-white">
+              Impor Data Pengguna (Excel &amp; CSV)
+            </DialogTitle>
+            <DialogDescription class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+              Daftarkan akun pengguna baru secara massal menggunakan berkas spreadsheet Excel (.xlsx) atau CSV.
+            </DialogDescription>
           </div>
         </div>
       </div>
 
-      <!-- Body Content -->
-      <div class="p-6 space-y-4">
+      <!-- Body Content (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar">
         <!-- Peringatan Impor Pengguna -->
         <div class="p-3.5 rounded-xl border border-amber-300/80 bg-amber-50/80 dark:border-amber-900/60 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 text-xs space-y-1">
           <div class="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
@@ -165,30 +164,34 @@ function submitImport() {
         </div>
 
         <!-- Download Template Banner -->
-        <div class="flex items-center justify-between p-3.5 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20">
-          <div class="flex items-center gap-2.5 min-w-0">
+        <div class="p-3.5 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20 space-y-2.5">
+          <div class="flex items-center gap-2">
             <FileText class="h-4 w-4 text-[#2563EB] shrink-0" />
-            <div class="min-w-0">
-              <p class="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                Belum memiliki template CSV?
-              </p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                Unduh template resmi dengan baris contoh data pengguna valid.
-              </p>
-            </div>
+            <p class="text-xs font-semibold text-slate-900 dark:text-white">
+              Belum memiliki template berkas? Unduh template resmi:
+            </p>
           </div>
-          <a
-            :href="route('users.import-template')"
-            class="h-8 px-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900 text-xs font-semibold text-[#2563EB] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors shadow-2xs inline-flex items-center gap-1.5 shrink-0"
-          >
-            <Download class="h-3.5 w-3.5" />
-            Template CSV
-          </a>
+          <div class="flex flex-wrap items-center gap-2">
+            <a
+              :href="route('users.import-template', { format: 'xlsx' })"
+              class="h-8 px-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-white dark:bg-slate-900 text-xs font-semibold text-[#2563EB] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors shadow-2xs inline-flex items-center gap-1.5"
+            >
+              <Download class="h-3.5 w-3.5" />
+              Template Excel (.xlsx)
+            </a>
+            <a
+              :href="route('users.import-template', { format: 'csv' })"
+              class="h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs inline-flex items-center gap-1.5"
+            >
+              <Download class="h-3.5 w-3.5" />
+              Template CSV
+            </a>
+          </div>
         </div>
 
         <!-- Upload Dropzone -->
         <div
-          class="border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer"
+          class="border-2 border-dashed rounded-2xl p-5 sm:p-6 text-center transition-all cursor-pointer"
           :class="[
             isDragging
               ? 'border-[#2563EB] bg-blue-50/50 dark:bg-blue-950/30'
@@ -203,22 +206,22 @@ function submitImport() {
           <input
             ref="fileInputRef"
             type="file"
-            accept=".csv,text/csv,text/plain"
+            accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/plain"
             class="hidden"
             @change="onFileSelect"
           />
 
           <!-- State: No File Selected -->
           <div v-if="!selectedFile" class="space-y-2">
-            <div class="mx-auto h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 flex items-center justify-center shadow-2xs">
+            <div class="mx-auto h-11 w-11 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 flex items-center justify-center shadow-2xs">
               <Upload class="h-5 w-5" />
             </div>
             <div>
               <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Tarik &amp; lepas berkas CSV ke sini, atau <span class="text-[#2563EB] underline underline-offset-2">pilih berkas</span>
+                Tarik &amp; lepas berkas Excel / CSV ke sini, atau <span class="text-[#2563EB] underline underline-offset-2">pilih berkas</span>
               </p>
               <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                Format .csv atau .txt (Maksimal 5 MB)
+                Format .xlsx, .xls, .csv, atau .txt (Maksimal 5 MB)
               </p>
             </div>
           </div>
@@ -234,7 +237,7 @@ function submitImport() {
                   {{ selectedFile.name }}
                 </p>
                 <p class="text-[11px] text-slate-400">
-                  {{ formatBytes(selectedFile.size) }} &bull; Berkas CSV Terpilih
+                  {{ formatBytes(selectedFile.size) }} &bull; {{ selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls') ? 'Berkas Excel Terpilih' : 'Berkas CSV Terpilih' }}
                 </p>
               </div>
             </div>
@@ -271,11 +274,11 @@ function submitImport() {
       </div>
 
       <!-- Footer Actions -->
-      <DialogFooter class="px-6 py-3.5 bg-slate-50/80 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex flex-row items-center justify-end gap-2.5">
+      <DialogFooter class="p-4 sm:px-6 bg-slate-50/80 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex flex-row items-center justify-end gap-2.5 shrink-0">
         <Button
           type="button"
           variant="outline"
-          class="h-9 px-4 rounded-xl text-xs font-semibold border-slate-200 dark:border-slate-800"
+          class="h-9 px-4 rounded-xl text-xs font-semibold border-slate-200 dark:border-slate-800 cursor-pointer"
           :disabled="isUploading"
           @click="handleClose(false)"
         >
@@ -283,7 +286,7 @@ function submitImport() {
         </Button>
         <Button
           type="button"
-          class="h-9 px-4 rounded-xl text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white shadow-2xs inline-flex items-center gap-1.5"
+          class="h-9 px-4 rounded-xl text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white shadow-2xs inline-flex items-center gap-1.5 cursor-pointer"
           :disabled="!selectedFile || isUploading"
           @click="submitImport"
         >

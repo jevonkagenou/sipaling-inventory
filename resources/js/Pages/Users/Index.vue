@@ -241,18 +241,30 @@ function openDeleteDialog(user: UserRowData) {
 }
 
 function onUserSaved(msg?: string) {
-  router.reload({ only: ['users', 'stats'] })
-  showToast('Data Pengguna Tersimpan', msg || 'Perubahan akun pengguna berhasil diterapkan.')
+  router.reload({
+    only: ['users', 'stats'],
+    onSuccess: () => {
+      showToast('Data Pengguna Tersimpan', msg || 'Perubahan akun pengguna berhasil diterapkan.')
+    },
+  })
 }
 
 function onStatusChanged() {
-  router.reload({ only: ['users', 'stats'] })
-  showToast('Status Diperbarui', 'Status aktivasi akun berhasil diubah.')
+  router.reload({
+    only: ['users', 'stats'],
+    onSuccess: () => {
+      showToast('Status Diperbarui', 'Status aktivasi akun berhasil diubah.')
+    },
+  })
 }
 
 function onUserDeleted() {
-  router.reload({ only: ['users', 'stats'] })
-  showToast('Pengguna Dihapus', 'Akun pengguna berhasil dihapus dari sistem.')
+  router.reload({
+    only: ['users', 'stats'],
+    onSuccess: () => {
+      showToast('Pengguna Dihapus', 'Akun pengguna berhasil dihapus dari sistem.')
+    },
+  })
 }
 
 // Filter States
@@ -500,6 +512,11 @@ const table = useTable({
   columns,
 })
 
+// Dynamic Table Key for guaranteed reactive re-render on data/status mutations
+const tableKey = computed(() => {
+  return props.users.map((u) => `${u.id}:${u.is_active ? 1 : 0}:${u.name}`).join('|')
+})
+
 function handleStatusFilterChange(status: StatusFilterKey) {
   activeStatusFilter.value = status
 }
@@ -518,7 +535,7 @@ function resetAllFilters() {
 <template>
   <Head title="Manajemen Pengguna & Aktivasi Akun - SIPALING" />
 
-  <!-- Action Dropdown Reusable Template -->
+  <!-- Action Buttons Reusable Template -->
   <DefineActionTemplate v-slot="{ user }">
     <div class="flex items-center justify-end gap-1">
       <!-- Quick Action: Edit Profile -->
@@ -533,59 +550,18 @@ function resetAllFilters() {
         <Pencil class="h-3.5 w-3.5" />
       </Button>
 
-      <!-- More Actions Dropdown -->
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button
-            variant="ghost"
-            class="h-7 w-7 p-0 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
-            title="Menu Tindakan Lainnya"
-          >
-            <span class="sr-only">Buka menu aksi</span>
-            <MoreHorizontal class="h-3.5 w-3.5" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" class="w-48 bg-white dark:bg-[#0F172A] border-slate-200 dark:border-slate-800 shadow-md">
-          <DropdownMenuLabel class="text-xs text-slate-400 font-normal">Tindakan Akun</DropdownMenuLabel>
-          
-          <DropdownMenuItem
-            class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs flex items-center"
-            @click="copyUuid(user)"
-          >
-            <Check v-if="copiedId === user.id" class="mr-2 h-3.5 w-3.5 text-emerald-500" />
-            <Copy v-else class="mr-2 h-3.5 w-3.5 text-slate-400" />
-            <span>{{ copiedId === user.id ? 'UUID Tersalin' : 'Salin Kode UUID' }}</span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs flex items-center"
-            @click="openEditDialog(user)"
-          >
-            <Pencil class="mr-2 h-3.5 w-3.5 text-slate-400" />
-            <span>Edit Profil &amp; Peran</span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            v-if="user.id !== currentAuthUserId"
-            class="cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs flex items-center"
-            @click="openStatusDialog(user)"
-          >
-            <Power class="mr-2 h-3.5 w-3.5" :class="user.is_active ? 'text-rose-500' : 'text-[#10B981]'" />
-            <span>{{ user.is_active ? 'Nonaktifkan Akun' : 'Aktifkan Akun' }}</span>
-          </DropdownMenuItem>
-
-          <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800" />
-
-          <DropdownMenuItem
-            v-if="user.id !== currentAuthUserId"
-            @click="openDeleteDialog(user)"
-            class="cursor-pointer text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs flex items-center"
-          >
-            <Trash2 class="mr-2 h-3.5 w-3.5 text-rose-500" />
-            <span>Hapus Pengguna</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <!-- Quick Action: Hapus Pengguna (Kecuali akun sendiri) -->
+      <Button
+        v-if="user.id !== currentAuthUserId"
+        variant="ghost"
+        size="icon"
+        class="h-7 w-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 cursor-pointer transition-colors"
+        title="Hapus Pengguna"
+        @click.stop="openDeleteDialog(user)"
+      >
+        <span class="sr-only">Hapus Pengguna</span>
+        <Trash2 class="h-3.5 w-3.5 text-rose-500" />
+      </Button>
     </div>
   </DefineActionTemplate>
 
@@ -636,7 +612,7 @@ function resetAllFilters() {
 
       <!-- 3. Desktop TanStack Data Table View (Visible on >= md screens) -->
       <div class="hidden md:block rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden">
-        <Table>
+        <Table :key="tableKey">
           <TableHeader class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
             <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id" class="hover:bg-transparent">
               <TableHead
@@ -659,12 +635,12 @@ function resetAllFilters() {
             <template v-if="table.getRowModel().rows.length">
               <TableRow
                 v-for="row in table.getRowModel().rows"
-                :key="row.id"
+                :key="row.original?.id ? `${row.original.id}_${row.original.is_active ? 1 : 0}` : row.id"
                 class="group border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
               >
                 <TableCell
                   v-for="cell in row.getVisibleCells()"
-                  :key="cell.id"
+                  :key="`${cell.id}_${row.original?.is_active ? 1 : 0}`"
                   :class="cn(
                     'px-2.5 sm:px-3 py-2.5 text-xs',
                     cell.column.id === 'actions' && 'sticky right-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 transition-colors z-10 text-right pr-3 shadow-[-4px_0_8px_rgba(0,0,0,0.03)] border-l border-slate-100 dark:border-slate-800/80'

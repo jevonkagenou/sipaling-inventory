@@ -134,6 +134,14 @@ watch(
   (isOpen) => {
     if (isOpen) resetForm()
   },
+  { immediate: true },
+)
+
+watch(
+  () => props.user,
+  () => {
+    if (props.open) resetForm()
+  },
 )
 
 const title = computed(() => (props.mode === 'create' ? 'Tambah Pengguna Baru' : 'Edit Data Pengguna'))
