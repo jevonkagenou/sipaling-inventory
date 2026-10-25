@@ -96,6 +96,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 5. Modul Manajemen Pengguna & Aktivasi Akun (Manajer Operasional & Komisaris)
     Route::middleware(['role:manajer-operasional|komisaris'])->prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/import-template', [UserController::class, 'downloadTemplate'])->name('import-template');
+        Route::post('/import', [UserController::class, 'importCsv'])->name('import');
         Route::post('/', [UserController::class, 'store'])->name('store');
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::patch('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
