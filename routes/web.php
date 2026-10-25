@@ -24,7 +24,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/inventory', [ProductController::class, 'index'])->name('inventory.index');
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
-    Route::match(['get', 'post'], '/analytics/simulate/{productId}', [AnalyticsController::class, 'simulate'])->name('analytics.simulate');
 
     // Operasi CRUD Master Produk & Kategori (Khusus Manajer Operasional & Komisaris)
     Route::middleware(['role_or_permission:manajer-operasional|komisaris|inventory.manage'])->group(function () {
@@ -70,6 +69,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['role:manajer-operasional|komisaris|staf-gudang|auditor-internal'])->prefix('analytics')->name('analytics.')->group(function () {
         Route::get('/', [AnalyticsController::class, 'index'])->name('index');
         Route::get('/export-restock', [AnalyticsController::class, 'exportRestock'])->name('export-restock');
+        Route::match(['get', 'post'], '/simulate/{productId}', [AnalyticsController::class, 'simulate'])->name('simulate');
     });
 
     // 3. Modul Alur Persetujuan Pengadaan (Restock Approval Workflow)

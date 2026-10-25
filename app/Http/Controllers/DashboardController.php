@@ -43,7 +43,7 @@ class DashboardController extends Controller
             })->sum('quantity'),
             'reorder_count' => Product::whereColumn('current_stock', '<=', 'minimum_stock')->count(),
             'aman_count' => Product::whereColumn('current_stock', '>', 'minimum_stock')->count(),
-            'total_inventory_value' => Product::all()->sum(fn ($p) => (float) $p->current_stock * (float) $p->unit_price),
+            'total_inventory_value' => (float) (Product::selectRaw('SUM(current_stock * unit_price) as total')->value('total') ?? 0),
             'total_audit_logs' => ActivityLog::count(),
             'today_audit_logs' => ActivityLog::whereDate('created_at', $today)->count(),
         ];
@@ -152,30 +152,7 @@ class DashboardController extends Controller
             );
         }
 
-        // Susun ringkasan rekomendasi restock seluruh katalog (sama seperti AnalyticsController)
-        $restockAlerts = $products->map(function ($p) {
-            $forecast = $this->desService->forecastProduct($p, horizon: 1);
-            $rec      = $forecast['restock_recommendation'];
-
-            return [
-                'id'               => $p->id,
-                'sku'              => $p->sku,
-                'name'             => $p->name,
-                'category_name'    => $p->category?->name ?? 'Uncategorized',
-                'current_stock'    => (int) $p->current_stock,
-                'minimum_stock'    => (int) $p->minimum_stock,
-                'unit'             => $p->unit,
-                'unit_price'       => (float) $p->unit_price,
-                'next_forecast'    => (int) round($forecast['future_forecasts'][0] ?? 0),
-                'suggested_quantity' => $rec['suggested_quantity'],
-                'status'           => $rec['status'],
-                'status_label'     => $rec['status_label'],
-                'mape'             => $forecast['mape'],
-                'rmse'             => $forecast['rmse'],
-            ];
-        })
-        ->sortByDesc(fn ($item) => $item['status'] === 'RESTOCK_URGENT' ? 2 : ($item['suggested_quantity'] > 0 ? 1 : 0))
-        ->values();
+        $restockAlerts = [];
 
         return Inertia::render('Dashboard', [
             'stats'              => $stats,
