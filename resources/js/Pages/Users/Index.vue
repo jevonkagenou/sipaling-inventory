@@ -49,6 +49,7 @@ import UserToolbar, { type RoleOption } from '@/Components/Users/UserToolbar.vue
 import UserFormDialog, { type UserItem } from '@/Components/Users/UserFormDialog.vue'
 import UserStatusDialog from '@/Components/Users/UserStatusDialog.vue'
 import UserDeleteDialog from '@/Components/Users/UserDeleteDialog.vue'
+import UserImportDialog from '@/Components/Users/UserImportDialog.vue'
 import UserToast, { type ToastState } from '@/Components/Users/UserToast.vue'
 
 // Lucide Icons
@@ -206,6 +207,7 @@ function getRoleBadge(role: string) {
 }
 
 // Dialog States
+const isImportDialogOpen = ref(false)
 const isFormDialogOpen = ref(false)
 const formDialogMode = ref<'create' | 'edit'>('create')
 const selectedUser = ref<UserRowData | null>(null)
@@ -629,6 +631,7 @@ function resetAllFilters() {
         @update:search-query="searchQuery = $event"
         @update:active-role-filter="activeRoleFilter = $event"
         @create="openCreateDialog"
+        @import="isImportDialogOpen = true"
       />
 
       <!-- 3. Desktop TanStack Data Table View (Visible on >= md screens) -->
@@ -842,6 +845,11 @@ function resetAllFilters() {
     </div>
 
     <!-- Modals & Dialogs -->
+    <UserImportDialog
+      v-model:open="isImportDialogOpen"
+      @imported="router.reload({ only: ['users', 'stats'] })"
+    />
+
     <UserFormDialog
       v-model:open="isFormDialogOpen"
       :mode="formDialogMode"

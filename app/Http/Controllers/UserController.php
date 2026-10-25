@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +16,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UserController extends Controller
 {
@@ -103,6 +106,192 @@ class UserController extends Controller
                 'role_counts' => $roleCounts,
             ],
         ]);
+    }
+
+    /**
+     * Mengunduh berkas template CSV untuk impor massal pengguna.
+     */
+    public function downloadTemplate(): StreamedResponse
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="template_import_pengguna_sipaling.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () {
+            $handle = fopen('php://output', 'w');
+            // Menulis UTF-8 BOM untuk kompatibilitas Microsoft Excel
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            // Header Kolom
+            fputcsv($handle, ['name', 'email', 'phone', 'role', 'password']);
+
+            // Baris Data Contoh
+            fputcsv($handle, ['Ahmad Fauzi', 'ahmad.fauzi@sipaling.com', '081234567890', 'staf-gudang', 'Password123!']);
+            fputcsv($handle, ['Budi Santoso', 'budi.santoso@sipaling.com', '081298765432', 'manajer-operasional', 'Password123!']);
+            fputcsv($handle, ['Citra Lestari', 'citra.lestari@sipaling.com', '081311223344', 'auditor-internal', 'Password123!']);
+            fputcsv($handle, ['Dewi Sartika', 'dewi.sartika@sipaling.com', '081355667788', 'komisaris', 'Password123!']);
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Mengimpor data pengguna massal dari berkas CSV.
+     */
+    public function importCsv(Request $request): RedirectResponse|JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+        ], [
+            'file.required' => 'Berkas CSV wajib dipilih.',
+            'file.mimes' => 'Berkas harus berformat .csv atau teks berpemisah koma.',
+            'file.max' => 'Ukuran berkas CSV maksimal 5 MB.',
+        ]);
+
+        $file = $request->file('file');
+        $filePath = $file->getRealPath();
+
+        $handle = fopen($filePath, 'r');
+        if (! $handle) {
+            return back()->withErrors(['file' => 'Gagal membaca berkas CSV.'])->with('error', 'Gagal membaca berkas CSV.');
+        }
+
+        // Baca baris pertama (header) dan bersihkan BOM jika ada
+        $firstLine = fgets($handle);
+        if (! $firstLine) {
+            fclose($handle);
+
+            return back()->withErrors(['file' => 'Berkas CSV kosong.'])->with('error', 'Berkas CSV kosong.');
+        }
+
+        $firstLine = str_replace("\xEF\xBB\xBF", '', $firstLine);
+        // Deteksi delimiter (koma atau titik koma)
+        $delimiter = str_contains($firstLine, ';') ? ';' : ',';
+        $headerColumns = array_map(fn ($col) => strtolower(trim($col)), str_getcsv($firstLine, $delimiter));
+
+        $colMap = array_flip($headerColumns);
+        $requiredKeys = ['name', 'email', 'role'];
+
+        foreach ($requiredKeys as $reqKey) {
+            if (! isset($colMap[$reqKey])) {
+                fclose($handle);
+
+                return back()->withErrors(['file' => "Format CSV tidak valid. Kolom '{$reqKey}' tidak ditemukan pada baris judul."])
+                    ->with('error', "Kolom wajib '{$reqKey}' tidak ditemukan pada berkas CSV.");
+            }
+        }
+
+        $importedCount = 0;
+        $skippedCount = 0;
+        $existingEmails = User::pluck('email')->map(fn ($e) => strtolower(trim($e)))->flip()->toArray();
+
+        // Valid roles cache
+        $validRoles = Role::pluck('name')->mapWithKeys(function ($roleName) {
+            return [strtolower($roleName) => $roleName];
+        })->toArray();
+
+        DB::beginTransaction();
+        try {
+            while (($row = fgetcsv($handle, 4096, $delimiter)) !== false) {
+                if (empty($row) || (count($row) === 1 && empty($row[0]))) {
+                    continue;
+                }
+
+                $name = isset($colMap['name']) && isset($row[$colMap['name']]) ? trim($row[$colMap['name']]) : '';
+                $email = isset($colMap['email']) && isset($row[$colMap['email']]) ? strtolower(trim($row[$colMap['email']])) : '';
+                $rawRole = isset($colMap['role']) && isset($row[$colMap['role']]) ? trim($row[$colMap['role']]) : '';
+                $phone = isset($colMap['phone']) && isset($row[$colMap['phone']]) ? trim($row[$colMap['phone']]) : null;
+                $rawPassword = isset($colMap['password']) && isset($row[$colMap['password']]) ? trim($row[$colMap['password']]) : '';
+
+                if (empty($name) || empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $skippedCount++;
+
+                    continue;
+                }
+
+                if (isset($existingEmails[$email])) {
+                    $skippedCount++;
+
+                    continue;
+                }
+
+                $normalizedRoleKey = str_replace(' ', '-', strtolower($rawRole));
+                if (! isset($validRoles[$normalizedRoleKey])) {
+                    $skippedCount++;
+
+                    continue;
+                }
+                $assignedRole = $validRoles[$normalizedRoleKey];
+
+                $password = (! empty($rawPassword) && strlen($rawPassword) >= 8)
+                    ? $rawPassword
+                    : 'Password123!';
+
+                $user = User::create([
+                    'name' => $name,
+                    'email' => $email,
+                    'phone' => ! empty($phone) ? $phone : null,
+                    'password' => Hash::make($password),
+                    'is_active' => true,
+                    'email_verified_at' => now(),
+                ]);
+
+                $user->assignRole($assignedRole);
+
+                $existingEmails[$email] = true;
+                $importedCount++;
+            }
+
+            fclose($handle);
+
+            ActivityLog::create([
+                'log_name' => 'users',
+                'description' => "Mengimpor {$importedCount} pengguna baru dari berkas CSV ({$file->getClientOriginalName()})",
+                'subject_type' => User::class,
+                'causer_type' => Auth::user() ? get_class(Auth::user()) : null,
+                'causer_id' => Auth::id(),
+                'event' => 'imported',
+                'properties' => [
+                    'imported_count' => $importedCount,
+                    'skipped_count' => $skippedCount,
+                    'filename' => $file->getClientOriginalName(),
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ],
+            ]);
+
+            DB::commit();
+
+            $message = "Proses impor selesai: {$importedCount} pengguna berhasil ditambahkan.";
+            if ($skippedCount > 0) {
+                $message .= " ({$skippedCount} baris dilewati karena duplikat atau format tidak lengkap).";
+            }
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'imported_count' => $importedCount,
+                    'skipped_count' => $skippedCount,
+                ]);
+            }
+
+            return redirect()->route('users.index')->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if (is_resource($handle)) {
+                fclose($handle);
+            }
+
+            return back()->withErrors(['file' => 'Gagal memproses berkas CSV: '.$e->getMessage()])
+                ->with('error', 'Terjadi kesalahan saat menyimpan data pengguna.');
+        }
     }
 
     /**

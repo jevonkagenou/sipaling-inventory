@@ -6,6 +6,7 @@ import {
   X,
   UserPlus,
   Filter,
+  FileSpreadsheet,
 } from 'lucide-vue-next'
 
 export interface RoleOption {
@@ -24,6 +25,7 @@ const emit = defineEmits<{
   (e: 'update:searchQuery', val: string): void
   (e: 'update:activeRoleFilter', val: string): void
   (e: 'create'): void
+  (e: 'import'): void
 }>()
 </script>
 
@@ -61,6 +63,17 @@ const emit = defineEmits<{
           <option v-for="r in roles" :key="r.id" :value="r.name">{{ r.label }}</option>
         </select>
       </div>
+
+      <!-- Impor CSV Button -->
+      <Button
+        type="button"
+        variant="outline"
+        @click="emit('import')"
+        class="h-9 px-3.5 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-all active:scale-95"
+      >
+        <FileSpreadsheet class="w-4 h-4 text-[#2563EB]" />
+        <span>Impor CSV</span>
+      </Button>
 
       <!-- Add User Primary Button -->
       <Button

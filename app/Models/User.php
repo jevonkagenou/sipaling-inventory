@@ -15,7 +15,7 @@ use Spatie\Activitylog\Models\Concerns\HasActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'is_active'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'is_active', 'email_verified_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -28,6 +28,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'is_active',
+        'email_verified_at',
     ];
 
     protected $hidden = [
