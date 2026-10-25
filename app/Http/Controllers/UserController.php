@@ -446,7 +446,7 @@ class UserController extends Controller
         ]);
 
         // Safety rule: Prevent user from deactivating themselves
-        $isActive = $request->has('is_active') ? (bool) $request->input('is_active') : $user->is_active;
+        $isActive = $request->has('is_active') ? $request->boolean('is_active') : (bool) $user->is_active;
         if (Auth::id() === $user->id && ! $isActive) {
             throw ValidationException::withMessages([
                 'is_active' => 'Anda tidak dapat menonaktifkan akun yang sedang Anda gunakan saat ini.',

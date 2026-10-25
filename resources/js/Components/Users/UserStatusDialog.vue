@@ -52,6 +52,9 @@ function confirmToggle() {
     {
       preserveScroll: true,
       onSuccess: () => {
+        if (props.user) {
+          props.user.is_active = !props.user.is_active
+        }
         emit('update:open', false)
         emit('confirmed')
       },
