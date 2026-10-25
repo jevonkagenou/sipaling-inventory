@@ -64,7 +64,7 @@ const emit = defineEmits<{
         </select>
       </div>
 
-      <!-- Impor CSV Button -->
+      <!-- Impor Pengguna Button -->
       <Button
         type="button"
         variant="outline"
@@ -72,7 +72,7 @@ const emit = defineEmits<{
         class="h-9 px-3.5 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-all active:scale-95"
       >
         <FileSpreadsheet class="w-4 h-4 text-[#2563EB]" />
-        <span>Impor CSV</span>
+        <span>Impor Pengguna</span>
       </Button>
 
       <!-- Add User Primary Button -->
