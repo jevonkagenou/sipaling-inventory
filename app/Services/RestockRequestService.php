@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Events\RestockRequestApproved;
+use App\Models\Product;
 use App\Models\RestockRequest;
+use App\Models\RestockRequestDetail;
 use App\Models\StockTransaction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -19,12 +21,14 @@ class RestockRequestService
 
     /**
      * Menghasilkan nomor referensi pengadaan restock otomatis (REQ-YYYYMM-XXXX).
+     * Menerapkan lockForUpdate untuk mencegah race condition (duplikasi nomor pengajuan).
      */
     public function generateRequestNumber(): string
     {
         $prefix = 'REQ-'.now()->format('Ym').'-';
 
         $lastRequest = RestockRequest::where('request_no', 'like', "{$prefix}%")
+            ->lockForUpdate()
             ->orderByDesc('request_no')
             ->first();
 
@@ -40,7 +44,7 @@ class RestockRequestService
 
         $ref = $prefix.str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
 
-        while (RestockRequest::where('request_no', $ref)->exists()) {
+        while (RestockRequest::where('request_no', $ref)->lockForUpdate()->exists()) {
             $sequence++;
             $ref = $prefix.str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
         }
@@ -69,6 +73,7 @@ class RestockRequestService
      *     request_no?: string,
      *     total_estimated_cost?: float|int,
      *     general_notes?: string|null,
+     *     items?: array<array{product_id: string, requested_quantity?: int, current_stock?: int, safety_stock?: int, suggested_quantity?: int, estimated_unit_price?: float|null, notes?: string|null}>
      * }  $data
      */
     public function createRequest(array $data, User $requester, array $meta = []): RestockRequest
@@ -84,15 +89,46 @@ class RestockRequestService
                 'general_notes' => $data['general_notes'] ?? null,
             ]);
 
+            $calculatedTotalCost = 0;
+
+            if (! empty($data['items']) && is_array($data['items'])) {
+                foreach ($data['items'] as $item) {
+                    $product = Product::findOrFail($item['product_id']);
+                    $requestedQty = (int) ($item['requested_quantity'] ?? 1);
+                    $unitPrice = isset($item['estimated_unit_price']) ? (float) $item['estimated_unit_price'] : (float) $product->unit_price;
+                    $subtotal = $requestedQty * $unitPrice;
+                    $calculatedTotalCost += $subtotal;
+
+                    RestockRequestDetail::create([
+                        'restock_request_id' => $restockRequest->id,
+                        'product_id' => $product->id,
+                        'current_stock' => $item['current_stock'] ?? $product->current_stock,
+                        'safety_stock' => $item['safety_stock'] ?? $product->minimum_stock,
+                        'suggested_quantity' => $item['suggested_quantity'] ?? 0,
+                        'requested_quantity' => $requestedQty,
+                        'approved_quantity' => null,
+                        'estimated_unit_price' => $unitPrice,
+                        'subtotal' => $subtotal,
+                        'notes' => $item['notes'] ?? null,
+                    ]);
+                }
+
+                if ($calculatedTotalCost > 0 && empty($data['total_estimated_cost'])) {
+                    $restockRequest->update([
+                        'total_estimated_cost' => $calculatedTotalCost,
+                    ]);
+                }
+            }
+
             $this->logActivity('restock_requested', $restockRequest, $requester, "Menerbitkan pengajuan restock {$restockRequest->request_no}", $meta);
 
-            return $restockRequest->load('requester');
+            return $restockRequest->load(['requester', 'details.product']);
         });
     }
 
     /**
      * Menyetujui berkas pengadaan restock oleh Komisaris (Anti-Bypass).
-     * Opsi autoGenerateInbound akan memicu event pembuatan transaksi masuk (Inbound) otomatis.
+     * Menerapkan pessimistic lock (lockForUpdate) dan integrasi atomik transaksi masuk (Inbound).
      *
      * @param  array<array{product_id: string, quantity: int, unit_price?: float|null, notes?: string|null}>  $inboundItems
      */
@@ -104,36 +140,58 @@ class RestockRequestService
         bool $autoGenerateInbound = false,
         array $inboundItems = []
     ): RestockRequest {
-        $approvedRequest = DB::transaction(function () use ($request, $reviewer, $notes, $meta) {
+        return DB::transaction(function () use ($request, $reviewer, $notes, $meta, $autoGenerateInbound, $inboundItems) {
+            // Lock pesimistik pada baris restock_requests untuk mencegah race condition (double approval / concurrent decision)
+            $lockedRequest = RestockRequest::where('id', $request->id)->lockForUpdate()->firstOrFail();
+
             // Validasi Anti-Bypass: Hanya dokumen berstatus pending yang boleh disetujui
-            if (! $this->canTransitionTo($request, 'approved')) {
+            if (! $this->canTransitionTo($lockedRequest, 'approved')) {
                 throw ValidationException::withMessages([
-                    'status' => ["Dokumen pengadaan {$request->request_no} tidak dapat disetujui karena berstatus {$request->status} (Anti-Bypass)."],
+                    'status' => ["Dokumen pengadaan {$lockedRequest->request_no} tidak dapat disetujui karena berstatus {$lockedRequest->status} (Anti-Bypass)."],
                 ]);
             }
 
-            $request->update([
+            $lockedRequest->update([
                 'status' => 'approved',
                 'reviewed_by' => $reviewer->id,
                 'reviewed_at' => now(),
                 'review_notes' => $notes,
             ]);
 
-            $this->logActivity('restock_approved', $request, $reviewer, "Menyetujui pengajuan restock {$request->request_no}", $meta);
+            // Sinkronkan kuantitas yang disetujui pada detail pengajuan
+            foreach ($lockedRequest->details as $detail) {
+                $detail->update([
+                    'approved_quantity' => $detail->requested_quantity,
+                ]);
+            }
 
-            return $request->load(['requester', 'reviewer']);
+            // Jika autoGenerateInbound aktif dan $inboundItems belum terisi, susun otomatis dari details pengadaan
+            if ($autoGenerateInbound && empty($inboundItems) && $lockedRequest->details->isNotEmpty()) {
+                $inboundItems = $lockedRequest->details->map(function ($detail) use ($lockedRequest) {
+                    return [
+                        'product_id' => $detail->product_id,
+                        'quantity' => (int) ($detail->approved_quantity ?? $detail->requested_quantity),
+                        'unit_price' => (float) $detail->estimated_unit_price,
+                        'notes' => "Item otomatis dari pengadaan restock {$lockedRequest->request_no}" . ($detail->notes ? " ({$detail->notes})" : ''),
+                    ];
+                })->all();
+            }
+
+            $this->logActivity('restock_approved', $lockedRequest, $reviewer, "Menyetujui pengajuan restock {$lockedRequest->request_no}", $meta);
+
+            // Memicu Event persetujuan dokumen pengadaan restock secara atomik di dalam transaksi
+            event(new RestockRequestApproved(
+                request: $lockedRequest,
+                reviewer: $reviewer,
+                autoGenerateInbound: $autoGenerateInbound,
+                items: $inboundItems,
+                meta: $meta
+            ));
+
+            $request->refresh();
+
+            return $lockedRequest->load(['requester', 'reviewer', 'details.product']);
         });
-
-        // Memicu Event persetujuan dokumen pengadaan restock
-        event(new RestockRequestApproved(
-            request: $approvedRequest,
-            reviewer: $reviewer,
-            autoGenerateInbound: $autoGenerateInbound,
-            items: $inboundItems,
-            meta: $meta
-        ));
-
-        return $approvedRequest;
     }
 
     /**
@@ -147,6 +205,8 @@ class RestockRequestService
         array $items,
         array $meta = []
     ): StockTransaction {
+        $request->refresh();
+
         if (! $request->isApproved()) {
             throw ValidationException::withMessages([
                 'status' => ["Draf Inbound hanya dapat diterbitkan untuk pengadaan berstatus 'approved'. Status saat ini: {$request->status}."],
@@ -162,6 +222,7 @@ class RestockRequestService
 
     /**
      * Menolak berkas pengadaan restock oleh Komisaris dengan catatan wajib (Anti-Bypass).
+     * Menerapkan pessimistic lock (lockForUpdate) untuk mencegah race condition.
      */
     public function reject(RestockRequest $request, User $reviewer, string $reason, array $meta = []): RestockRequest
     {
@@ -174,23 +235,35 @@ class RestockRequestService
         }
 
         return DB::transaction(function () use ($request, $reviewer, $trimmedReason, $meta) {
+            // Lock pesimistik pada baris restock_requests untuk mencegah race condition (concurrent decision)
+            $lockedRequest = RestockRequest::where('id', $request->id)->lockForUpdate()->firstOrFail();
+
             // Validasi Anti-Bypass: Hanya dokumen berstatus pending yang boleh ditolak
-            if (! $this->canTransitionTo($request, 'rejected')) {
+            if (! $this->canTransitionTo($lockedRequest, 'rejected')) {
                 throw ValidationException::withMessages([
-                    'status' => ["Dokumen pengadaan {$request->request_no} tidak dapat ditolak karena berstatus {$request->status} (Anti-Bypass)."],
+                    'status' => ["Dokumen pengadaan {$lockedRequest->request_no} tidak dapat ditolak karena berstatus {$lockedRequest->status} (Anti-Bypass)."],
                 ]);
             }
 
-            $request->update([
+            $lockedRequest->update([
                 'status' => 'rejected',
                 'reviewed_by' => $reviewer->id,
                 'reviewed_at' => now(),
                 'review_notes' => $trimmedReason,
             ]);
 
-            $this->logActivity('restock_rejected', $request, $reviewer, "Menolak pengajuan restock {$request->request_no}. Alasan: {$trimmedReason}", $meta);
+            // Sinkronkan approved_quantity = 0 pada detail pengajuan yang ditolak
+            foreach ($lockedRequest->details as $detail) {
+                $detail->update([
+                    'approved_quantity' => 0,
+                ]);
+            }
 
-            return $request->load(['requester', 'reviewer']);
+            $this->logActivity('restock_rejected', $lockedRequest, $reviewer, "Menolak pengajuan restock {$lockedRequest->request_no}. Alasan: {$trimmedReason}", $meta);
+
+            $request->refresh();
+
+            return $lockedRequest->load(['requester', 'reviewer', 'details.product']);
         });
     }
 
