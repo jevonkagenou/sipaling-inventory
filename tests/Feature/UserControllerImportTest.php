@@ -269,4 +269,28 @@ class UserControllerImportTest extends TestCase
 
         $response->assertSessionHasErrors(['file']);
     }
+
+    /**
+     * Skenario 9: Pembaruan data pengguna (Edit User) dengan domain internal sipaling.com berhasil tanpa hambatan DNS.
+     */
+    public function test_manager_can_update_user_with_internal_domain_email(): void
+    {
+        $response = $this->actingAs($this->manager)->put("/users/{$this->staff->id}", [
+            'name' => 'Staf Gudang Updated',
+            'email' => 'staf.updated@sipaling.com',
+            'phone' => '081234567899',
+            'role' => 'staf-gudang',
+            'is_active' => true,
+        ]);
+
+        $response->assertRedirect('/users');
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $this->staff->id,
+            'name' => 'Staf Gudang Updated',
+            'email' => 'staf.updated@sipaling.com',
+            'phone' => '081234567899',
+        ]);
+    }
 }
