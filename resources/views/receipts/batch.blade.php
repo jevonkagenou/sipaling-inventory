@@ -294,7 +294,7 @@
                     </td>
                     <td style="width: 50%; vertical-align: top; text-align: right;">
                         <div class="doc-title-main">
-                            {{ $isInbound ? 'BUKTI PENERIMAAN BARANG' : 'BUKTI PENGELUARAN BARANG' }}
+                            {{ $isInbound ? 'BUKTI PENERIMAAN BARANG' : 'SURAT JALAN / PENGELUARAN' }}
                         </div>
                         <table class="meta-table-right" cellpadding="0" cellspacing="0" align="right">
                             <tr>

@@ -193,7 +193,8 @@ class StockTransactionController extends Controller
         $pdf = Pdf::loadView('receipts.transaction', compact('transaction'))
             ->setPaper('a4', 'portrait');
 
-        $filename = 'Bukti-'.$transaction->reference_no.'.pdf';
+        $prefix = $transaction->type === 'outbound' ? 'Surat-Jalan-' : 'Bukti-Penerimaan-';
+        $filename = $prefix.$transaction->reference_no.'.pdf';
 
         return $pdf->stream($filename);
     }

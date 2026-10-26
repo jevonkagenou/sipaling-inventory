@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>{{ $transaction->type === 'inbound' ? 'Bukti Penerimaan Barang' : 'Bukti Pengeluaran Barang' }} - {{ $transaction->reference_no }}</title>
+    <title>{{ $transaction->type === 'inbound' ? 'Bukti Penerimaan Barang' : 'Surat Jalan / Bukti Pengeluaran Barang' }} - {{ $transaction->reference_no }}</title>
     <style>
         @page {
             margin: 18mm 18mm 18mm 18mm;
@@ -286,7 +286,7 @@
             </td>
             <td style="width: 50%; vertical-align: top; text-align: right;">
                 <div class="doc-title-main">
-                    {{ $isInbound ? 'BUKTI PENERIMAAN BARANG' : 'BUKTI PENGELUARAN BARANG' }}
+                    {{ $isInbound ? 'BUKTI PENERIMAAN BARANG' : 'SURAT JALAN / PENGELUARAN' }}
                 </div>
                 <table class="meta-table-right" cellpadding="0" cellspacing="0" align="right">
                     <tr>
