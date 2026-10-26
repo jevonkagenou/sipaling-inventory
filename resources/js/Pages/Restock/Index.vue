@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { Head, Link, usePage, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { ClipboardCheck, Clock, CheckCircle2, XCircle, Eye, Search, X, TrendingUp, FileText, Boxes, ShieldCheck, PackagePlus, AlertTriangle, RotateCcw,
+import { ClipboardCheck, Clock, CheckCircle2, XCircle, Eye, Search, X, TrendingUp, FileText, Boxes, ShieldCheck, PackagePlus, AlertTriangle,
 } from 'lucide-vue-next'
 
 export interface RestockProduct {
@@ -51,6 +51,15 @@ const props = defineProps<{
   requests?: {
     data: RestockRequest[]
   } | RestockRequest[]
+  filters?: {
+    status?: string
+    search?: string
+  }
+  stats?: {
+    pending: number
+    approved: number
+    rejected: number
+  }
 }>()
 
 // RBAC
@@ -63,163 +72,13 @@ const userRoles = computed<string[]>(() => {
 const isKomisaris = computed(() => userRoles.value.includes('komisaris'))
 const isManager = computed(() => userRoles.value.includes('manajer-operasional'))
 
-// Sample blueprint dataset
-const sampleRequests: RestockRequest[] = [
-  {
-    id: 'req-001',
-    request_no: 'REQ-202610-0001',
-    requested_by: 'Budi Santoso',
-    requester: { id: 'usr-1', name: 'Budi Santoso', email: 'budi.manajer@sipaling.id' },
-    status: 'pending',
-    reviewed_by: null,
-    reviewer: null,
-    reviewed_at: null,
-    review_notes: null,
-    total_estimated_cost: 12850000,
-    general_notes: 'Usulan pengadaan mendesak berdasarkan sinyal RESTOCK_URGENT Holt DES untuk mengantisipasi lonjakan permintaan ritel akhir bulan.',
-    created_at: '2026-10-19T14:30:00+07:00',
-    details_count: 3,
-    details: [
-      {
-        id: 'det-101',
-        product_id: 'prd-1',
-        product: { id: 'prd-1', sku: 'PRD-MKO-001', name: 'Minyak Goreng Sawit 2L', unit: 'Pouch' },
-        current_stock: 14,
-        safety_stock: 40,
-        suggested_quantity: 120,
-        requested_quantity: 120,
-        approved_quantity: null,
-        estimated_unit_price: 34000,
-        subtotal: 4080000,
-      },
-      {
-        id: 'det-102',
-        product_id: 'prd-2',
-        product: { id: 'prd-2', sku: 'PRD-BRS-002', name: 'Beras Premium Ramos 5kg', unit: 'Sak' },
-        current_stock: 8,
-        safety_stock: 30,
-        suggested_quantity: 80,
-        requested_quantity: 80,
-        approved_quantity: null,
-        estimated_unit_price: 72000,
-        subtotal: 5760000,
-      },
-      {
-        id: 'det-103',
-        product_id: 'prd-3',
-        product: { id: 'prd-3', sku: 'PRD-GLA-003', name: 'Gula Pasir Kristal Putih 1kg', unit: 'Pack' },
-        current_stock: 25,
-        safety_stock: 50,
-        suggested_quantity: 172,
-        requested_quantity: 172,
-        approved_quantity: null,
-        estimated_unit_price: 17500,
-        subtotal: 3010000,
-      },
-    ],
-  },
-  {
-    id: 'req-002',
-    request_no: 'REQ-202610-0002',
-    requested_by: 'Budi Santoso',
-    requester: { id: 'usr-1', name: 'Budi Santoso', email: 'budi.manajer@sipaling.id' },
-    status: 'approved',
-    reviewed_by: 'Ir. Hendra Kusuma',
-    reviewer: { id: 'usr-2', name: 'Ir. Hendra Kusuma' },
-    reviewed_at: '2026-10-18T10:15:00+07:00',
-    review_notes: 'Disetujui penuh sesuai rekomendasi model Holt DES. Segera koordinasikan dengan distributor utama.',
-    total_estimated_cost: 8400000,
-    general_notes: 'Pengadaan bahan baku kemasan dan kopi untuk penyangga stok awal kuartal IV.',
-    created_at: '2026-10-17T09:00:00+07:00',
-    details_count: 2,
-    details: [
-      {
-        id: 'det-201',
-        product_id: 'prd-4',
-        product: { id: 'prd-4', sku: 'PRD-TPG-004', name: 'Tepung Terigu Segitiga 1kg', unit: 'Pack' },
-        current_stock: 20,
-        safety_stock: 50,
-        suggested_quantity: 200,
-        requested_quantity: 200,
-        approved_quantity: 200,
-        estimated_unit_price: 12000,
-        subtotal: 2400000,
-      },
-      {
-        id: 'det-202',
-        product_id: 'prd-5',
-        product: { id: 'prd-5', sku: 'PRD-KPI-005', name: 'Kopi Bubuk Robusta Malang 250g', unit: 'Pcs' },
-        current_stock: 12,
-        safety_stock: 35,
-        suggested_quantity: 200,
-        requested_quantity: 200,
-        approved_quantity: 200,
-        estimated_unit_price: 30000,
-        subtotal: 6000000,
-      },
-    ],
-  },
-  {
-    id: 'req-003',
-    request_no: 'REQ-202610-0003',
-    requested_by: 'Budi Santoso',
-    requester: { id: 'usr-1', name: 'Budi Santoso', email: 'budi.manajer@sipaling.id' },
-    status: 'rejected',
-    reviewed_by: 'Ir. Hendra Kusuma',
-    reviewer: { id: 'usr-2', name: 'Ir. Hendra Kusuma' },
-    reviewed_at: '2026-10-16T16:45:00+07:00',
-    review_notes: 'Harga estimasi unit dari supplier saat ini terlalu tinggi (+18% acuan kontrak). Mohon negosiasikan ulang.',
-    total_estimated_cost: 5250000,
-    general_notes: 'Pengadaan pelengkap produk sirup & perisa minuman ringan.',
-    created_at: '2026-10-16T11:20:00+07:00',
-    details_count: 2,
-    details: [
-      {
-        id: 'det-301',
-        product_id: 'prd-6',
-        product: { id: 'prd-6', sku: 'PRD-SRP-006', name: 'Sirup Cocopandan Botol 460ml', unit: 'Botol' },
-        current_stock: 18,
-        safety_stock: 30,
-        suggested_quantity: 150,
-        requested_quantity: 150,
-        approved_quantity: 0,
-        estimated_unit_price: 22000,
-        subtotal: 3300000,
-      },
-      {
-        id: 'det-302',
-        product_id: 'prd-7',
-        product: { id: 'prd-7', sku: 'PRD-THC-007', name: 'Teh Celup Melati Kotak 25s', unit: 'Kotak' },
-        current_stock: 40,
-        safety_stock: 60,
-        suggested_quantity: 300,
-        requested_quantity: 300,
-        approved_quantity: 0,
-        estimated_unit_price: 6500,
-        subtotal: 1950000,
-      },
-    ],
-  },
-]
-
-// State list
-const initialData = computed<RestockRequest[]>(() => {
-  if (props.requests) {
-    if (Array.isArray(props.requests)) return props.requests
-    if (Array.isArray(props.requests.data)) return props.requests.data
-  }
-  return sampleRequests
+// Reactive request list directly from backend props
+const requestsList = computed<RestockRequest[]>(() => {
+  if (!props.requests) return []
+  if (Array.isArray(props.requests)) return props.requests
+  if (Array.isArray(props.requests.data)) return props.requests.data
+  return []
 })
-
-const requestsList = ref<RestockRequest[]>([...initialData.value])
-
-watch(
-  () => props.requests,
-  () => {
-    requestsList.value = [...initialData.value]
-  },
-  { deep: true }
-)
 
 const search = ref('')
 const selectedStatus = ref<'all' | 'pending' | 'approved' | 'rejected'>('all')
@@ -251,6 +110,7 @@ const filteredRequests = computed(() => {
 
 // KPI Metrics
 const stats = computed(() => {
+  if (props.stats) return props.stats
   const all = requestsList.value
   const pending = all.filter((r) => r.status === 'pending').length
   const approved = all.filter((r) => r.status === 'approved').length
@@ -280,20 +140,6 @@ function closeDetail() {
 function handleApprove(req: RestockRequest) {
   if (!isKomisaris.value || isSubmitting.value) return
 
-  // Jika item dummy sampel
-  if (req.id.startsWith('req-')) {
-    req.status = 'approved'
-    req.reviewed_by = currentUser.value?.name || 'Komisaris'
-    req.reviewer = { id: currentUser.value?.id || 'kom', name: req.reviewed_by }
-    req.reviewed_at = new Date().toISOString()
-    req.review_notes = reviewNotesInput.value.trim() || 'Disetujui penuh oleh Komisaris sesuai rekomendasi model Holt DES.'
-    req.details?.forEach((d) => { d.approved_quantity = d.requested_quantity })
-
-    flashMessage.value = `Berkas ${req.request_no} telah disetujui!`
-    setTimeout(() => { flashMessage.value = '' }, 4000)
-    return
-  }
-
   isSubmitting.value = true
   router.post(
     route('restock.approve', req.id),
@@ -317,20 +163,6 @@ function handleReject(req: RestockRequest) {
   if (!isKomisaris.value || isSubmitting.value) return
   if (!reviewNotesInput.value.trim()) {
     alert('Harap lampirkan alasan penolakan pada catatan evaluasi.')
-    return
-  }
-
-  // Jika item dummy sampel
-  if (req.id.startsWith('req-')) {
-    req.status = 'rejected'
-    req.reviewed_by = currentUser.value?.name || 'Komisaris'
-    req.reviewer = { id: currentUser.value?.id || 'kom', name: req.reviewed_by }
-    req.reviewed_at = new Date().toISOString()
-    req.review_notes = reviewNotesInput.value.trim()
-    req.details?.forEach((d) => { d.approved_quantity = 0 })
-
-    flashMessage.value = `Berkas ${req.request_no} ditolak dengan catatan evaluasi.`
-    setTimeout(() => { flashMessage.value = '' }, 4000)
     return
   }
 
@@ -369,13 +201,6 @@ function dismissError() {
 function resetFilters() {
   search.value = ''
   selectedStatus.value = 'all'
-}
-
-function resetSampleData() {
-  requestsList.value = JSON.parse(JSON.stringify(sampleRequests))
-  resetFilters()
-  flashMessage.value = 'Data simulasi restock berhasil dikembalikan ke sampel awal.'
-  setTimeout(() => { flashMessage.value = '' }, 3000)
 }
 
 function formatRupiah(val: number | string) {
@@ -827,18 +652,10 @@ function formatDate(dateStr: string) {
         </div>
 
         <!-- Table Footer Summary -->
-        <div class="p-3.5 bg-slate-50/70 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <div class="p-3.5 bg-slate-50/70 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
           <span>
             Menampilkan {{ filteredRequests.length }} dari total {{ requestsList.length }} berkas pengadaan.
           </span>
-          <button
-            type="button"
-            @click="resetSampleData"
-            class="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 inline-flex items-center gap-1 cursor-pointer"
-          >
-            <RotateCcw class="w-3 h-3" />
-            <span>Reset Data Simulasi</span>
-          </button>
         </div>
       </div>
 
