@@ -136,6 +136,16 @@ function closeDetail() {
   reviewNotesInput.value = ''
 }
 
+function goToAnalytics() {
+  closeDetail()
+  router.visit(route('analytics.index'))
+}
+
+function goToInbound() {
+  closeDetail()
+  router.visit(route('transactions.inbound.create'))
+}
+
 // Otorisasi Komisaris
 function handleApprove(req: RestockRequest) {
   if (!isKomisaris.value || isSubmitting.value) return
@@ -886,32 +896,34 @@ function formatDate(dateStr: string) {
               </div>
 
               <!-- Footer -->
-              <div class="p-4 bg-slate-50/80 dark:bg-slate-900/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <Link
-                  :href="route('analytics.index')"
-                  class="text-xs text-[#2563EB] hover:underline font-semibold inline-flex items-center gap-1"
+              <div class="p-4 bg-slate-50/80 dark:bg-slate-900/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  @click="goToAnalytics"
+                  class="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#2563EB] text-xs font-semibold shadow-2xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  <TrendingUp class="w-3.5 h-3.5" />
+                  <TrendingUp class="w-3.5 h-3.5 text-[#2563EB]" />
                   <span>Buka Analitik Prediksi DES</span>
-                </Link>
+                </button>
 
                 <div class="flex items-center gap-2">
                   <button
                     type="button"
                     @click="closeDetail"
-                    class="rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                    class="h-9 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer inline-flex items-center"
                   >
                     Tutup
                   </button>
 
-                  <Link
+                  <button
                     v-if="selectedRequest.status === 'approved'"
-                    :href="route('transactions.inbound.create')"
-                    class="inline-flex items-center gap-1.5 rounded-xl bg-[#10B981] hover:bg-emerald-700 px-4 py-2 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer"
+                    type="button"
+                    @click="goToInbound"
+                    class="h-9 inline-flex items-center gap-1.5 rounded-xl bg-[#10B981] hover:bg-emerald-700 px-4 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer"
                   >
                     <PackagePlus class="w-3.5 h-3.5" />
                     <span>Terbitkan Inbound Gudang</span>
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
