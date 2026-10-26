@@ -704,10 +704,10 @@ const visiblePages = computed(() => {
                       :href="route('transactions.receipt', tx.id)"
                       target="_blank"
                       class="h-7 px-2.5 rounded-lg border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/40 text-xs font-medium text-[#2563EB] dark:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/60 shadow-2xs inline-flex items-center gap-1 transition-colors"
-                      title="Unduh / Cetak Bukti PDF Langsung"
+                      :title="tx.type === 'outbound' ? 'Unduh / Cetak Surat Jalan PDF' : 'Unduh / Cetak Bukti Penerimaan PDF'"
                     >
                       <Printer class="h-3.5 w-3.5" />
-                      PDF
+                      {{ tx.type === 'outbound' ? 'Surat Jalan' : 'Bukti PDF' }}
                     </a>
                   </div>
                 </td>
@@ -916,15 +916,24 @@ const visiblePages = computed(() => {
                 <p class="border-t border-slate-900 pt-1">( _______________ )</p>
               </div>
             </div>
-<div class="flex justify-end pt-2 no-print">
-  <button
-    type="button"
-    @click="closeDetail"
-    class="rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-  >
-    Tutup
-  </button>
-</div>
+              <div class="flex items-center justify-end gap-2 pt-3 no-print border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  @click="closeDetail"
+                  class="rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                >
+                  Tutup
+                </button>
+                <a
+                  v-if="selectedTransaction"
+                  :href="route('transactions.receipt', selectedTransaction.id)"
+                  target="_blank"
+                  class="rounded-xl bg-[#2563EB] hover:bg-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-blue-500/20 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Printer class="w-3.5 h-3.5" />
+                  <span>{{ selectedTransaction.type === 'outbound' ? 'Cetak Surat Jalan (PDF)' : 'Cetak Bukti Penerimaan (PDF)' }}</span>
+                </a>
+              </div>
              
             </div>
           </div>
