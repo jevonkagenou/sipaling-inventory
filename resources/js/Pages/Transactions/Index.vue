@@ -924,17 +924,7 @@ const visiblePages = computed(() => {
                 >
                   Tutup
                 </button>
-                <a
-                  v-if="selectedTransaction"
-                  :href="route('transactions.receipt', selectedTransaction.id)"
-                  target="_blank"
-                  class="rounded-xl bg-[#2563EB] hover:bg-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-blue-500/20 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Printer class="w-3.5 h-3.5" />
-                  <span>{{ selectedTransaction.type === 'outbound' ? 'Cetak Surat Jalan (PDF)' : 'Cetak Bukti Penerimaan (PDF)' }}</span>
-                </a>
-              </div>
-             
+                </div>
             </div>
           </div>
         </Transition>
