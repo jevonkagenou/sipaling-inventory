@@ -700,15 +700,15 @@ const visiblePages = computed(() => {
                       <Eye class="h-3.5 w-3.5 text-slate-400" />
                       Detail
                     </button>
-                    <a
-                      :href="route('transactions.receipt', tx.id)"
-                      target="_blank"
-                      class="h-7 px-2.5 rounded-lg border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/40 text-xs font-medium text-[#2563EB] dark:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/60 shadow-2xs inline-flex items-center gap-1 transition-colors"
-                      :title="tx.type === 'outbound' ? 'Unduh / Cetak Surat Jalan PDF' : 'Unduh / Cetak Bukti Penerimaan PDF'"
-                    >
-                      <Printer class="h-3.5 w-3.5" />
-                      {{ tx.type === 'outbound' ? 'Surat Jalan' : 'Bukti PDF' }}
-                    </a>
+            <a
+              :href="route('transactions.receipt', tx.id)"
+              target="_blank"
+              class="h-7 px-2.5 rounded-lg border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/40 text-xs font-medium text-[#2563EB] dark:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/60 shadow-2xs inline-flex items-center gap-1 transition-colors"
+              title="Unduh / Cetak PDF"
+            >
+              <Printer class="h-3.5 w-3.5" />
+              Cetak PDF
+            </a>
                   </div>
                 </td>
               </tr>
