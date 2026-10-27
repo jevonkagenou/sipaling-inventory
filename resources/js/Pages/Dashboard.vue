@@ -452,10 +452,10 @@ function formatDate(dateStr: string) {
                         {{ item.category?.name || 'Retail' }}
                       </div>
                     </td>
-                    <td class="px-3 py-2.5 text-right tabular-nums font-bold text-amber-600 dark:text-amber-400 text-xs">
+                    <td class="px-3 py-2.5 text-right tabular-nums font-bold text-amber-600 dark:text-amber-400 text-xs whitespace-nowrap">
                       {{ item.current_stock }} {{ item.unit }}
                     </td>
-                    <td class="px-3 py-2.5 text-right tabular-nums text-slate-500 text-xs">
+                    <td class="px-3 py-2.5 text-right tabular-nums text-slate-500 text-xs whitespace-nowrap">
                       {{ item.minimum_stock }} {{ item.unit }}
                     </td>
                     <td class="px-3 py-2.5 text-center whitespace-nowrap">

@@ -782,16 +782,16 @@ watch(
                 <td class="px-3 py-2.5 font-semibold text-slate-900 dark:text-white text-xs truncate max-w-[200px]" :title="item.name">
                   {{ item.name }}
                 </td>
-                <td class="px-3 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-300 text-xs font-medium">
+                <td class="px-3 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-300 text-xs font-medium whitespace-nowrap">
                   {{ item.current_stock }} {{ item.unit }}
                 </td>
-                <td class="px-3 py-2.5 text-right tabular-nums text-slate-500 text-xs">
+                <td class="px-3 py-2.5 text-right tabular-nums text-slate-500 text-xs whitespace-nowrap">
                   {{ item.minimum_stock }} {{ item.unit }}
                 </td>
-                <td class="px-3 py-2.5 text-right tabular-nums font-semibold text-[#2563EB] dark:text-blue-400 text-xs">
+                <td class="px-3 py-2.5 text-right tabular-nums font-semibold text-[#2563EB] dark:text-blue-400 text-xs whitespace-nowrap">
                   {{ item.next_forecast }} {{ item.unit }}
                 </td>
-                <td class="px-3 py-2.5 text-right tabular-nums font-bold text-xs" :class="item.suggested_quantity > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-[#10B981]'">
+                <td class="px-3 py-2.5 text-right tabular-nums font-bold text-xs whitespace-nowrap" :class="item.suggested_quantity > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-[#10B981]'">
                   {{ item.suggested_quantity }} {{ item.unit }}
                 </td>
                 <td class="px-3 py-2.5 text-center whitespace-nowrap">

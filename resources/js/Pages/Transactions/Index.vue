@@ -884,10 +884,10 @@ const visiblePages = computed(() => {
                           <p class="font-semibold text-xs text-slate-900 dark:text-white">{{ dt.product?.name }}</p>
                           <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono text-[10px]">{{ dt.product?.sku }}</span>
                         </td>
-                        <td class="px-3 py-2.5 text-center font-bold tabular-nums" :class="selectedTransaction.type === 'inbound' ? 'text-[#10B981]' : 'text-amber-600'">
+                        <td class="px-3 py-2.5 text-center font-bold tabular-nums whitespace-nowrap" :class="selectedTransaction.type === 'inbound' ? 'text-[#10B981]' : 'text-amber-600'">
                           {{ selectedTransaction.type === 'inbound' ? '+' : '-' }}{{ dt.quantity }} {{ dt.product?.unit }}
                         </td>
-                        <td class="px-3 py-2.5 text-right font-medium tabular-nums text-slate-700 dark:text-slate-300">
+                        <td class="px-3 py-2.5 text-right font-medium tabular-nums text-slate-700 dark:text-slate-300 whitespace-nowrap">
                           {{ formatRupiah(dt.unit_price) }}
                         </td>
                         <td class="px-3 py-2.5 text-slate-500 text-[11px]">

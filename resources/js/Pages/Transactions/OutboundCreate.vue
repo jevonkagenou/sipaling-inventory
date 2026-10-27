@@ -759,7 +759,7 @@ function applyCsvToForm() {
                 </div>
                 <div>
                   <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Estimasi Nilai Total</span>
-                  <span class="text-sm font-bold text-slate-900 dark:text-white tabular-nums font-mono">
+                  <span class="text-sm font-bold text-slate-900 dark:text-white tabular-nums font-mono whitespace-nowrap">
                     {{ formatRupiah(totalValue) }}
                   </span>
                 </div>

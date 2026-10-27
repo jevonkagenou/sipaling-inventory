@@ -258,9 +258,9 @@ function formatDate(dateStr: string) {
               </div>
             </div>
 
-            <div class="flex items-baseline gap-2 self-start md:self-auto bg-blue-50/60 dark:bg-blue-950/40 px-3 py-1.5 rounded-xl border border-blue-100 dark:border-blue-900/50">
+            <div class="flex items-baseline gap-2 self-start md:self-auto bg-blue-50/60 dark:bg-blue-950/40 px-3 py-1.5 rounded-xl border border-blue-100 dark:border-blue-900/50 whitespace-nowrap">
               <span class="text-xs text-slate-500 dark:text-slate-400">Total Estimasi:</span>
-              <span class="text-base font-bold text-[#2563EB] dark:text-blue-400 tabular-nums">
+              <span class="text-base font-bold text-[#2563EB] dark:text-blue-400 tabular-nums font-mono">
                 {{ formatRupiah(req.total_estimated_cost) }}
               </span>
             </div>
@@ -277,40 +277,40 @@ function formatDate(dateStr: string) {
             <table class="w-full text-xs text-left">
               <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-semibold uppercase text-[10px] border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th class="px-4 py-2.5">Produk</th>
-                  <th class="px-4 py-2.5 text-right">Stok / Safety</th>
-                  <th class="px-4 py-2.5 text-right">Saran Holt DES</th>
-                  <th class="px-4 py-2.5 text-right">Jumlah Diminta</th>
-                  <th class="px-4 py-2.5 text-right">Estimasi Harga</th>
-                  <th class="px-4 py-2.5 text-right">Subtotal</th>
-                  <th class="px-4 py-2.5">Catatan</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Produk</th>
+                  <th class="px-3 py-2.5 text-right whitespace-nowrap">Stok / Safety</th>
+                  <th class="px-3 py-2.5 text-right whitespace-nowrap">Saran Holt DES</th>
+                  <th class="px-3 py-2.5 text-right whitespace-nowrap">Jumlah Diminta</th>
+                  <th class="px-3 py-2.5 text-right whitespace-nowrap">Estimasi Harga</th>
+                  <th class="px-3 py-2.5 text-right whitespace-nowrap">Subtotal</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Catatan</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr v-for="item in req.details" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                  <td class="px-4 py-2.5">
-                    <p class="font-semibold text-slate-900 dark:text-white">{{ item.product?.name }}</p>
+                  <td class="px-3 py-2.5">
+                    <p class="font-semibold text-slate-900 dark:text-white truncate max-w-[200px]" :title="item.product?.name">{{ item.product?.name }}</p>
                     <span class="font-mono text-[10px] text-slate-400">{{ item.product?.sku }}</span>
                   </td>
-                  <td class="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                  <td class="px-3 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300 whitespace-nowrap">
                     <span :class="item.current_stock < item.safety_stock ? 'text-rose-600 font-bold' : ''">
                       {{ item.current_stock }}
                     </span>
                     <span class="text-slate-400"> / {{ item.safety_stock }} {{ item.product?.unit }}</span>
                   </td>
-                  <td class="px-4 py-2.5 text-right tabular-nums font-semibold text-[#2563EB] dark:text-blue-400">
+                  <td class="px-3 py-2.5 text-right tabular-nums font-semibold text-[#2563EB] dark:text-blue-400 whitespace-nowrap">
                     {{ item.suggested_quantity }} {{ item.product?.unit }}
                   </td>
-                  <td class="px-4 py-2.5 text-right tabular-nums font-bold text-slate-900 dark:text-white">
+                  <td class="px-3 py-2.5 text-right tabular-nums font-bold text-slate-900 dark:text-white whitespace-nowrap">
                     {{ item.requested_quantity }} {{ item.product?.unit }}
                   </td>
-                  <td class="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                  <td class="px-3 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300 whitespace-nowrap">
                     {{ formatRupiah(item.estimated_unit_price) }}
                   </td>
-                  <td class="px-4 py-2.5 text-right tabular-nums font-bold text-slate-900 dark:text-white">
+                  <td class="px-3 py-2.5 text-right tabular-nums font-bold text-slate-900 dark:text-white whitespace-nowrap">
                     {{ formatRupiah(item.subtotal) }}
                   </td>
-                  <td class="px-4 py-2.5 text-slate-400 text-[11px]">
+                  <td class="px-3 py-2.5 text-slate-400 text-[11px] max-w-[150px] truncate" :title="item.notes || '-'">
                     {{ item.notes || '-' }}
                   </td>
                 </tr>

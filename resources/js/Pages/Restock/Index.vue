@@ -513,14 +513,14 @@ function formatDate(dateStr: string) {
           <table class="w-full text-left text-xs">
             <thead class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
               <tr class="h-10">
-                <th class="px-4 py-2.5 whitespace-nowrap">No. Pengajuan</th>
-                <th class="px-4 py-2.5 whitespace-nowrap">Waktu Dibuat</th>
-                <th class="px-4 py-2.5 whitespace-nowrap">Pemohon</th>
-                <th class="px-4 py-2.5 whitespace-nowrap">Rincian Barang</th>
-                <th class="px-4 py-2.5 whitespace-nowrap text-right">Estimasi Biaya</th>
-                <th class="px-4 py-2.5 whitespace-nowrap text-center">Status Otorisasi</th>
-                <th class="px-4 py-2.5 whitespace-nowrap">Peninjau & Catatan</th>
-                <th class="px-4 py-2.5 text-right whitespace-nowrap">Aksi</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">No. Pengajuan</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Waktu Dibuat</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Pemohon</th>
+                <th class="px-3 py-2.5 whitespace-nowrap text-center">Rincian Barang</th>
+                <th class="px-3 py-2.5 whitespace-nowrap text-right">Estimasi Biaya</th>
+                <th class="px-3 py-2.5 whitespace-nowrap text-center">Status Otorisasi</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Peninjau & Catatan</th>
+                <th class="px-3 py-2.5 text-right whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -553,7 +553,7 @@ function formatDate(dateStr: string) {
                 class="group hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors"
               >
                 <!-- 1. No. Pengajuan -->
-                <td class="px-4 py-3 whitespace-nowrap">
+                <td class="px-3 py-2.5 whitespace-nowrap">
                   <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[11px] font-semibold">
                     <FileText class="w-3 h-3 text-slate-400" />
                     {{ req.request_no }}
@@ -561,44 +561,42 @@ function formatDate(dateStr: string) {
                 </td>
 
                 <!-- 2. Waktu Dibuat -->
-                <td class="px-4 py-3 text-slate-600 dark:text-slate-400 text-xs whitespace-nowrap tabular-nums">
+                <td class="px-3 py-2.5 text-slate-600 dark:text-slate-400 text-xs whitespace-nowrap tabular-nums">
                   {{ formatDate(req.created_at) }}
                 </td>
 
                 <!-- 3. Pemohon -->
-                <td class="px-4 py-3 whitespace-nowrap">
-                  <div class="flex items-center gap-2">
+                <td class="px-3 py-2.5 whitespace-nowrap">
+                  <div class="flex items-center gap-2 max-w-[140px]" :title="req.requester?.name || req.requested_by">
                     <div class="w-6 h-6 rounded-full bg-blue-100 text-[#2563EB] dark:bg-blue-950 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold shrink-0">
                       {{ (req.requester?.name || req.requested_by || 'U')[0] }}
                     </div>
-                    <span class="font-medium text-slate-800 dark:text-slate-200 text-xs">
+                    <span class="font-medium text-slate-800 dark:text-slate-200 text-xs truncate">
                       {{ req.requester?.name || req.requested_by }}
                     </span>
                   </div>
                 </td>
 
-                <!-- 4. Rincian Barang (Multi-Item) -->
-                <td class="px-4 py-3">
-                  <div class="flex items-center gap-1.5 flex-wrap max-w-xs">
-                    <span class="inline-block px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300 text-[11px] font-bold tabular-nums">
-                      {{ req.details_count || req.details?.length || 0 }} SKU
-                    </span>
-                    <span class="text-[11px] text-slate-600 dark:text-slate-300 truncate max-w-[170px]" :title="req.details?.[0]?.product?.name">
-                      {{ req.details?.[0]?.product?.name || 'Produk Restock' }}
-                      <span v-if="(req.details?.length || 0) > 1" class="text-slate-400 font-normal">
-                        +{{ (req.details?.length || 0) - 1 }} lainnya
-                      </span>
-                    </span>
-                  </div>
+                <!-- 4. Rincian Barang (Hanya Jumlah SKU Sesuai Permintaan) -->
+                <td class="px-3 py-2.5 text-center whitespace-nowrap">
+                  <span
+                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-300 text-[11px] font-bold tabular-nums border border-blue-200/60 dark:border-blue-900/60 shadow-2xs"
+                    :title="req.details && req.details.length > 0 ? req.details.map(d => `${d.product?.sku || 'SKU'}: ${d.product?.name || 'Produk'} (${d.requested_quantity} ${d.product?.unit || 'pcs'})`).join(' | ') : 'Tidak ada rincian item'"
+                  >
+                    <Boxes class="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" />
+                    <span>{{ req.details_count || req.details?.length || 0 }} SKU</span>
+                  </span>
                 </td>
 
                 <!-- 5. Total Biaya -->
-                <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-900 dark:text-white whitespace-nowrap">
-                  {{ formatRupiah(req.total_estimated_cost) }}
+                <td class="px-3 py-2.5 text-right font-bold tabular-nums text-slate-900 dark:text-white whitespace-nowrap">
+                  <span :title="formatRupiah(req.total_estimated_cost)">
+                    {{ formatRupiah(req.total_estimated_cost) }}
+                  </span>
                 </td>
 
                 <!-- 6. Status Otorisasi Badge -->
-                <td class="px-4 py-3 text-center whitespace-nowrap">
+                <td class="px-3 py-2.5 text-center whitespace-nowrap">
                   <span
                     :class="[
                       'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border',
@@ -635,9 +633,9 @@ function formatDate(dateStr: string) {
                 </td>
 
                 <!-- 7. Peninjau & Catatan -->
-                <td class="px-4 py-3 max-w-[200px]">
-                  <div v-if="req.reviewed_by || req.reviewer">
-                    <p class="font-semibold text-slate-800 dark:text-slate-200 text-xs truncate">
+                <td class="px-3 py-2.5 max-w-[170px]">
+                  <div v-if="req.reviewed_by || req.reviewer" class="space-y-0.5">
+                    <p class="font-semibold text-slate-800 dark:text-slate-200 text-xs truncate" :title="req.reviewer?.name || req.reviewed_by">
                       {{ req.reviewer?.name || req.reviewed_by }}
                     </p>
                     <p class="text-[11px] text-slate-400 dark:text-slate-500 truncate" :title="req.review_notes || '-'">
@@ -650,7 +648,7 @@ function formatDate(dateStr: string) {
                 </td>
 
                 <!-- 8. Aksi -->
-                <td class="px-4 py-3 text-right whitespace-nowrap">
+                <td class="px-3 py-2.5 text-right whitespace-nowrap">
                   <button
                     type="button"
                     @click="openDetail(req)"
@@ -688,9 +686,9 @@ function formatDate(dateStr: string) {
             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
             @click.self="closeDetail"
           >
-            <div class="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col">
+            <div class="w-full max-w-4xl max-h-[90vh] rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
               <!-- Header -->
-              <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-10">
+              <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-10">
                 <div class="flex items-center gap-2.5">
                   <div class="h-9 w-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center">
                     <FileText class="h-5 w-5" />
@@ -729,7 +727,7 @@ function formatDate(dateStr: string) {
               </div>
 
 
-              <div class="p-6 space-y-5 flex-1">
+              <div class="p-5 sm:p-6 space-y-5 flex-1 overflow-y-auto min-h-0">
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-xs">
                   <div>
                     <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Pemohon (Manajer)</span>
@@ -838,17 +836,17 @@ function formatDate(dateStr: string) {
                     <span class="text-[11px] text-slate-400">Rekomendasi Holt DES</span>
                   </div>
 
-                  <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                    <table class="w-full text-xs text-left">
+                  <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto">
+                    <table class="w-full text-xs text-left min-w-[720px]">
                       <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 font-semibold uppercase text-[10px]">
                         <tr>
-                          <th class="px-3 py-2.5">Produk</th>
-                          <th class="px-3 py-2.5 text-right">Stok / Safety</th>
-                          <th class="px-3 py-2.5 text-right">Saran DES</th>
-                          <th class="px-3 py-2.5 text-right">Diminta</th>
-                          <th class="px-3 py-2.5 text-right">Disetujui</th>
-                          <th class="px-3 py-2.5 text-right">Harga Satuan</th>
-                          <th class="px-3 py-2.5 text-right">Subtotal</th>
+                          <th class="px-3 py-2.5 whitespace-nowrap">Produk</th>
+                          <th class="px-3 py-2.5 text-right whitespace-nowrap">Stok / Safety</th>
+                          <th class="px-3 py-2.5 text-right whitespace-nowrap">Saran DES</th>
+                          <th class="px-3 py-2.5 text-right whitespace-nowrap">Diminta</th>
+                          <th class="px-3 py-2.5 text-right whitespace-nowrap">Disetujui</th>
+                          <th class="px-3 py-2.5 text-right whitespace-nowrap">Harga Satuan</th>
+                          <th class="px-3 py-2.5 text-right whitespace-nowrap pr-4">Subtotal</th>
                         </tr>
                       </thead>
                       <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -858,28 +856,28 @@ function formatDate(dateStr: string) {
                           class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
                         >
                           <td class="px-3 py-2.5">
-                            <p class="font-semibold text-slate-900 dark:text-white">{{ item.product?.name }}</p>
+                            <p class="font-semibold text-slate-900 dark:text-white truncate max-w-[200px]" :title="item.product?.name">{{ item.product?.name }}</p>
                             <span class="font-mono text-[10px] text-slate-400">{{ item.product?.sku }}</span>
                           </td>
-                          <td class="px-3 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                          <td class="px-3 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300 whitespace-nowrap">
                             <span :class="item.current_stock < item.safety_stock ? 'text-rose-600 font-bold' : ''">
                               {{ item.current_stock }}
                             </span>
                             <span class="text-slate-400"> / {{ item.safety_stock }} {{ item.product?.unit }}</span>
                           </td>
-                          <td class="px-3 py-2.5 text-right tabular-nums font-semibold text-[#2563EB] dark:text-blue-400">
+                          <td class="px-3 py-2.5 text-right tabular-nums font-semibold text-[#2563EB] dark:text-blue-400 whitespace-nowrap">
                             {{ item.suggested_quantity }} {{ item.product?.unit }}
                           </td>
-                          <td class="px-3 py-2.5 text-right tabular-nums font-bold text-slate-900 dark:text-white">
+                          <td class="px-3 py-2.5 text-right tabular-nums font-bold text-slate-900 dark:text-white whitespace-nowrap">
                             {{ item.requested_quantity }} {{ item.product?.unit }}
                           </td>
-                          <td class="px-3 py-2.5 text-right tabular-nums font-bold" :class="item.approved_quantity !== null ? 'text-[#10B981]' : 'text-slate-400'">
+                          <td class="px-3 py-2.5 text-right tabular-nums font-bold whitespace-nowrap" :class="item.approved_quantity !== null ? 'text-[#10B981]' : 'text-slate-400'">
                             {{ item.approved_quantity !== null ? item.approved_quantity + ' ' + (item.product?.unit || '') : '-' }}
                           </td>
-                          <td class="px-3 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                          <td class="px-3 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300 whitespace-nowrap">
                             {{ formatRupiah(item.estimated_unit_price) }}
                           </td>
-                          <td class="px-3 py-2.5 text-right tabular-nums font-bold text-slate-900 dark:text-white">
+                          <td class="px-3 py-2.5 text-right tabular-nums font-bold text-slate-900 dark:text-white whitespace-nowrap pr-4">
                             {{ formatRupiah(item.subtotal) }}
                           </td>
                         </tr>
@@ -889,7 +887,7 @@ function formatDate(dateStr: string) {
                           <td colspan="6" class="px-3 py-2.5 text-right text-xs">
                             Total Estimasi Anggaran Pengadaan:
                           </td>
-                          <td class="px-3 py-2.5 text-right font-bold text-[#2563EB] dark:text-blue-400 tabular-nums">
+                          <td class="px-3 py-2.5 text-right font-bold text-[#2563EB] dark:text-blue-400 tabular-nums whitespace-nowrap pr-4">
                             {{ formatRupiah(selectedRequest.total_estimated_cost) }}
                           </td>
                         </tr>
@@ -900,7 +898,7 @@ function formatDate(dateStr: string) {
               </div>
 
               <!-- Footer -->
-              <div class="p-4 bg-slate-50/80 dark:bg-slate-900/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+              <div class="p-4 bg-slate-50/90 dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 shrink-0 z-10">
                 <button
                   type="button"
                   @click="goToAnalytics"
