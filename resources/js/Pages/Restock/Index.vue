@@ -71,6 +71,9 @@ const userRoles = computed<string[]>(() => {
 })
 const isKomisaris = computed(() => userRoles.value.includes('komisaris'))
 const isManager = computed(() => userRoles.value.includes('manajer-operasional'))
+const canCreateTransaction = computed(() => {
+  return userRoles.value.includes('staf-gudang') || userRoles.value.includes('manajer-operasional')
+})
 
 // Reactive request list directly from backend props
 const requestsList = computed<RestockRequest[]>(() => {
@@ -142,8 +145,9 @@ function goToAnalytics() {
 }
 
 function goToInbound() {
+  const restockId = selectedRequest.value?.id
   closeDetail()
-  router.visit(route('transactions.inbound.create'))
+  router.visit(route('transactions.inbound.create', { restock_id: restockId }))
 }
 
 // Otorisasi Komisaris
@@ -916,7 +920,7 @@ function formatDate(dateStr: string) {
                   </button>
 
                   <button
-                    v-if="selectedRequest.status === 'approved'"
+                    v-if="selectedRequest.status === 'approved' && canCreateTransaction"
                     type="button"
                     @click="goToInbound"
                     class="h-9 inline-flex items-center gap-1.5 rounded-xl bg-[#10B981] hover:bg-emerald-700 px-4 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer"
@@ -924,6 +928,14 @@ function formatDate(dateStr: string) {
                     <PackagePlus class="w-3.5 h-3.5" />
                     <span>Terbitkan Inbound Gudang</span>
                   </button>
+
+                  <div
+                    v-else-if="selectedRequest.status === 'approved'"
+                    class="h-9 px-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-800/80 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold inline-flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Siap Diproses Masuk oleh Staf Gudang</span>
+                  </div>
                 </div>
               </div>
             </div>

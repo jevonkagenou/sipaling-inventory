@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             RoleAndPermissionSeeder::class,
             InventoryCsvSeeder::class,
             InboundTransactionSeeder::class,
+            RestockRequestSeeder::class,
         ]);
     }
 }

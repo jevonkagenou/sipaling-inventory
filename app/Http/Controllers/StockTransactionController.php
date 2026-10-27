@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\RestockRequest;
 use App\Models\StockTransaction;
 use App\Models\StockTransactionDetail;
 use App\Services\StockTransactionService;
@@ -90,7 +91,7 @@ class StockTransactionController extends Controller
     /**
      * Menampilkan form pencatatan barang masuk (Inbound).
      */
-    public function inboundCreate(): Response
+    public function inboundCreate(Request $request): Response
     {
         $products = Product::query()
             ->with('category:id,name')
@@ -100,10 +101,44 @@ class StockTransactionController extends Controller
 
         $generatedRef = $this->stockTransactionService->generateReferenceNumber('inbound');
 
+        // Ambil daftar pengadaan restock yang sudah disetujui (Approved) untuk ditarik staf gudang
+        $approvedRestocks = RestockRequest::with([
+            'details.product:id,sku,name,unit,unit_price,current_stock',
+            'requester:id,name',
+            'reviewer:id,name',
+        ])
+            ->where('status', 'approved')
+            ->latest()
+            ->get()
+            ->map(function ($req) {
+                return [
+                    'id' => $req->id,
+                    'request_no' => $req->request_no,
+                    'created_at' => $req->created_at->format('d M Y, H:i'),
+                    'total_estimated_cost' => (float) $req->total_estimated_cost,
+                    'review_notes' => $req->review_notes,
+                    'requester_name' => $req->requester?->name,
+                    'items' => $req->details->map(function ($d) {
+                        return [
+                            'product_id' => $d->product_id,
+                            'quantity' => (int) ($d->approved_quantity ?? $d->requested_quantity),
+                            'unit_price' => (float) ($d->estimated_unit_price ?? $d->product?->unit_price ?? 0),
+                            'notes' => $d->notes ?? "Pengadaan: {$d->request?->request_no}",
+                            'sku' => $d->product?->sku ?? '',
+                            'name' => $d->product?->name ?? '',
+                            'unit' => $d->product?->unit ?? 'pcs',
+                            'current_stock' => (int) ($d->product?->current_stock ?? 0),
+                        ];
+                    }),
+                ];
+            });
+
         return Inertia::render('Transactions/InboundCreate', [
             'products' => $products,
             'categories' => Category::select('id', 'name')->orderBy('name')->get(),
             'generatedRef' => $generatedRef,
+            'approvedRestocks' => $approvedRestocks,
+            'preselectedRestockId' => $request->query('restock_id'),
         ]);
     }
 

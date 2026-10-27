@@ -259,4 +259,33 @@ class StockTransactionControllerTest extends TestCase
         $response = $this->actingAs($this->staff)->get('/transactions/batch-receipt');
         $response->assertSessionHasErrors('ids');
     }
+
+    public function test_staff_inbound_create_receives_approved_restocks_and_preselected_restock_id(): void
+    {
+        $manager = User::whereHas('roles', fn ($q) => $q->where('name', 'manajer-operasional'))->first() ?? $this->manager;
+        $restock = \App\Models\RestockRequest::create([
+            'request_no' => 'REQ-TEST-APP-001',
+            'requested_by' => $manager->id,
+            'status' => 'approved',
+            'total_estimated_cost' => 100000,
+        ]);
+
+        \App\Models\RestockRequestDetail::create([
+            'restock_request_id' => $restock->id,
+            'product_id' => $this->product->id,
+            'requested_quantity' => 10,
+            'approved_quantity' => 10,
+            'estimated_unit_price' => 10000,
+            'subtotal' => 100000,
+        ]);
+
+        $response = $this->actingAs($this->staff)->get("/transactions/inbound?restock_id={$restock->id}");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Transactions/InboundCreate')
+            ->has('approvedRestocks')
+            ->where('preselectedRestockId', $restock->id)
+        );
+    }
 }

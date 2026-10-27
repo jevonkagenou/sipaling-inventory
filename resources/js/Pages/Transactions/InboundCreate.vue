@@ -32,6 +32,7 @@ import {
   Download,
   ShieldAlert,
   Loader2,
+  ClipboardCheck,
 } from 'lucide-vue-next'
 
 export interface Category {
@@ -60,11 +61,82 @@ interface InboundItemForm {
   isDropdownOpen?: boolean
 }
 
+export interface ApprovedRestockDetail {
+  product_id: string
+  quantity: number
+  unit_price: number
+  notes?: string
+  sku: string
+  name: string
+  unit: string
+  current_stock: number
+}
+
+export interface ApprovedRestock {
+  id: string
+  request_no: string
+  created_at: string
+  total_estimated_cost: number
+  review_notes?: string
+  requester_name?: string
+  items: ApprovedRestockDetail[]
+}
+
 const props = defineProps<{
   products: ProductItem[]
   categories: Category[]
   generatedRef: string
+  approvedRestocks?: ApprovedRestock[]
+  preselectedRestockId?: string
 }>()
+
+const selectedRestockId = ref<string>(props.preselectedRestockId || '')
+
+const activeRestock = computed(() => {
+  if (!selectedRestockId.value || !props.approvedRestocks) return null
+  return props.approvedRestocks.find((r) => r.id === selectedRestockId.value) || null
+})
+
+function applyRestockRequest(restockId: string) {
+  selectedRestockId.value = restockId
+  if (!restockId) {
+    clearRestockSelection()
+    return
+  }
+
+  const restock = props.approvedRestocks?.find((r) => r.id === restockId)
+  if (!restock) return
+
+  // Set catatan bukti penerimaan otomatis
+  form.notes = `Penerimaan pengadaan restock berkas ${restock.request_no} (Disetujui Komisaris).`
+
+  // Populasi seluruh item produk yang disetujui
+  if (restock.items && restock.items.length > 0) {
+    form.items = restock.items.map((item) => ({
+      product_id: item.product_id,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      notes: item.notes || `Ref: ${restock.request_no}`,
+      searchQuery: `${item.sku} - ${item.name}`,
+      isDropdownOpen: false,
+    }))
+  }
+}
+
+function clearRestockSelection() {
+  selectedRestockId.value = ''
+  form.notes = ''
+  form.items = [
+    {
+      product_id: '',
+      quantity: 1,
+      unit_price: 0,
+      notes: '',
+      searchQuery: '',
+      isDropdownOpen: false,
+    },
+  ]
+}
 
 const form = useForm({
   reference_no: props.generatedRef,
@@ -139,6 +211,9 @@ function handleDocumentClick(e: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
+  if (props.preselectedRestockId) {
+    applyRestockRequest(props.preselectedRestockId)
+  }
 })
 
 onUnmounted(() => {
@@ -407,11 +482,84 @@ function applyCsvToForm() {
         </div>
 
         <!-- Section 1: Informasi Dokumen & Pengirim -->
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md">
-          <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-            <FileText class="h-4 w-4 text-[#2563EB]" />
-            1. Informasi Bukti Penerimaan
-          </h3>
+        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <FileText class="h-4 w-4 text-[#2563EB]" />
+              1. Informasi Bukti Penerimaan
+            </h3>
+            <span class="text-xs text-slate-400">Pastikan nomor surat jalan atau referensi fisik tercatat</span>
+          </div>
+
+          <!-- Opsi Tarik dari Berkas Pengadaan Disetujui (Restock Integration) -->
+          <div
+            v-if="approvedRestocks && approvedRestocks.length > 0"
+            class="rounded-xl border border-blue-200/70 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-white dark:from-slate-900 dark:via-blue-950/20 dark:to-slate-900 p-3.5 dark:border-blue-900/60 transition-all"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-start gap-3">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2563EB]/10 text-[#2563EB] dark:bg-blue-500/20 dark:text-blue-400 mt-0.5">
+                  <ClipboardCheck class="h-4 w-4" />
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-white">
+                      Tarik dari Berkas Pengadaan Disetujui (Restock)
+                    </h4>
+                    <span class="rounded-full bg-blue-100 dark:bg-blue-950/80 px-2 py-0.5 text-[10px] font-semibold text-[#2563EB] dark:text-blue-300">
+                      {{ approvedRestocks.length }} Berkas Siap
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Pilih nomor pengadaan untuk mengisi otomatis seluruh item dan kuantitas hasil persetujuan Komisaris.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 w-full sm:w-auto">
+                <select
+                  :value="selectedRestockId"
+                  @change="applyRestockRequest(($event.target as HTMLSelectElement).value)"
+                  class="h-9 w-full sm:w-72 rounded-xl border border-blue-200 bg-white px-3 text-xs font-semibold text-slate-800 shadow-2xs focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 dark:border-blue-900 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+                >
+                  <option value="">-- Input Manual (Bukan dari Restock) --</option>
+                  <option
+                    v-for="r in approvedRestocks"
+                    :key="r.id"
+                    :value="r.id"
+                  >
+                    {{ r.request_no }} ({{ r.items.length }} SKU) • {{ r.requester_name || 'Manajer' }}
+                  </option>
+                </select>
+
+                <button
+                  v-if="selectedRestockId"
+                  type="button"
+                  @click="clearRestockSelection"
+                  class="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shrink-0 shadow-2xs cursor-pointer"
+                  title="Batalkan pilihan berkas dan reset form"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            <!-- Detail berkas aktif yang dimuat -->
+            <div
+              v-if="activeRestock"
+              class="mt-3 pt-2.5 border-t border-blue-100 dark:border-blue-900/50 flex flex-wrap items-center justify-between gap-2 text-xs"
+            >
+              <div class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium text-[11px]">
+                <CheckCircle2 class="h-3.5 w-3.5 shrink-0 text-[#10B981]" />
+                <span>
+                  Memuat <strong>{{ activeRestock.items.length }} SKU</strong> dari berkas <strong>{{ activeRestock.request_no }}</strong> disetujui Komisaris.
+                </span>
+              </div>
+              <div v-if="activeRestock.review_notes" class="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                &ldquo;{{ activeRestock.review_notes }}&rdquo;
+              </div>
+            </div>
+          </div>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <!-- No Referensi -->
