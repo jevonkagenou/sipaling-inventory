@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\RestockRequest;
 use App\Models\StockTransaction;
 use App\Models\StockTransactionDetail;
 use App\Models\User;
@@ -46,6 +47,7 @@ class DashboardController extends Controller
             'total_inventory_value' => (float) (Product::selectRaw('SUM(current_stock * unit_price) as total')->value('total') ?? 0),
             'total_audit_logs' => ActivityLog::count(),
             'today_audit_logs' => ActivityLog::whereDate('created_at', $today)->count(),
+            'sensitive_changes_count' => ActivityLog::whereIn('event', ['updated', 'deleted'])->count(),
         ];
 
         // 5 produk paling kritis (stok mendekati / di bawah minimum)
@@ -62,10 +64,10 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // 5 rekaman audit log terakhir
+        // 8 rekaman audit log terakhir (lengkap untuk Auditor Internal & Komisaris)
         $recentLogs = ActivityLog::with('causer:id,name,email')
             ->latest()
-            ->take(5)
+            ->take(8)
             ->get();
 
         // 1. Data Tren Mutasi Inbound vs Outbound (14 Hari Terakhir)
@@ -108,6 +110,35 @@ class DashboardController extends Controller
             ];
         }
 
+        $topOutboundProducts = collect();
+        if ($request->user()?->hasRole('staf-gudang')) {
+            $topOutboundProducts = StockTransactionDetail::query()
+                ->join('stock_transactions', 'stock_transactions.id', '=', 'stock_transaction_details.stock_transaction_id')
+                ->join('products', 'products.id', '=', 'stock_transaction_details.product_id')
+                ->where('stock_transactions.type', 'outbound')
+                ->whereBetween('stock_transactions.transaction_date', [$startDate, $endDate])
+                ->select([
+                    'products.id',
+                    'products.sku',
+                    'products.name',
+                    'products.unit',
+                ])
+                ->selectRaw('COUNT(stock_transaction_details.id) as outbound_count, SUM(stock_transaction_details.quantity) as total_quantity')
+                ->groupBy('products.id', 'products.sku', 'products.name', 'products.unit')
+                ->orderByDesc('outbound_count')
+                ->orderByDesc('total_quantity')
+                ->take(5)
+                ->get()
+                ->map(fn ($product) => [
+                    'id' => $product->id,
+                    'sku' => $product->sku,
+                    'name' => $product->name,
+                    'unit' => $product->unit,
+                    'outbound_count' => (int) $product->outbound_count,
+                    'total_quantity' => (int) $product->total_quantity,
+                ]);
+        }
+
         // 2. Data Statistik Status Pengguna (Aktif vs Diblokir & Sebaran Role)
         $totalUsers = User::count();
         $activeUsers = User::where('is_active', true)->count();
@@ -127,6 +158,65 @@ class DashboardController extends Controller
             'active_percentage' => $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100, 1) : 0,
             'roles' => $rolesWithCount,
         ];
+
+        $commissionerDashboard = null;
+        if ($request->user()?->hasRole('komisaris')) {
+            $monthStart = Carbon::now()->startOfMonth();
+            $monthEnd = Carbon::now()->endOfMonth();
+
+            $commissionerDashboard = [
+                'pending_count' => RestockRequest::pending()->count(),
+                'approved_this_month' => RestockRequest::approved()
+                    ->whereBetween('reviewed_at', [$monthStart, $monthEnd])
+                    ->count(),
+                'rejected_this_month' => RestockRequest::rejected()
+                    ->whereBetween('reviewed_at', [$monthStart, $monthEnd])
+                    ->count(),
+                'oldest_pending_at' => RestockRequest::pending()->min('created_at'),
+                'pending_requests' => RestockRequest::pending()
+                    ->with([
+                        'requester:id,name',
+                        'details.product:id,sku,name,unit,current_stock,minimum_stock',
+                    ])
+                    ->withCount('details')
+                    ->oldest('created_at')
+                    ->take(5)
+                    ->get(),
+                'recent_decisions' => RestockRequest::query()
+                    ->whereIn('status', ['approved', 'rejected'])
+                    ->with(['requester:id,name', 'reviewer:id,name'])
+                    ->latest('reviewed_at')
+                    ->take(5)
+                    ->get(),
+            ];
+        }
+
+        $auditActivityTrends = [];
+        if ($request->user()?->hasRole('auditor-internal')) {
+            $auditAnchorDate = Carbon::today();
+            $auditStartDate = $auditAnchorDate->copy()->subDays(13)->startOfDay();
+            $auditEndDate = $auditAnchorDate->copy()->endOfDay();
+
+            $auditActivityCounts = ActivityLog::query()
+                ->whereIn('event', ['created', 'updated'])
+                ->whereBetween('created_at', [$auditStartDate, $auditEndDate])
+                ->selectRaw('DATE(created_at) as activity_date, event, COUNT(*) as aggregate')
+                ->groupBy('activity_date', 'event')
+                ->get()
+                ->groupBy('activity_date');
+
+            for ($daysAgo = 13; $daysAgo >= 0; $daysAgo--) {
+                $date = $auditAnchorDate->copy()->subDays($daysAgo);
+                $events = $auditActivityCounts->get($date->toDateString(), collect())->keyBy('event');
+
+                $auditActivityTrends[] = [
+                    'date' => $date->toDateString(),
+                    'label' => $date->format('d M'),
+                    'created' => (int) data_get($events->get('created'), 'aggregate', 0),
+                    'updated' => (int) data_get($events->get('updated'), 'aggregate', 0),
+                ];
+            }
+        }
 
         // analitik DES - populate data untuk Manajer Operasional
         $products = Product::query()
@@ -160,7 +250,10 @@ class DashboardController extends Controller
             'recentTransactions' => $recentTransactions,
             'recentLogs'         => $recentLogs,
             'mutationTrends'     => $mutationTrends,
+            'topOutboundProducts' => $topOutboundProducts,
             'userStats'          => $userStats,
+            'commissionerDashboard' => $commissionerDashboard,
+            'auditActivityTrends' => $auditActivityTrends,
 
             // data analitik DES untuk Manajer Operasional
             'products'           => $products,
