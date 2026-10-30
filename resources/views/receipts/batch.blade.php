@@ -207,7 +207,7 @@
             border-radius: 3px;
         }
 
-        /* Tanda Tangan */
+        /* Tanda Tangan 2 Kolom Simetris */
         table.sig-table {
             width: 100%;
             border-collapse: collapse;
@@ -215,10 +215,10 @@
             page-break-inside: avoid;
         }
         table.sig-table td {
-            width: 33.33%;
+            width: 50%;
             text-align: center;
             vertical-align: top;
-            padding: 0 8px;
+            padding: 0 20px;
         }
         .sig-title {
             font-size: 8pt;
@@ -226,12 +226,12 @@
             font-weight: 500;
         }
         .sig-space {
-            height: 50px;
+            height: 48px;
         }
         .sig-line {
             border-bottom: 1px solid #0f172a;
             display: inline-block;
-            min-width: 135px;
+            min-width: 160px;
             padding-bottom: 2px;
             font-weight: bold;
             font-size: 8pt;
@@ -514,10 +514,10 @@
                 </div>
             @endif
 
-            <!-- Lembar Tanda Tangan 3 Pihak Resmi -->
+            <!-- Lembar Tanda Tangan 2 Pihak Resmi (Simetris Kiri & Kanan) -->
             <table class="sig-table" cellpadding="0" cellspacing="0">
                 <tr>
-                    <td>
+                    <td style="width: 50%;">
                         <div class="sig-title">Diserahkan Oleh,</div>
                         <div class="sig-space"></div>
                         <div>
@@ -527,7 +527,7 @@
                         </div>
                         <div class="sig-role">{{ $isInbound ? 'Pemasok / Driver Pengirim' : 'Petugas Gudang Pengirim' }}</div>
                     </td>
-                    <td>
+                    <td style="width: 50%;">
                         <div class="sig-title">Diterima Oleh,</div>
                         <div class="sig-space"></div>
                         <div>
@@ -536,16 +536,6 @@
                             </span>
                         </div>
                         <div class="sig-role">{{ $isInbound ? 'Petugas Gudang Penerima' : 'Pihak Penerima Barang' }}</div>
-                    </td>
-                    <td>
-                        <div class="sig-title">Mengetahui,</div>
-                        <div class="sig-space"></div>
-                        <div>
-                            <span class="sig-line">
-                                ........................................
-                            </span>
-                        </div>
-                        <div class="sig-role">Kepala Gudang / Supervisor</div>
                     </td>
                 </tr>
             </table>
