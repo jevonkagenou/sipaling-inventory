@@ -204,4 +204,225 @@ describe('Modul 01: Autentikasi, Hak Akses Multi-Peran, & Keamanan Rute', () => 
     cy.contains(/kembali ke halaman masuk/i).should('be.visible').click();
     cy.url().should('include', '/login');
   });
+  
+/*TC_AUT_011 dan TC_AUT_012*/
+
+describe('Pengujian Najwa - Validasi Status Akun Nonaktif', () => {
+  const email = 'staf@sipaling.com';
+  const password = 'password';
+  const pesanNonaktif =
+    'Akun Anda non-aktif. Hubungi Administrator.';
+
+  beforeEach(() => {
+    cy.clearCookies();
+    cy.clearLocalStorage();
+    cy.visit('/login');
+  });
+it('TC_AUT_011 - Verifikasi toast hilang otomatis setelah 5 detik', () => {
+    loginAkunNonaktif();
+
+    cy.contains('div.fixed.bottom-6.right-6', pesanNonaktif)
+        .should('be.visible');
+
+    cy.wait(5200);
+
+    cy.contains('div.fixed.bottom-6.right-6', pesanNonaktif)
+        .should('not.exist');
+});
+  function loginAkunNonaktif() {
+    cy.get('#email').clear().type(email);
+    cy.get('#password').clear().type(password);
+    cy.get('button[type="submit"]').click();
+
+    cy.contains(pesanNonaktif).should('be.visible');
+    cy.url().should('include', '/login');
+  }
+
+it('TC_AUT_011 - Login ditolak untuk akun staf nonaktif', () => {
+    loginAkunNonaktif();
+
+cy.get('div.fixed.bottom-6.right-6')
+  .filter(':visible')
+  .filter((index, element) =>
+    element.innerText.includes(pesanNonaktif)
+  )
+  .first()
+  .should('be.visible')
+  .within(() => {
+    cy.contains(pesanNonaktif).should('be.visible');
+    cy.get('button').should('be.visible');
+  });
+
+    // Memastikan pesan tidak muncul ganda
+    cy.get('p').filter((index, element) =>
+      element.innerText.includes(pesanNonaktif)
+    ).should('have.length', 1);
+
+    // Menguji tombol tutup toast
+cy.contains('div.fixed.bottom-6.right-6', pesanNonaktif)
+  .filter(':visible')
+  .first()
+  .find('button')
+  .click();
+
+cy.contains('div.fixed.bottom-6.right-6', pesanNonaktif)
+  .should('not.exist');
+
+    // Memastikan pengguna tidak dapat masuk dashboard
+    cy.visit('/dashboard');
+    cy.url().should('include', '/login');
+  });
+
+ it('TC_AUT_012 - Toast akun nonaktif pada mobile, mode terang dan gelap', () => {
+    cy.viewport(375, 812);
+
+    // Mengaktifkan mode gelap
+   cy.get('button[title="Beralih ke Mode Gelap"]').click();
+    cy.get('html').should('have.class', 'dark');
+
+    loginAkunNonaktif();
+
+    cy.contains('div.fixed.bottom-6.right-6', pesanNonaktif)
+  .filter(':visible')
+  .first()
+  .should(($toast) => {
+    const rect = $toast[0].getBoundingClientRect();
+
+    expect(rect.left).to.be.at.least(0);
+    expect(rect.right).to.be.at.most(375);
+    expect(rect.top).to.be.at.least(0);
+    expect(rect.bottom).to.be.at.most(812);
+  });
+
+    // Menutup toast dan kembali ke login
+  cy.contains('div.fixed.bottom-6.right-6', pesanNonaktif)
+  .filter(':visible')
+  .first()
+  .find('button')
+  .click();
+    cy.visit('/login');
+
+    // Mengubah ke mode terang
+    cy.get('button[title="Beralih ke Mode Terang"]').click();
+    cy.get('html').should('not.have.class', 'dark');
+
+    loginAkunNonaktif();
+
+cy.contains('div.fixed.bottom-6.right-6', pesanNonaktif)
+  .filter(':visible')
+  .should('be.visible');
+    cy.contains(pesanNonaktif).should('be.visible');
+
+// Memastikan tidak ada scroll horizontal
+cy.document().then((doc) => {
+  expect(doc.documentElement.scrollWidth)
+    .to.be.at.most(375);
+});
+  
+});
+});
+/* TC_PRF_003 - Validasi Informasi Kartu Identitas Profil */
+
+describe('Pengujian Najwa - Kartu Identitas Profil', () => {
+
+it('TC_PRF_003 - Memastikan informasi identitas akun Manajer Operasional tampil dengan benar', () => {
+
+    // Login sebagai Manajer Operasional
+    cy.visit('/login');
+    cy.get('#email').clear().type('manajer@sipaling.com');
+    cy.get('#password').clear().type('password');
+    cy.get('button[type="submit"]').click();
+
+    cy.url().should('include', '/dashboard');
+
+    // Membuka halaman profil
+    cy.visit('/profile');
+    cy.url().should('include', '/profile');
+
+    // Memastikan identitas pengguna tampil
+    cy.contains('h3', 'Manajer Operasional').should('be.visible');
+    cy.contains('Akun Aktif').should('be.visible');
+
+    // Memastikan informasi kartu identitas
+    cy.contains('ID Pengguna').should('be.visible');
+    cy.contains('ID-01A0FFA1').should('be.visible');
+
+    cy.contains('Email').should('be.visible');
+    cy.contains('manajer@sipaling.com').should('be.visible');
+
+    cy.contains('Telepon').should('be.visible');
+    cy.contains('081200000002').should('be.visible');
+
+    cy.contains('Bergabung Sejak').should('be.visible');
+    cy.contains('3 Oktober 2026').should('be.visible');
+
+    // Memastikan keterangan verifikasi identitas tampil
+    cy.contains('Identitas terverifikasi sistem SIPALING')
+      .should('be.visible');
+
+  });
+
+/* TC_PRF_004 - Kartu Responsif pada Mode Terang dan Gelap */
+
+it('TC_PRF_004 - Memastikan kartu identitas responsif pada desktop, mobile, mode terang dan gelap', () => {
+
+  // Login sebagai Manajer Operasional
+  cy.visit('/login');
+  cy.get('#email').clear().type('manajer@sipaling.com');
+  cy.get('#password').clear().type('password');
+  cy.get('button[type="submit"]').click();
+
+  cy.url().should('include', '/dashboard');
+
+  // Membuka halaman profil
+  cy.visit('/profile');
+  cy.url().should('include', '/profile');
+
+  // Memastikan kartu identitas tampil
+  cy.contains('h3', 'Manajer Operasional').should('be.visible');
+
+  // Pengujian desktop mode terang
+  cy.viewport(1280, 800);
+
+  cy.get('html').should('not.have.class', 'dark');
+  cy.contains('Identitas terverifikasi sistem SIPALING')
+    .should('be.visible');
+
+  // Pengujian desktop mode gelap
+  cy.get('button[title="Ganti Mode Tampilan"]').click();
+
+  cy.get('html').should('have.class', 'dark');
+  cy.contains('Identitas terverifikasi sistem SIPALING')
+    .should('be.visible');
+
+  // Pengujian mobile mode gelap
+  cy.viewport(375, 812);
+
+  cy.get('html').should('have.class', 'dark');
+
+  cy.contains('h3', 'Manajer Operasional').should('be.visible');
+  cy.contains('manajer@sipaling.com').should('be.visible');
+  cy.contains('081200000002').should('be.visible');
+
+  // Memastikan tidak ada scroll horizontal pada mobile
+  cy.document().then((doc) => {
+    expect(doc.documentElement.scrollWidth).to.be.at.most(375);
+  });
+
+  // Pengujian mobile mode terang
+  cy.get('button[title="Ganti Mode Tampilan"]').click();
+
+  cy.get('html').should('not.have.class', 'dark');
+
+  cy.contains('h3', 'Manajer Operasional').should('be.visible');
+  cy.contains('Identitas terverifikasi sistem SIPALING')
+    .should('be.visible');
+
+  // Memastikan tidak ada scroll horizontal pada mobile mode terang
+  cy.document().then((doc) => {
+    expect(doc.documentElement.scrollWidth).to.be.at.most(375);
+  });
+
+});
+});
 });
