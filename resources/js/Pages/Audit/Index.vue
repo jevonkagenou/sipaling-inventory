@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import AuditDiffDialog from '@/Components/Audit/AuditDiffDialog.vue'
 import {
   Search,
   Filter,
@@ -678,53 +679,10 @@ const visiblePages = computed(() => {
       </div>
     </div>
 
-    <!-- Modal Detail Diff / Properties -->
-    <div
-      v-if="isDetailModalOpen && selectedLog"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs"
-      @click.self="isDetailModalOpen = false"
-    >
-      <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-          <h3 class="text-base font-bold text-slate-900 dark:text-white">
-            Detail Forensik Rekam Audit
-          </h3>
-          <button @click="isDetailModalOpen = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
-            <X class="h-5 w-5" />
-          </button>
-        </div>
-
-        <div class="space-y-3 text-xs sm:text-sm">
-          <div>
-            <span class="text-xs font-semibold text-slate-400">Deskripsi:</span>
-            <p class="font-medium text-slate-800 dark:text-slate-200 mt-0.5">{{ selectedLog.description }}</p>
-          </div>
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span class="text-slate-400">Waktu:</span>
-              <p class="font-medium text-slate-700 dark:text-slate-300">{{ formatDate(selectedLog.created_at) }}</p>
-            </div>
-            <div>
-              <span class="text-slate-400">Aktor:</span>
-              <p class="font-medium text-slate-700 dark:text-slate-300">{{ selectedLog.causer?.name || 'Sistem' }}</p>
-            </div>
-          </div>
-
-          <div>
-            <span class="text-xs font-semibold text-slate-400">Payload Forensik / Diff (JSON):</span>
-            <pre class="mt-1 max-h-48 overflow-auto rounded-xl bg-slate-900 p-3 text-[11px] text-emerald-400 font-mono">{{ JSON.stringify(selectedLog.attribute_changes || selectedLog.properties, null, 2) }}</pre>
-          </div>
-        </div>
-
-        <div class="pt-2 text-right">
-          <button
-            @click="isDetailModalOpen = false"
-            class="h-9 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs transition-colors cursor-pointer"
-          >
-            Tutup
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- Dialog Perbandingan Perubahan Atribut -->
+    <AuditDiffDialog
+      v-model:open="isDetailModalOpen"
+      :log="selectedLog"
+    />
   </AuthenticatedLayout>
 </template>
