@@ -101,20 +101,317 @@ describe('Modul 03: Katalog Master Inventaris, Kategori, & Operasi CRUD', () => 
     cy.get('table').contains('Produk Uji Cypress (Revisi Sukses)').should('be.visible');
   });
 
-  it('CRUD Kategori Master: Menambah kategori baru secara riil melalui modal kelola kategori', () => {
+ it('CRUD Kategori Master: Menambah kategori baru secara riil melalui modal kelola kategori', () => {
     const categoryName = `Kategori Uji ${Date.now().toString().slice(-4)}`;
+
     cy.visit('/inventory');
     cy.contains('button', /kelola kategori/i).click();
-    cy.contains(/kelola master kategori/i).should('be.visible');
 
-    // Isi input nama kategori baru
-    cy.get('input[placeholder*="Elektronik"]').clear().type(categoryName);
-    cy.get('[role="dialog"]').find('button[type="submit"]').click();
+    cy.get('[role="dialog"]').should('be.visible')
+      .within(() => {
+        cy.contains('Kelola Master Kategori').should('be.visible');
 
-    // Verifikasi kategori baru muncul di daftar kategori modal
-    cy.contains(categoryName).should('be.visible');
+        cy.get('input[placeholder="Contoh: Elektronik & IT"]')
+          .clear()
+          .type(categoryName);
+
+        cy.contains('button', 'Tambah Kategori').click();
+
+        // Memastikan kategori baru muncul di daftar kategori
+                cy.get('div.space-y-2')
+          .contains('span', categoryName)
+          .should('be.visible');
+      });
   });
 
+  it('Master Kategori: Membatalkan perubahan edit kategori tanpa menyimpan', () => {
+  const originalName = 'Gifts & Novelties';
+  const temporaryName = `Kategori Batal ${Date.now().toString().slice(-4)}`;
+
+  cy.visit('/inventory');
+  cy.contains('button', /kelola kategori/i).click();
+
+  cy.get('[role="dialog"]').should('be.visible');
+
+  // Buka form edit
+cy.get('[role="dialog"]').within(() => {
+  cy.contains('span', originalName)
+    .parents()
+    .filter((index, element) => {
+      return Cypress.$(element).find('button[title="Edit Kategori"]').length > 0;
+    })
+    .first()
+    .find('button[title="Edit Kategori"]')
+    .click();
+});
+
+  // Ubah nama sementara
+  cy.get('input[placeholder="Contoh: Elektronik & IT"]')
+    .clear()
+    .type(temporaryName);
+
+  // Batalkan perubahan
+  cy.get('[role="dialog"]').contains('button', 'Batal').click();
+
+  // Pastikan form kembali ke mode tambah
+  cy.contains('Tambah Kategori Baru').should('be.visible');
+
+  // Pastikan nama kategori awal tetap ada
+  cy.contains('span', originalName).should('be.visible');
+
+  // Pastikan nama sementara tidak tersimpan
+  cy.contains('span', temporaryName).should('not.exist');
+});
+it('Master Kategori: Mengedit nama kategori dan mengembalikan data awal', () => {
+  const originalName = 'Gifts & Novelties';
+  const updatedName = `Kategori Edit ${Date.now().toString().slice(-4)}`;
+
+  cy.visit('/inventory');
+  cy.contains('button', /kelola kategori/i).click();
+
+  cy.get('[role="dialog"]').should('be.visible');
+
+  // Buka form edit kategori
+cy.get('[role="dialog"]').within(() => {
+  cy.contains('span', originalName)
+    .parents()
+    .filter((index, element) => {
+      return Cypress.$(element).find('button[title="Edit Kategori"]').length > 0;
+    })
+    .first()
+    .find('button[title="Edit Kategori"]')
+    .click();
+});
+
+  // Pastikan data awal masuk ke form
+  cy.contains('Edit Kategori').should('be.visible');
+  cy.get('input[placeholder="Contoh: Elektronik & IT"]')
+    .should('have.value', originalName);
+
+  // Ubah nama kategori
+  cy.get('input[placeholder="Contoh: Elektronik & IT"]')
+    .clear()
+    .type(updatedName);
+
+  cy.contains('button', 'Simpan Perubahan').click();
+
+  // Pastikan nama baru muncul
+  cy.contains('span', updatedName).should('be.visible');
+
+  // Kembalikan nama kategori seperti semula
+cy.get('[role="dialog"]').within(() => {
+  cy.contains('span', updatedName)
+    .parents()
+    .filter((index, element) => {
+      return Cypress.$(element).find('button[title="Edit Kategori"]').length > 0;
+    })
+    .first()
+    .find('button[title="Edit Kategori"]')
+    .click();
+});
+  cy.get('input[placeholder="Contoh: Elektronik & IT"]')
+    .clear()
+    .type(originalName);
+
+  cy.contains('button', 'Simpan Perubahan').click();
+
+  cy.contains('span', originalName).should('be.visible');
+});
+  /*
+  |--------------------------------------------------------------------------
+  | PENGUJIAN MODUL 2 - MASTER DATA INVENTARIS (NAJWA)
+  | TC_INV_001 - TC_INV_004
+  |--------------------------------------------------------------------------
+  */
+
+  it('TC_INV_001: Membuka modal Tambah Barang dan memverifikasi seluruh komponen form', () => {
+    cy.visit('/inventory');
+
+    cy.contains('button', /tambah barang/i).should('be.visible').click();
+
+    cy.get('[role="dialog"]').within(() => {
+      cy.contains('Tambah Barang').should('be.visible');
+
+      // Memastikan seluruh field tersedia
+      cy.get('input#sku').should('be.visible').and('have.value', '');
+      cy.get('select#category_id').should('be.visible');
+      cy.get('select#category_id option').should('have.length.greaterThan', 1);
+      cy.get('input#name').should('be.visible').and('have.value', '');
+      cy.get('input#unit').should('be.visible').and('have.value', '');
+      cy.get('input#unit_price').should('be.visible').and('have.value', '');
+      cy.get('input#current_stock').should('be.visible').and('have.value', '0');
+      cy.get('input#minimum_stock').should('be.visible').and('have.value', '0');
+      cy.get('textarea#description').should('be.visible');
+
+      // Memastikan tombol tersedia
+      cy.contains('button', 'Batal').should('be.visible');
+      cy.contains('button', 'Simpan Barang').should('be.visible');
+    });
+
+    // Menutup modal tanpa menyimpan data
+    cy.get('[role="dialog"]').contains('button', 'Batal').click();
+    cy.get('[role="dialog"]').should('not.exist');
+  });
+
+  it('TC_INV_002: Memverifikasi data produk pada modal Edit Barang dengan SKU 84879', () => {
+    cy.visit('/inventory');
+
+    // Mencari produk berdasarkan SKU
+    cy.get('input[placeholder*="Cari"]').clear().type('84879');
+
+    cy.get('table tbody tr').should('have.length.at.least', 1);
+
+    cy.get('table tbody tr').first().within(() => {
+      cy.contains('84879').should('be.visible');
+      cy.get('button').last().click({ force: true });
+    });
+
+    // Membuka menu Edit Barang
+    cy.contains('Edit Barang').should('be.visible').click();
+
+    cy.get('[role="dialog"]').within(() => {
+      cy.contains('Edit Barang').should('be.visible');
+
+      // Memastikan data lama terisi otomatis
+      cy.get('input#sku').should('have.value', '84879');
+      cy.get('input#name').should('have.value', 'ASSORTED COLOUR BIRD ORNAMENT');
+      cy.get('input#unit').should('have.value', 'pcs');
+      cy.get('input#current_stock').should('have.value', '30');
+      cy.get('input#minimum_stock').should('have.value', '60');
+
+      cy.get('select#category_id').invoke('val').should('not.be.empty');
+      cy.get('input#unit_price').should('not.have.value', '');
+      cy.contains('button', 'Batal').should('be.visible');
+      cy.contains('button', 'Simpan Perubahan').should('be.visible');
+    });
+
+    // Menutup modal tanpa mengubah produk
+    cy.get('[role="dialog"]').contains('button', 'Batal').click();
+    cy.get('[role="dialog"]').should('not.exist');
+  });
+
+  it('TC_INV_003: Memverifikasi backend menolak SKU duplikat dan Nama Barang kosong secara bersamaan', () => {
+    cy.visit('/inventory');
+
+    cy.contains('button', /tambah barang/i).click();
+
+    cy.get('[role="dialog"]').within(() => {
+      // Menggunakan SKU yang sudah terdaftar
+      cy.get('input#sku').clear().type('84879');
+
+      // Mengisi field wajib lainnya agar hanya dua validasi yang diuji
+      cy.get('select#category_id').select(1);
+      cy.get('input#name').clear();
+      cy.get('input#unit').clear().type('pcs');
+      cy.get('input#unit_price').clear().type('30000');
+      cy.get('input#current_stock').clear().type('15');
+      cy.get('input#minimum_stock').clear().type('3');
+
+      cy.contains('button', 'Simpan Barang').click();
+
+      // Memastikan kedua pesan validasi backend muncul
+      cy.contains('Kode SKU sudah terdaftar dalam sistem inventaris.')
+        .should('be.visible');
+
+      cy.contains('Nama barang wajib diisi.')
+        .should('be.visible');
+
+      // Modal tetap terbuka
+      cy.contains('Tambah Barang').should('be.visible');
+
+      // Data input lainnya tetap dipertahankan
+      cy.get('input#sku').should('have.value', '84879');
+      cy.get('input#unit').should('have.value', 'pcs');
+      cy.get('input#unit_price').should('have.value', '30000');
+      cy.get('input#current_stock').should('have.value', '15');
+      cy.get('input#minimum_stock').should('have.value', '3');
+    });
+
+    // Tutup tanpa menyimpan
+    cy.get('[role="dialog"]').contains('button', 'Batal').click();
+  });
+
+  it('TC_INV_004: Memverifikasi tampilan modal Tambah Barang pada mode terang, gelap, dan layar mobile', () => {
+  cy.visit('/inventory');
+
+  // 1. Buka modal Tambah Barang pada mode terang
+  cy.contains('button', /tambah barang/i).click();
+  cy.get('[role="dialog"]').should('be.visible');
+
+  // Memastikan komponen modal terlihat pada mode terang
+  cy.get('[role="dialog"]').within(() => {
+    cy.contains('Tambah Barang').should('be.visible');
+    cy.get('input#sku').should('be.visible');
+    cy.get('select#category_id').should('be.visible');
+    cy.get('input#name').should('be.visible');
+    cy.get('input#unit').should('be.visible');
+    cy.get('input#unit_price').should('be.visible');
+    cy.get('input#current_stock').should('be.visible');
+    cy.get('input#minimum_stock').should('be.visible');
+    cy.get('textarea#description').should('be.visible');
+    cy.contains('button', 'Batal').should('be.visible');
+    cy.contains('button', 'Simpan Barang').should('be.visible');
+  });
+
+  // 2. Tutup modal sebelum mengganti mode tampilan
+  cy.get('[role="dialog"]').contains('button', 'Batal').click();
+  cy.get('[role="dialog"]').should('not.exist');
+
+  // 3. Aktifkan mode gelap
+  cy.get('html').then(($html) => {
+    if (!$html.hasClass('dark')) {
+      cy.get('button[title="Ganti Mode Tampilan"]').click();
+    }
+  });
+
+  cy.get('html').should('have.class', 'dark');
+
+  // 4. Buka kembali modal pada mode gelap
+  cy.contains('button', /tambah barang/i).click();
+  cy.get('[role="dialog"]').should('be.visible');
+
+  cy.get('[role="dialog"]').within(() => {
+    cy.contains('Tambah Barang').should('be.visible');
+    cy.get('input#sku').should('be.visible');
+    cy.get('input#name').should('be.visible');
+    cy.get('textarea#description').should('be.visible');
+  });
+
+  // 5. Ubah ukuran layar menjadi mobile
+  cy.viewport(375, 812);
+
+  cy.get('[role="dialog"]').should('be.visible');
+
+  cy.get('[role="dialog"]').within(() => {
+    cy.get('input#sku').should('be.visible');
+    cy.get('select#category_id').should('be.visible');
+    cy.get('input#name').should('be.visible');
+    cy.get('input#unit').should('be.visible');
+    cy.get('input#unit_price').should('be.visible');
+    cy.get('input#current_stock').should('be.visible');
+    cy.get('input#minimum_stock').should('be.visible');
+    cy.get('textarea#description').should('be.visible');
+    cy.contains('button', 'Batal').should('be.visible');
+    cy.contains('button', 'Simpan Barang').should('be.visible');
+  });
+
+  // Memastikan modal tidak keluar dari lebar layar mobile
+  cy.get('[role="dialog"]').then(($dialog) => {
+  const rect = $dialog[0].getBoundingClientRect();
+  expect(rect.left).to.be.at.least(-1);
+  expect(rect.right).to.be.at.most(376);
+});
+
+  // 6. Tutup modal dan kembalikan mode terang
+  cy.get('[role="dialog"]').contains('button', 'Batal').click();
+  cy.get('[role="dialog"]').should('not.exist');
+
+  cy.get('button[title="Ganti Mode Tampilan"]').click();
+  cy.get('html').should('not.have.class', 'dark');
+
+  // Memastikan tidak ada data yang berubah
+  cy.get('table tbody tr').should('exist');
+});
   /*
   |--------------------------------------------------------------------------
   | PENGUJIAN MODUL 2 - VALIDASI SKU & PROTEKSI RESTRICT DELETE (SULTAN)
