@@ -277,7 +277,7 @@ cy.contains('div.fixed.bottom-6.right-6', pesanNonaktif)
     cy.viewport(375, 812);
 
     // Mengaktifkan mode gelap
-   cy.get('button[title="Beralih ke Mode Gelap"]').click();
+   cy.get('button[title="Ganti ke mode gelap"]').click();
     cy.get('html').should('have.class', 'dark');
 
     loginAkunNonaktif();
@@ -303,7 +303,7 @@ cy.contains('div.fixed.bottom-6.right-6', pesanNonaktif)
     cy.visit('/login');
 
     // Mengubah ke mode terang
-    cy.get('button[title="Beralih ke Mode Terang"]').click();
+    cy.get('button[title="Ganti ke mode terang"]').click();
     cy.get('html').should('not.have.class', 'dark');
 
     loginAkunNonaktif();
@@ -409,7 +409,7 @@ it('TC_PRF_004 - Memastikan kartu identitas responsif pada desktop, mobile, mode
     expect(doc.documentElement.scrollWidth).to.be.at.most(375);
   });
 
-  // Pengujian mobile mode terang
+ // Pengujian mobile mode terang
   cy.get('button[title="Ganti Mode Tampilan"]').click();
 
   cy.get('html').should('not.have.class', 'dark');
