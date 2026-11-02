@@ -91,6 +91,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 4. Modul Jejak Audit & Investigasi Forensik (Auditor Internal & Komisaris)
     Route::middleware(['role:auditor-internal|komisaris'])->prefix('audit')->name('audit.')->group(function () {
         Route::get('/', [AuditLogController::class, 'index'])->name('index');
+        Route::get('/export', [AuditLogController::class, 'export'])->name('export');
     });
 
     // 5. Modul Manajemen Pengguna & Aktivasi Akun (Manajer Operasional & Komisaris)
