@@ -22,6 +22,7 @@ import {
   FileSpreadsheet,
   FileText,
   ChevronDown,
+  Check,
 } from 'lucide-vue-next'
 import {
   DropdownMenu,
@@ -130,16 +131,27 @@ function resetToOptimal() {
 }
 
 function applyPreset(type) {
-  if (type === 'stabil') {
-    alphaInput.value = 0.15
-    betaInput.value = 0.05
-  } else if (type === 'optimal') {
-    alphaInput.value = props.forecastData?.optimal_alpha ?? 0.2
-    betaInput.value = props.forecastData?.optimal_beta ?? 0.1
-  } else if (type === 'responsif') {
-    alphaInput.value = 0.45
-    betaInput.value = 0.25
+  if (type === 'optimal') {
+    resetToOptimal()
+    return
   }
+
+  const a = type === 'stabil' ? 0.15 : 0.45
+  const b = type === 'stabil' ? 0.05 : 0.25
+
+  alphaInput.value = a
+  betaInput.value = b
+
+  // Langsung eksekusi kalkulasi model agar grafik & kartu akurasi langsung terbarukan
+  router.get(
+    route('analytics.index'),
+    {
+      product_id: currentProduct.value?.id,
+      alpha: a,
+      beta: b,
+    },
+    { preserveState: true, preserveScroll: true }
+  )
 }
 
 // Chart SVG Calculation
@@ -280,8 +292,22 @@ const isOptimalParams = computed(() => {
   const hasAlphaFilter = props.filters?.alpha !== null && props.filters?.alpha !== undefined && props.filters?.alpha !== ''
   const hasBetaFilter = props.filters?.beta !== null && props.filters?.beta !== undefined && props.filters?.beta !== ''
   
-  // Jika ada query filter alpha/beta di URL, artinya sedang dalam mode simulasi manual
-  return !hasAlphaFilter && !hasBetaFilter
+  if (!hasAlphaFilter && !hasBetaFilter) return true
+
+  const optAlpha = props.forecastData?.optimal_alpha
+  const optBeta = props.forecastData?.optimal_beta
+  if (optAlpha !== undefined && optBeta !== undefined) {
+    return Number(props.filters?.alpha) === Number(optAlpha) && Number(props.filters?.beta) === Number(optBeta)
+  }
+
+  return false
+})
+
+const activePreset = computed(() => {
+  if (isOptimalParams.value) return 'optimal'
+  const curAlpha = Number(appliedAlpha.value)
+  if (curAlpha <= 0.25) return 'stabil'
+  return 'responsif'
 })
 const hoveredPoint = ref(null)
 // Multi-restock: pilihan produk dan modal pengajuan
@@ -463,23 +489,38 @@ watch(
             <button
               type="button"
               @click="applyPreset('stabil')"
-              class="px-2.5 py-1 rounded-lg text-xs font-medium border border-blue-200/80 bg-blue-50/50 text-[#2563EB] hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 transition-colors cursor-pointer"
+              class="px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer inline-flex items-center gap-1.5"
+              :class="activePreset === 'stabil'
+                ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-xs font-semibold'
+                : 'border-blue-200/80 bg-blue-50/50 text-[#2563EB] hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300'"
+              title="Sensitivitas stabil: bobot tren rendah 0.15 & 0.05"
             >
-              🟢 Stabil (Konservatif)
+              <span>🟢 Stabil (Konservatif)</span>
+              <Check v-if="activePreset === 'stabil'" class="w-3 h-3 text-white" />
             </button>
             <button
               type="button"
               @click="applyPreset('optimal')"
-              class="px-2.5 py-1 rounded-lg text-xs font-medium border border-emerald-200/80 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 transition-colors cursor-pointer"
+              class="px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer inline-flex items-center gap-1.5"
+              :class="activePreset === 'optimal'
+                ? 'bg-[#10B981] text-white border-[#10B981] shadow-xs font-semibold'
+                : 'border-emerald-200/80 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300'"
+              title="Rekomendasi optimal sistem (Grid Search)"
             >
-              🔵 Seimbang (Optimal)
+              <span>🔵 Seimbang (Optimal)</span>
+              <Check v-if="activePreset === 'optimal'" class="w-3 h-3 text-white" />
             </button>
             <button
               type="button"
               @click="applyPreset('responsif')"
-              class="px-2.5 py-1 rounded-lg text-xs font-medium border border-amber-200/80 bg-amber-50/50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300 transition-colors cursor-pointer"
+              class="px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer inline-flex items-center gap-1.5"
+              :class="activePreset === 'responsif'
+                ? 'bg-amber-600 text-white border-amber-600 shadow-xs font-semibold'
+                : 'border-amber-200/80 bg-amber-50/50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300'"
+              title="Sensitivitas responsif: bobot tren tinggi 0.45 & 0.25"
             >
-              🟡 Responsif (Cepat Tanggap)
+              <span>🟡 Responsif (Cepat Tanggap)</span>
+              <Check v-if="activePreset === 'responsif'" class="w-3 h-3 text-white" />
             </button>
           </div>
 
