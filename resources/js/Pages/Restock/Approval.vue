@@ -73,7 +73,7 @@ function openModal(req: RestockRequest, type: 'approve' | 'reject') {
   selectedRequest.value = req
   actionType.value = type
   reviewNotes.value = type === 'approve'
-    ? 'Disetujui penuh oleh Komisaris sesuai rekomendasi peramalan Holt DES.'
+    ? 'Disetujui penuh oleh Komisaris sesuai rekomendasi pengadaan sistem.'
     : ''
 }
 
@@ -199,7 +199,7 @@ function formatDate(dateStr: string) {
             class="h-9 px-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs transition-all inline-flex items-center gap-1.5"
           >
             <TrendingUp class="w-3.5 h-3.5" />
-            <span>Tinjau Prediksi DES</span>
+            <span>Tinjau Prediksi Kebutuhan</span>
           </Link>
         </div>
       </div>
@@ -279,7 +279,7 @@ function formatDate(dateStr: string) {
                 <tr>
                   <th class="px-3 py-2.5 whitespace-nowrap">Produk</th>
                   <th class="px-3 py-2.5 text-right whitespace-nowrap">Stok / Safety</th>
-                  <th class="px-3 py-2.5 text-right whitespace-nowrap">Saran Holt DES</th>
+                  <th class="px-3 py-2.5 text-right whitespace-nowrap">Saran Sistem</th>
                   <th class="px-3 py-2.5 text-right whitespace-nowrap">Jumlah Diminta</th>
                   <th class="px-3 py-2.5 text-right whitespace-nowrap">Estimasi Harga</th>
                   <th class="px-3 py-2.5 text-right whitespace-nowrap">Subtotal</th>

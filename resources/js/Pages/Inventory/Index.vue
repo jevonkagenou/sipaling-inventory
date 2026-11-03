@@ -478,6 +478,53 @@ function onCardClick(key: CardKey) {
   tableSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+// Hitung jumlah data per kategori/pencarian untuk tombol pill toolbar (independen dari activeStatusFilter)
+const categoryFilteredProducts = computed(() => {
+  const searchQuery = ((table.getColumn('name')?.getFilterValue() as string) || '').toLowerCase().trim()
+  return props.products.filter((p) => {
+    if (selectedCategoryId.value !== 'all' && p.category?.id !== selectedCategoryId.value && (p as any).category_id !== selectedCategoryId.value) {
+      return false
+    }
+    if (searchQuery && !p.name.toLowerCase().includes(searchQuery) && !p.sku.toLowerCase().includes(searchQuery)) {
+      return false
+    }
+    return true
+  })
+})
+
+const toolbarCounts = computed(() => {
+  const items = categoryFilteredProducts.value
+  return {
+    total: items.length,
+    aman: items.filter((p) => p.status === 'Aman').length,
+    reorder: items.filter((p) => p.status === 'Reorder').length,
+  }
+})
+
+// Metrik kartu KPI interaktif yang 100% reaktif terhadap filter pencarian, kategori, dan status TanStack
+const reactiveStats = computed(() => {
+  const rows = table.getFilteredRowModel().rows.map((r: any) => r.original as ProductItem)
+  const isFiltered =
+    rows.length !== props.products.length ||
+    activeStatusFilter.value !== 'all' ||
+    selectedCategoryId.value !== 'all' ||
+    !!table.getColumn('name')?.getFilterValue()
+
+  const uniqueCategories = new Set(rows.map((i) => i.category?.name).filter(Boolean)).size
+
+  return {
+    total_products: rows.length,
+    total_categories: uniqueCategories || (selectedCategoryId.value !== 'all' ? 1 : props.categories.length),
+    total_transactions: rows.length,
+    total_details: rows.reduce((sum, item) => sum + (Number(item.transaction_details_count) || 0), 0),
+    aman_count: rows.filter((item) => item.status === 'Aman').length,
+    reorder_count: rows.filter((item) => item.status === 'Reorder').length,
+    is_filtered: isFiltered,
+    global_total_products: props.products.length,
+    global_total_details: props.stats.total_details,
+  }
+})
+
 // Dialog States
 const isDialogOpen = ref(false)
 const dialogMode = ref<'create' | 'edit'>('create')
@@ -562,15 +609,15 @@ function onDeleteError(message: string) {
   <!-- Action Dropdown Template Definition -->
   <DefineTemplate v-slot="{ product }">
     <div class="flex items-center justify-end gap-1">
-      <!-- Quick Action: Cek Prediksi DES (Direct 1-Click for Instant Visibility) -->
+      <!-- Quick Action: Cek Prediksi Kebutuhan (Direct 1-Click for Instant Visibility) -->
       <Button
         variant="ghost"
         size="icon"
         class="h-7 w-7 rounded-md text-[#2563EB] hover:text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/60 cursor-pointer transition-colors"
-        title="Cek Prediksi Holt DES"
+        title="Lihat Prediksi Kebutuhan Barang"
         @click.stop="openForecastDialog(product)"
       >
-        <span class="sr-only">Cek Prediksi DES</span>
+        <span class="sr-only">Lihat Prediksi Kebutuhan</span>
         <TrendingUp class="h-3.5 w-3.5" />
       </Button>
 
@@ -639,7 +686,7 @@ function onDeleteError(message: string) {
       </div>
       <!-- 1. Modular Interactive KPI Cards Component -->
       <InventoryStatsCards
-        :stats="stats"
+        :stats="reactiveStats"
         :active-card="activeCard"
         @select-card="onCardClick"
       />
@@ -649,9 +696,9 @@ function onDeleteError(message: string) {
         <InventoryToolbar
           :search-query="(table.getColumn('name')?.getFilterValue() as string) ?? ''"
           :active-status-filter="activeStatusFilter"
-          :total-count="products.length"
-          :aman-count="stats.aman_count"
-          :reorder-count="stats.reorder_count"
+          :total-count="toolbarCounts.total"
+          :aman-count="toolbarCounts.aman"
+          :reorder-count="toolbarCounts.reorder"
           :table="table"
           :column-names="columnNames"
           :categories="categories"

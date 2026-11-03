@@ -15,7 +15,7 @@ import {
     Shield,
     Briefcase,
     FileSearch,
-    Sparkles,
+    UserCheck,
     Check,
 } from 'lucide-vue-next';
 import AuthErrorToast from '@/Components/Auth/AuthErrorToast.vue';
@@ -96,6 +96,7 @@ const demoAccounts = [
     {
         role: 'komisaris',
         name: 'Komisaris',
+        label: 'Otoritas Eksekutif',
         email: 'komisaris@sipaling.com',
         password: 'password',
         icon: Shield,
@@ -103,7 +104,8 @@ const demoAccounts = [
     },
     {
         role: 'manajer-operasional',
-        name: 'Manajer Ops',
+        name: 'Manajer Operasional',
+        label: 'Perencanaan & Restock',
         email: 'manajer@sipaling.com',
         password: 'password',
         icon: Briefcase,
@@ -112,6 +114,7 @@ const demoAccounts = [
     {
         role: 'staf-gudang',
         name: 'Staf Gudang',
+        label: 'Operasional Lapangan',
         email: 'staf@sipaling.com',
         password: 'password',
         icon: Boxes,
@@ -120,6 +123,7 @@ const demoAccounts = [
     {
         role: 'auditor-internal',
         name: 'Auditor Internal',
+        label: 'Pengawas Kepatuhan',
         email: 'sultansyarif630@gmail.com',
         password: 'password',
         icon: FileSearch,
@@ -270,17 +274,17 @@ function fillDemoAccount(acc, autoSubmit = false) {
                         </Button>
                     </form>
 
-                    <!-- Quick Demo / Seeder Accounts Panel -->
+                    <!-- Pilihan Akun Pengujian Demo -->
                     <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
                         <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                                <Sparkles class="w-3.5 h-3.5 text-[#2563EB]" />
-                                Akun Pengujian (Seeder)
+                            <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                <UserCheck class="w-3.5 h-3.5 text-[#2563EB]" />
+                                Masuk Cepat Akun Demo
                             </span>
-                            <span v-if="selectedRoleName" class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                <Check class="w-3 h-3" /> {{ selectedRoleName }} Terisi
+                            <span v-if="selectedRoleName" class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                <Check class="w-3 h-3" /> {{ selectedRoleName }} Terpilih
                             </span>
-                            <span v-else class="text-[10px] text-slate-400">
+                            <span v-else class="text-[11px] text-slate-400">
                                 Klik untuk isi otomatis
                             </span>
                         </div>
@@ -306,11 +310,11 @@ function fillDemoAccount(acc, autoSubmit = false) {
                                             <component :is="acc.icon" class="w-3.5 h-3.5" />
                                         </div>
                                         <div class="min-w-0">
-                                            <span class="font-bold text-xs text-slate-900 dark:text-white truncate block">
+                                            <span class="font-semibold text-xs text-slate-900 dark:text-white truncate block">
                                                 {{ acc.name }}
                                             </span>
-                                            <span class="text-[10px] text-slate-400 dark:text-slate-500 truncate block font-mono">
-                                                {{ acc.email.split('@')[0] }}
+                                            <span class="text-[11px] text-slate-500 dark:text-slate-400 truncate block">
+                                                {{ acc.label }}
                                             </span>
                                         </div>
                                     </div>

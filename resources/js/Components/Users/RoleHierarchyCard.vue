@@ -14,7 +14,7 @@ import {
   Users,
 } from 'lucide-vue-next'
 
-const isOpen = ref(true)
+const isOpen = ref(false)
 const activeTab = ref<'hierarchy' | 'workflow'>('hierarchy')
 
 const tiers = [
@@ -138,31 +138,32 @@ const workflowSteps = [
   <div class="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0F172A] shadow-2xs overflow-hidden transition-all">
     <!-- Header Collapsible -->
     <div
-      class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 cursor-pointer select-none"
+      class="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+      :class="isOpen ? 'border-b border-slate-100 dark:border-slate-800' : ''"
       @click="isOpen = !isOpen"
     >
       <div class="flex items-center gap-3">
-        <div class="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950/70 text-[#2563EB] dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/60 shrink-0">
-          <Workflow class="h-5 w-5" />
+        <div class="h-9 w-9 rounded-xl bg-blue-50 dark:bg-blue-950/70 text-[#2563EB] dark:text-blue-400 flex items-center justify-center border border-blue-200/60 dark:border-blue-800/60 shrink-0">
+          <Workflow class="h-4.5 w-4.5" />
         </div>
         <div>
           <div class="flex items-center gap-2 flex-wrap">
-            <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
               Struktur Hierarki Peran &amp; Alur Pelaporan Tim
             </h3>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-[#2563EB] dark:bg-blue-950 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800">
               Tata Kelola Terpadu
             </span>
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Pembagian tugas berjenjang dari pelaksana lapangan hingga otorisasi eksekutif dan audit independen.
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+            Pembagian tanggung jawab berjenjang: Eksekutif (Komisaris &amp; Manajer) dan Operasional (Staf Gudang &amp; Auditor).
           </p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 self-end sm:self-auto" @click.stop>
-        <!-- Toggle Mode Tab -->
-        <div class="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800/80 p-0.5 text-xs">
+      <div class="flex items-center gap-2 self-end sm:self-auto shrink-0" @click.stop>
+        <!-- Toggle Mode Tab (Hanya tampil saat terbuka) -->
+        <div v-if="isOpen" class="flex items-center rounded-xl bg-slate-100 dark:bg-slate-800/80 p-0.5 text-xs">
           <button
             type="button"
             @click="activeTab = 'hierarchy'"
@@ -177,17 +178,18 @@ const workflowSteps = [
             class="px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer"
             :class="activeTab === 'workflow' ? 'bg-white dark:bg-slate-900 text-[#2563EB] shadow-2xs font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'"
           >
-            Alur Pelaporan &amp; Tugas
+            Alur Tugas
           </button>
         </div>
 
         <button
           type="button"
           @click="isOpen = !isOpen"
-          class="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
+          class="h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
         >
-          <ChevronUp v-if="isOpen" class="h-4 w-4" />
-          <ChevronDown v-else class="h-4 w-4" />
+          <span>{{ isOpen ? 'Tutup Panduan' : 'Lihat Detail Peran' }}</span>
+          <ChevronUp v-if="isOpen" class="h-3.5 w-3.5 text-slate-400" />
+          <ChevronDown v-else class="h-3.5 w-3.5 text-slate-400" />
         </button>
       </div>
     </div>

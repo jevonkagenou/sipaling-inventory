@@ -12,6 +12,9 @@ export interface InventoryStats {
   total_details: number
   reorder_count: number
   aman_count: number
+  is_filtered?: boolean
+  global_total_products?: number
+  global_total_details?: number
 }
 
 const props = defineProps<{
@@ -101,7 +104,12 @@ watch(() => props.stats, () => {
           <span class="text-xs text-slate-500">item</span>
         </div>
         <CardDescription class="mt-1 text-xs text-slate-400">
-          Dari {{ stats.total_categories }} kategori barang
+          <span v-if="stats.is_filtered">
+            Terfilter dari {{ stats.global_total_products ?? stats.total_products }} total barang
+          </span>
+          <span v-else>
+            Dari {{ stats.total_categories }} kategori barang
+          </span>
         </CardDescription>
       </CardContent>
     </Card>
@@ -136,7 +144,12 @@ watch(() => props.stats, () => {
           <span class="text-xs text-slate-500">mutasi</span>
         </div>
         <CardDescription class="mt-1 text-xs text-slate-400">
-          {{ stats.total_transactions }} kali transaksi
+          <span v-if="stats.is_filtered">
+            Akumulasi mutasi barang terfilter
+          </span>
+          <span v-else>
+            {{ stats.total_transactions }} kali transaksi
+          </span>
         </CardDescription>
       </CardContent>
     </Card>
@@ -171,7 +184,12 @@ watch(() => props.stats, () => {
           <span class="text-xs text-slate-500">barang</span>
         </div>
         <CardDescription class="mt-1 text-xs text-slate-400">
-          Kuantitas di atas batas minimum
+          <span v-if="stats.is_filtered">
+            {{ stats.aman_count }} dari {{ stats.total_products }} barang terfilter
+          </span>
+          <span v-else>
+            Kuantitas di atas batas minimum
+          </span>
         </CardDescription>
       </CardContent>
     </Card>
@@ -206,7 +224,12 @@ watch(() => props.stats, () => {
           <span class="text-xs text-slate-500">barang</span>
         </div>
         <CardDescription class="mt-1 text-xs text-slate-400">
-          Mendekati atau di bawah batas minimum
+          <span v-if="stats.is_filtered">
+            {{ stats.reorder_count }} dari {{ stats.total_products }} barang terfilter
+          </span>
+          <span v-else>
+            Mendekati atau di bawah batas minimum
+          </span>
         </CardDescription>
       </CardContent>
     </Card>

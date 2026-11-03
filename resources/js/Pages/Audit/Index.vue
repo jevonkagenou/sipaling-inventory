@@ -371,17 +371,17 @@ const visiblePages = computed(() => {
           </p>
         </div>
 
-        <!-- 4. Log Peramalan DES -->
+        <!-- 4. Log Prediksi Kebutuhan -->
         <div
           @click="setLogNameFilter('forecasting')"
           class="rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-2xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
           :class="currentLogName === 'forecasting'
             ? 'border-[#4F46E5] ring-2 ring-indigo-500/20 dark:border-indigo-500'
             : 'border-slate-200 dark:border-slate-800 hover:border-[#4F46E5]/50'"
-          title="Klik untuk filter log peramalan DES"
+          title="Klik untuk filter log kalkulasi prediksi kebutuhan"
         >
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Log Peramalan DES</span>
+            <span>Log Prediksi Kebutuhan</span>
             <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <Cpu class="h-4 w-4" />
             </div>
@@ -393,243 +393,204 @@ const visiblePages = computed(() => {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">log</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Riwayat komputasi & simulasi' }}
+            {{ stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Riwayat kalkulasi prediksi sistem' }}
           </p>
         </div>
       </div>
 
       <!-- Logs Table Card -->
       <div class="rounded-2xl border border-slate-200/80 bg-white shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md overflow-hidden">
-        <!-- Toolbar & Filters (Style Transaksi) -->
-        <div class="p-4 sm:p-5 border-b border-slate-200/80 dark:border-slate-800/80 flex flex-col gap-3.5 xl:flex-row xl:items-center xl:justify-between">
-          <!-- Event Filter Tabs -->
-          <div class="flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800 w-full sm:w-fit overflow-x-auto">
-            <button
-              type="button"
-              @click="setEventFilter('')"
-              :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0',
-                !currentEvent
-                  ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-900 dark:text-white'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
-              ]"
-            >
-              Semua Event
-            </button>
-            <button
-              type="button"
-              @click="setEventFilter('created')"
-              :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0',
-                currentEvent === 'created'
-                  ? 'bg-[#10B981] text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
-              ]"
-            >
-              <CheckCircle2 class="h-3.5 w-3.5" />
-              Created
-            </button>
-            <button
-              type="button"
-              @click="setEventFilter('updated')"
-              :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0',
-                currentEvent === 'updated'
-                  ? 'bg-[#2563EB] text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
-              ]"
-            >
-              <Activity class="h-3.5 w-3.5" />
-              Updated
-            </button>
-            <button
-              type="button"
-              @click="setEventFilter('deleted')"
-              :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0',
-                currentEvent === 'deleted'
-                  ? 'bg-rose-600 text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
-              ]"
-            >
-              <X class="h-3.5 w-3.5" />
-              Deleted
-            </button>
+        <!-- Toolbar & Filter Bar (2 Baris Rapi, Lega & Konsisten) -->
+        <div class="p-4 sm:p-5 border-b border-slate-200/80 dark:border-slate-800/80 space-y-3.5">
+          <!-- Baris 1: Pencarian, Filter Modul, Aktor & Aksi Unduh -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <!-- Sisi Kiri: Search Input, Dropdown Modul & Aktor -->
+            <div class="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <!-- Search Box -->
+              <div class="relative w-full sm:w-64 lg:w-72">
+                <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <input
+                  v-model="search"
+                  type="text"
+                  placeholder="Cari deskripsi, aktor, IP..."
+                  class="h-9 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-8 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-900 dark:text-white shadow-2xs"
+                />
+                <button
+                  v-if="search"
+                  type="button"
+                  @click="search = ''"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  title="Hapus pencarian"
+                >
+                  <X class="h-4 w-4" />
+                </button>
+              </div>
+
+              <!-- Dropdown Filter Modul -->
+              <select
+                v-model="currentLogName"
+                aria-label="Filter Modul Sistem"
+                class="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 cursor-pointer outline-none shrink-0"
+                title="Filter berdasarkan Modul Aktivitas"
+              >
+                <option value="">Semua Modul</option>
+                <option value="inventory">Inventaris &amp; Mutasi</option>
+                <option value="users">Aktivitas Pengguna</option>
+                <option value="forecasting">Prediksi Kebutuhan</option>
+                <option value="audit">Sistem &amp; Audit</option>
+              </select>
+
+              <!-- Dropdown Filter Pengguna (Aktor) -->
+              <select
+                v-if="props.users && props.users.length > 0"
+                v-model="currentCauser"
+                aria-label="Filter Pengguna Aktor"
+                class="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 cursor-pointer outline-none shrink-0 max-w-[160px] truncate"
+                title="Filter berdasarkan Pengguna (Aktor)"
+              >
+                <option value="">Semua Pengguna</option>
+                <option v-for="u in props.users" :key="u.id" :value="u.id">
+                  {{ u.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Sisi Kanan: Reset Filter & Unduh Laporan -->
+            <div class="flex items-center gap-2 self-end sm:self-auto shrink-0">
+              <button
+                v-if="hasActiveFilters"
+                type="button"
+                @click="resetAllFilters"
+                class="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 text-xs font-semibold shadow-2xs transition-all inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+                title="Reset seluruh filter"
+              >
+                <X class="h-3.5 w-3.5" />
+                <span>Reset Filter</span>
+              </button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <button
+                    type="button"
+                    class="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 font-semibold text-xs shadow-2xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer outline-none shrink-0"
+                    title="Unduh laporan rekam jejak audit"
+                  >
+                    <Download class="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>Unduh Laporan</span>
+                    <ChevronDown class="w-3 h-3 text-slate-400 ml-0.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" class="w-60 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-md p-1.5 rounded-xl z-50">
+                  <DropdownMenuLabel class="text-[11px] text-slate-400 font-normal px-2 py-1">Pilih Format Unduhan</DropdownMenuLabel>
+                  <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800 my-1" />
+                  <DropdownMenuItem as-child>
+                    <a
+                      :href="buildExportUrl('csv')"
+                      class="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <FileText class="w-4 h-4 text-[#2563EB] shrink-0" />
+                      <div class="flex flex-col">
+                        <span class="font-semibold text-slate-900 dark:text-white">Teks CSV (.csv)</span>
+                        <span class="text-[10px] text-slate-400">Ringan, kompatibel UTF-8 BOM</span>
+                      </div>
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem as-child>
+                    <a
+                      :href="buildExportUrl('pdf')"
+                      class="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <FileSpreadsheet class="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                      <div class="flex flex-col">
+                        <span class="font-semibold text-slate-900 dark:text-white">Dokumen PDF (.pdf)</span>
+                        <span class="text-[10px] text-slate-400">Siap cetak, landscape A4</span>
+                      </div>
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800 my-1" />
+                  <div class="px-2.5 py-1.5">
+                    <p class="text-[10px] text-slate-400 leading-relaxed">
+                      <span class="font-semibold text-slate-500">Filter aktif</span> ({{ hasActiveFilters ? 'diterapkan' : 'tidak ada' }}) akan diteruskan ke berkas unduhan.
+                    </p>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
-          <!-- Filters: Export, Date Range & Search Input -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap xl:flex-nowrap">
-            <!-- Tombol Ekspor Laporan (Sejajar Filter) -->
-            <DropdownMenu>
-              <DropdownMenuTrigger as-child>
-                <button
-                  type="button"
-                  class="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 font-semibold text-xs shadow-2xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer outline-none shrink-0"
-                  title="Unduh laporan rekam jejak audit (filter saat ini akan diteruskan)"
-                >
-                  <Download class="w-3.5 h-3.5 text-[#2563EB]" />
-                  <span>Unduh Laporan</span>
-                  <ChevronDown class="w-3 h-3 text-slate-400 ml-0.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" class="w-60 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-md p-1.5 rounded-xl z-50">
-                <DropdownMenuLabel class="text-[11px] text-slate-400 font-normal px-2 py-1">Pilih Format Unduhan</DropdownMenuLabel>
-                <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800 my-1" />
-                <DropdownMenuItem as-child>
-                  <a
-                    :href="buildExportUrl('csv')"
-                    class="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg cursor-pointer transition-colors"
-                  >
-                    <FileText class="w-4 h-4 text-[#2563EB] shrink-0" />
-                    <div class="flex flex-col">
-                      <span class="font-semibold text-slate-900 dark:text-white">Teks CSV (.csv)</span>
-                      <span class="text-[10px] text-slate-400">Ringan, kompatibel UTF-8 BOM</span>
-                    </div>
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem as-child>
-                  <a
-                    :href="buildExportUrl('pdf')"
-                    class="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer transition-colors"
-                  >
-                    <FileSpreadsheet class="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
-                    <div class="flex flex-col">
-                      <span class="font-semibold text-slate-900 dark:text-white">Dokumen PDF (.pdf)</span>
-                      <span class="text-[10px] text-slate-400">Siap cetak, landscape A4</span>
-                    </div>
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800 my-1" />
-                <div class="px-2.5 py-1.5">
-                  <p class="text-[10px] text-slate-400 leading-relaxed">
-                    <span class="font-semibold text-slate-500">Filter aktif</span> ({{ hasActiveFilters ? 'diterapkan' : 'tidak ada' }}) akan diteruskan ke berkas unduhan.
-                  </p>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <!-- Dropdown Filter Modul (Log Name) -->
-            <select
-              v-model="currentLogName"
-              aria-label="Filter Modul Sistem"
-              class="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 cursor-pointer outline-none shrink-0"
-              title="Filter berdasarkan Modul Aktivitas"
-            >
-              <option value="">Semua Modul</option>
-              <option value="inventory">Inventaris &amp; Mutasi</option>
-              <option value="users">Aktivitas Pengguna</option>
-              <option value="forecasting">Peramalan DES</option>
-              <option value="audit">Sistem &amp; Audit</option>
-            </select>
-
-            <!-- Dropdown Filter Pengguna (Aktor) -->
-            <select
-              v-if="props.users && props.users.length > 0"
-              v-model="currentCauser"
-              aria-label="Filter Pengguna Aktor"
-              class="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 cursor-pointer outline-none shrink-0 max-w-[160px] truncate"
-              title="Filter berdasarkan Pengguna (Aktor)"
-            >
-              <option value="">Semua Pengguna</option>
-              <option v-for="u in props.users" :key="u.id" :value="u.id">
-                {{ u.name }}
-              </option>
-            </select>
+          <!-- Baris 2: Segmented Tabs Event & Filter Rentang Kalender -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+            <!-- Event Tabs (Lega & Tanpa Scrollbar Sempit) -->
+            <div class="inline-flex items-center p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 text-xs w-fit">
+              <button
+                type="button"
+                @click="setEventFilter('')"
+                :class="!currentEvent
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <span>Semua Event</span>
+              </button>
+              <button
+                type="button"
+                @click="setEventFilter('created')"
+                :class="currentEvent === 'created'
+                  ? 'bg-[#10B981] text-white font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <CheckCircle2 class="h-3.5 w-3.5" />
+                <span>Dibuat</span>
+              </button>
+              <button
+                type="button"
+                @click="setEventFilter('updated')"
+                :class="currentEvent === 'updated'
+                  ? 'bg-[#2563EB] text-white font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <Activity class="h-3.5 w-3.5" />
+                <span>Diperbarui</span>
+              </button>
+              <button
+                type="button"
+                @click="setEventFilter('deleted')"
+                :class="currentEvent === 'deleted'
+                  ? 'bg-rose-600 text-white font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 font-medium'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <X class="h-3.5 w-3.5" />
+                <span>Dihapus</span>
+              </button>
+            </div>
 
             <!-- Date Range Filter -->
-            <div class="h-9 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/15 select-none">
-              <!-- Tanggal Mulai -->
-              <div
-                class="relative flex items-center gap-1.5 cursor-pointer group py-1"
-                @click="openStartDatePicker"
-                title="Dari Tanggal (Klik untuk memilih kalender)"
-              >
+            <div class="h-9 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/15 select-none shrink-0 self-end sm:self-auto">
+              <div class="relative flex items-center gap-1.5 cursor-pointer group py-1" @click="openStartDatePicker" title="Dari Tanggal">
                 <Calendar class="h-3.5 w-3.5 text-slate-400 group-hover:text-[#2563EB] dark:group-hover:text-blue-400 transition-colors shrink-0" />
-                <span
-                  class="text-[11px] sm:text-xs font-medium tabular-nums transition-colors"
-                  :class="startDate ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-400 dark:text-slate-500'"
-                >
+                <span class="text-[11px] sm:text-xs font-medium tabular-nums" :class="startDate ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-400 dark:text-slate-500'">
                   {{ startDate ? formatDisplayDate(startDate) : 'dd/mm/yyyy' }}
                 </span>
-                <input
-                  ref="startDateInput"
-                  v-model="startDate"
-                  type="date"
-                  :max="endDate || undefined"
-                  aria-label="Filter Tanggal Mulai"
-                  class="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
-                  tabindex="-1"
-                />
+                <input ref="startDateInput" v-model="startDate" type="date" :max="endDate || undefined" class="absolute inset-0 opacity-0 pointer-events-none w-full h-full" tabindex="-1" />
               </div>
 
               <span class="text-[11px] text-slate-400 font-semibold select-none px-0.5">s.d.</span>
 
-              <!-- Tanggal Akhir -->
-              <div
-                class="relative flex items-center gap-1.5 cursor-pointer group py-1"
-                @click="openEndDatePicker"
-                title="Sampai Tanggal (Klik untuk memilih kalender)"
-              >
+              <div class="relative flex items-center gap-1.5 cursor-pointer group py-1" @click="openEndDatePicker" title="Sampai Tanggal">
                 <Calendar class="h-3.5 w-3.5 text-slate-400 group-hover:text-[#2563EB] dark:group-hover:text-blue-400 transition-colors shrink-0" />
-                <span
-                  class="text-[11px] sm:text-xs font-medium tabular-nums transition-colors"
-                  :class="endDate ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-400 dark:text-slate-500'"
-                >
+                <span class="text-[11px] sm:text-xs font-medium tabular-nums" :class="endDate ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-400 dark:text-slate-500'">
                   {{ endDate ? formatDisplayDate(endDate) : 'dd/mm/yyyy' }}
                 </span>
-                <input
-                  ref="endDateInput"
-                  v-model="endDate"
-                  type="date"
-                  :min="startDate || undefined"
-                  aria-label="Filter Tanggal Akhir"
-                  class="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
-                  tabindex="-1"
-                />
+                <input ref="endDateInput" v-model="endDate" type="date" :min="startDate || undefined" class="absolute inset-0 opacity-0 pointer-events-none w-full h-full" tabindex="-1" />
               </div>
 
-              <button
-                v-if="startDate || endDate"
-                type="button"
-                @click.stop="startDate = ''; endDate = ''"
-                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-0.5"
-                title="Hapus filter rentang tanggal"
-              >
+              <button v-if="startDate || endDate" type="button" @click.stop="startDate = ''; endDate = ''" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-0.5" title="Hapus filter rentang tanggal">
                 <X class="h-3 w-3" />
               </button>
             </div>
-
-            <!-- Search Box -->
-            <div class="relative flex-1 sm:w-64 xl:w-72">
-              <input
-                v-model="search"
-                type="text"
-                placeholder="Cari deskripsi, aktor, event..."
-                class="h-9 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-8 py-1.5 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-900 dark:text-white shadow-2xs"
-              />
-              <Search class="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-              <button
-                v-if="search"
-                type="button"
-                @click="search = ''"
-                class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                title="Hapus pencarian"
-              >
-                <X class="h-4 w-4" />
-              </button>
-            </div>
-
-            <!-- Reset Filter -->
-            <button
-              v-if="hasActiveFilters"
-              type="button"
-              @click="resetAllFilters"
-              class="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 text-xs font-semibold shadow-2xs transition-all inline-flex items-center gap-1.5 cursor-pointer shrink-0"
-              title="Reset seluruh filter"
-            >
-              <X class="h-3.5 w-3.5" />
-              <span>Reset</span>
-            </button>
           </div>
         </div>
 

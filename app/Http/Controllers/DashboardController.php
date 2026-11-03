@@ -44,6 +44,10 @@ class DashboardController extends Controller
             'today_outbound_qty' => (int) StockTransactionDetail::whereHas('transaction', function ($q) use ($todayStart, $todayEnd) {
                 $q->where('type', 'outbound')->whereBetween('transaction_date', [$todayStart, $todayEnd]);
             })->sum('quantity'),
+            'today_inbound_count' => StockTransaction::where('type', 'inbound')->whereBetween('transaction_date', [$todayStart, $todayEnd])->count(),
+            'today_outbound_count' => StockTransaction::where('type', 'outbound')->whereBetween('transaction_date', [$todayStart, $todayEnd])->count(),
+            'pending_restock_count' => RestockRequest::pending()->count(),
+            'approved_restock_count' => RestockRequest::approved()->count(),
             'reorder_count' => Product::whereColumn('current_stock', '<=', 'minimum_stock')->count(),
             'aman_count' => Product::whereColumn('current_stock', '>', 'minimum_stock')->count(),
             'total_inventory_value' => (float) (Product::selectRaw('SUM(current_stock * unit_price) as total')->value('total') ?? 0),

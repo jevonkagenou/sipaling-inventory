@@ -195,27 +195,27 @@ const chartData = computed(() => {
     <!-- Header Legenda Penjelas Kurva (Mode Terang & Gelap Selaras) -->
     <div class="flex flex-wrap items-center justify-between gap-3 text-xs border-b border-slate-100 dark:border-slate-800/80 pb-2">
       <div class="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
-        <span class="inline-block w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500 animate-pulse"></span>
-        Visualisasi Kebutuhan Barang
+        <span class="inline-block w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500"></span>
+        <span>Tren Penjualan &amp; Ramalan Stok</span>
       </div>
 
       <div class="flex flex-wrap items-center gap-4 text-xs">
         <!-- Legenda Historis -->
         <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium">
           <span class="w-3.5 h-1 rounded-full bg-blue-600 dark:bg-blue-500"></span>
-          <span>Data Historis (Aktual)</span>
+          <span>Penjualan Riil (Lalu)</span>
         </div>
 
         <!-- Legenda Fitted Model (Opsional) -->
         <div v-if="props.showFitted && chartData?.fittedPoints.length" class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
           <span class="w-3.5 h-0.5 rounded-full bg-indigo-500 dark:bg-indigo-400 stroke-dash"></span>
-          <span>Taksiran Model (Fitted)</span>
+          <span>Pola Model</span>
         </div>
 
         <!-- Legenda Proyeksi DES -->
         <div class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
           <span class="w-4 h-0.5 border-t-2 border-dashed border-emerald-600 dark:border-emerald-400"></span>
-          <span>Proyeksi Peramalan</span>
+          <span>Perkiraan Laku (Masa Depan)</span>
         </div>
       </div>
     </div>
@@ -295,7 +295,7 @@ const chartData = computed(() => {
             text-anchor="middle"
             class="text-[9px] font-bold fill-slate-600 dark:fill-slate-300 tracking-wider uppercase"
           >
-            Batas Proyeksi &rarr;
+            Mulai Ramalan &rarr;
           </text>
         </g>
 

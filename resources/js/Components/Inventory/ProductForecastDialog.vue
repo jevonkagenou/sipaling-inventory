@@ -335,7 +335,7 @@ const restockBadge = computed(() => {
           </div>
         </div>
         <DialogDescription class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-normal pr-8">
-          Estimasi kebutuhan restock diproyeksikan otomatis berbasis riwayat transaksi bulanan (Didukung Algoritma Double Exponential Smoothing Holt's Linear).
+          Estimasi kebutuhan restock diproyeksikan otomatis berbasis pola pergerakan penjualan dan stok minimum gudang.
         </DialogDescription>
       </DialogHeader>
 
@@ -344,7 +344,7 @@ const restockBadge = computed(() => {
         <!-- Loading State -->
         <div v-if="loading" class="py-12 text-center space-y-3">
         <div class="w-8 h-8 mx-auto border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-xs text-slate-500">Menganalisis deret waktu & parameter pemulusan Holt...</p>
+        <p class="text-xs text-slate-500">Menganalisis riwayat mutasi & menghitung perkiraan kebutuhan...</p>
       </div>
 
       <!-- Error State -->
@@ -404,28 +404,28 @@ const restockBadge = computed(() => {
         <template v-else>
           <!-- 1. Grid 4 Kartu Metrik Operasional -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <!-- Bobot Alpha -->
+            <!-- Sensitivitas Terkini -->
             <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/40 dark:bg-slate-950/40">
               <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
-                <span class="text-xs font-medium">Tren Terkini (&alpha;)</span>
+                <span class="text-xs font-medium">Tren Terkini</span>
                 <Cpu class="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
               </div>
               <div class="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1 tabular-nums">
                 {{ forecastData.optimal_alpha }}
               </div>
-              <span class="text-xs text-slate-400 block mt-0.5">Sensitivitas data terakhir</span>
+              <span class="text-xs text-slate-400 block mt-0.5">Kepekaan data terakhir</span>
             </div>
 
-            <!-- Bobot Beta -->
+            <!-- Adaptasi Laju Tren -->
             <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/40 dark:bg-slate-950/40">
               <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
-                <span class="text-xs font-medium">Arah Tren (&beta;)</span>
+                <span class="text-xs font-medium">Arah Pertumbuhan</span>
                 <TrendingUp class="w-4 h-4 text-[#4F46E5] dark:text-indigo-400" />
               </div>
               <div class="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1 tabular-nums">
                 {{ forecastData.optimal_beta }}
               </div>
-              <span class="text-xs text-slate-400 block mt-0.5">Sensitivitas pola laju tren</span>
+              <span class="text-xs text-slate-400 block mt-0.5">Kepekaan kenaikan tren</span>
             </div>
 
             <!-- Akurasi Model -->
@@ -503,7 +503,7 @@ const restockBadge = computed(() => {
               <!-- Slider Alpha -->
               <div class="space-y-1">
                 <div class="flex justify-between text-xs">
-                  <label class="text-slate-600 dark:text-slate-400 font-medium">Sensitivitas Tren Terkini (&alpha;):</label>
+                  <label class="text-slate-600 dark:text-slate-400 font-medium">Kepekaan Tren Terkini:</label>
                   <span class="font-semibold text-slate-800 dark:text-slate-200 tabular-nums">{{ simAlpha }}</span>
                 </div>
                 <input
@@ -519,7 +519,7 @@ const restockBadge = computed(() => {
               <!-- Slider Beta -->
               <div class="space-y-1">
                 <div class="flex justify-between text-xs">
-                  <label class="text-slate-600 dark:text-slate-400 font-medium">Sensitivitas Arah Tren (&beta;):</label>
+                  <label class="text-slate-600 dark:text-slate-400 font-medium">Kepekaan Kenaikan Tren:</label>
                   <span class="font-semibold text-slate-800 dark:text-slate-200 tabular-nums">{{ simBeta }}</span>
                 </div>
                 <input

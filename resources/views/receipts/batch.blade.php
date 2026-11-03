@@ -243,6 +243,43 @@
             margin-top: 2px;
         }
 
+        /* Tanda Tangan Kolektif 3 Kolom */
+        table.sig-table-3col {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            page-break-inside: avoid;
+        }
+        table.sig-table-3col td {
+            width: 33.33%;
+            text-align: center;
+            vertical-align: top;
+            padding: 0 10px;
+        }
+
+        /* Box Berita Acara Kolektif */
+        .batch-summary-box {
+            margin-top: 16px;
+            padding: 12px 14px;
+            background-color: #f8fafc;
+            border: 1.5px solid #0f172a;
+            border-radius: 4px;
+            page-break-inside: avoid;
+        }
+        .batch-summary-title {
+            font-weight: bold;
+            font-size: 9.5pt;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .batch-summary-desc {
+            font-size: 7.5pt;
+            color: #334155;
+            line-height: 1.45;
+        }
+
         /* Footer Halaman */
         .footer-bar {
             margin-top: 22px;
@@ -514,38 +551,40 @@
                 </div>
             @endif
 
-            <!-- Lembar Tanda Tangan 2 Pihak Resmi (Simetris Kiri & Kanan) -->
-            <table class="sig-table" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td style="width: 50%;">
-                        <div class="sig-title">Diserahkan Oleh,</div>
-                        <div class="sig-space"></div>
-                        <div>
-                            <span class="sig-line">
-                                {{ $isInbound ? ($transaction->party_name ?: '........................................') : ($transaction->creator->name ?? '........................................') }}
-                            </span>
-                        </div>
-                        <div class="sig-role">{{ $isInbound ? 'Pemasok / Driver Pengirim' : 'Petugas Gudang Pengirim' }}</div>
-                    </td>
-                    <td style="width: 50%;">
-                        <div class="sig-title">Diterima Oleh,</div>
-                        <div class="sig-space"></div>
-                        <div>
-                            <span class="sig-line">
-                                {{ $isInbound ? ($transaction->creator->name ?? '........................................') : ($transaction->party_name ?: '........................................') }}
-                            </span>
-                        </div>
-                        <div class="sig-role">{{ $isInbound ? 'Petugas Gudang Penerima' : 'Pihak Penerima Barang' }}</div>
-                    </td>
-                </tr>
-            </table>
+            @if (count($transactions) === 1)
+                <!-- Tanda Tangan Khusus Dokumen Tunggal -->
+                <table class="sig-table" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="width: 50%;">
+                            <div class="sig-title">Diserahkan Oleh,</div>
+                            <div class="sig-space"></div>
+                            <div>
+                                <span class="sig-line">
+                                    {{ $isInbound ? ($transaction->party_name ?: '........................................') : ($transaction->creator->name ?? '........................................') }}
+                                </span>
+                            </div>
+                            <div class="sig-role">{{ $isInbound ? 'Pemasok / Driver Pengirim' : 'Petugas Gudang Pengirim' }}</div>
+                        </td>
+                        <td style="width: 50%;">
+                            <div class="sig-title">Diterima Oleh,</div>
+                            <div class="sig-space"></div>
+                            <div>
+                                <span class="sig-line">
+                                    {{ $isInbound ? ($transaction->creator->name ?? '........................................') : ($transaction->party_name ?: '........................................') }}
+                                </span>
+                            </div>
+                            <div class="sig-role">{{ $isInbound ? 'Petugas Gudang Penerima' : 'Pihak Penerima Barang' }}</div>
+                        </td>
+                    </tr>
+                </table>
+            @endif
 
             <!-- Footer Dokumen Bersih -->
             <div class="footer-bar">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td style="width: 60%; text-align: left;">
-                            SIPALING &bull; Dokumen Mutasi Inventaris (Hal {{ $tIndex + 1 }} dari {{ count($transactions) }})
+                            SIPALING &bull; Dokumen Mutasi Inventaris (No: {{ $transaction->reference_no }}) &bull; Hal {{ $tIndex + 1 }} dari {{ count($transactions) > 1 ? count($transactions) + 1 : 1 }}
                         </td>
                         <td style="width: 40%; text-align: right;">
                             Dicetak: {{ now()->translatedFormat('d F Y, H:i') }} WIB
@@ -559,5 +598,122 @@
             <div style="page-break-after: always;"></div>
         @endif
     @endforeach
+
+    @if (count($transactions) > 1)
+        <!-- ========================================================================= -->
+        <!-- LEMBAR PENGESAHAN KOLEKTIF BATCH (1 TANDA TANGAN UNTUK SELURUH TRANSAKSI) -->
+        <!-- ========================================================================= -->
+        <div style="page-break-before: always;" class="sheet-container">
+            <!-- Header Berita Acara Rekapitulasi Kolektif -->
+            <table class="header-table" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="width: 50%; vertical-align: top;">
+                        <div class="company-name">SIPALING INVENTORY</div>
+                        <div class="company-desc">Sistem Inventaris Prediktif &amp; Logistik Terintegrasi</div>
+                    </td>
+                    <td style="width: 50%; vertical-align: top; text-align: right;">
+                        <div class="doc-title-main">BERITA ACARA REKAPITULASI MUTASI</div>
+                        <div style="font-size: 8pt; color: #64748b;">Pengesahan Kolektif {{ count($transactions) }} Transaksi Terpilih</div>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="divider-line"></div>
+
+            <!-- Ringkasan Batch Box -->
+            <div class="batch-summary-box">
+                <div class="batch-summary-title">LEMBAR PENGESAHAN DOKUMEN MUTASI KOLEKTIF</div>
+                <div class="batch-summary-desc">
+                    Dengan ini seluruh daftar transaksi mutasi barang (masuk/keluar) sebanyak <strong>{{ count($transactions) }} dokumen</strong> sebagaimana terlampir pada lembar-lembar sebelumnya telah diteliti, diperiksa keabsahan fisik barang dan nomor fakturnya di gudang, serta disetujui bersama sebagai bukti pencatatan inventaris resmi.
+                </div>
+                <table style="width: 100%; margin-top: 10px; border-top: 1px dashed #cbd5e1; padding-top: 8px; font-size: 8pt;">
+                    <tr>
+                        <td style="width: 33%;">Total Transaksi: <strong>{{ count($transactions) }} Dokumen</strong></td>
+                        <td style="width: 33%;">Total Volume: <strong>{{ number_format($transactions->sum(fn($t) => $t->details->sum('quantity')), 0, ',', '.') }} Unit</strong></td>
+                        <td style="width: 34%; text-align: right;">Total Nilai Mutasi: <strong>{{ formatRupiahBatch($transactions->sum(fn($t) => $t->details->sum(fn($d) => $d->quantity * ($d->unit_price ?? 0)))) }}</strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Tabel Rekapitulasi Ringkas Dokumen yang Masuk Batch -->
+            <table class="items-table" style="margin-top: 16px;" cellpadding="0" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 5%;">NO</th>
+                        <th style="width: 25%;">NO. REFERENSI</th>
+                        <th style="width: 20%;">WAKTU TRANSAKSI</th>
+                        <th style="width: 15%;">TIPE MUTASI</th>
+                        <th style="width: 20%;">PIHAK TERKAIT</th>
+                        <th class="text-right" style="width: 15%;">TOTAL NILAI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($transactions as $idx => $t)
+                        @php
+                            $subVal = $t->details->sum(fn($d) => (float) $d->quantity * (float) ($d->unit_price ?? 0));
+                        @endphp
+                        <tr>
+                            <td class="text-center font-mono">{{ $idx + 1 }}</td>
+                            <td class="font-mono font-bold" style="color: #1d4ed8;">{{ $t->reference_no }}</td>
+                            <td>{{ \Carbon\Carbon::parse($t->transaction_date)->translatedFormat('d/m/Y H:i') }}</td>
+                            <td class="font-bold" style="color: {{ $t->type === 'inbound' ? '#059669' : '#d97706' }};">
+                                {{ $t->type === 'inbound' ? 'Masuk (Inbound)' : 'Keluar (Outbound)' }}
+                            </td>
+                            <td>{{ $t->party_name ?: '-' }}</td>
+                            <td class="text-right font-mono font-bold">{{ formatRupiahBatch($subVal) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            <!-- Lembar Tanda Tangan Kolektif 3 Kolom (1 TTD DI AKHIR UNTUK SELURUH DOKUMEN) -->
+            <div style="margin-top: 24px; font-size: 8pt; text-align: right; color: #475569;">
+                Ditetapkan di Gudang Utama, {{ now()->translatedFormat('d F Y') }}
+            </div>
+
+            <table class="sig-table-3col" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td>
+                        <div class="sig-title">Diserahkan / Dikerjakan,</div>
+                        <div class="sig-space"></div>
+                        <div>
+                            <span class="sig-line">{{ auth()->user()?->name ?? '........................................' }}</span>
+                        </div>
+                        <div class="sig-role">Petugas Pelaksana Gudang</div>
+                    </td>
+                    <td>
+                        <div class="sig-title">Diperiksa / Diketahui,</div>
+                        <div class="sig-space"></div>
+                        <div>
+                            <span class="sig-line">........................................</span>
+                        </div>
+                        <div class="sig-role">Manajer Operasional Gudang</div>
+                    </td>
+                    <td>
+                        <div class="sig-title">Disahkan Oleh,</div>
+                        <div class="sig-space"></div>
+                        <div>
+                            <span class="sig-line">........................................</span>
+                        </div>
+                        <div class="sig-role">Pimpinan / Pengawas (Komisaris)</div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Footer Dokumen -->
+            <div class="footer-bar" style="margin-top: 24px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 60%; text-align: left;">
+                            SIPALING &bull; Lembar Berita Acara Rekapitulasi Kolektif (Hal {{ count($transactions) + 1 }} dari {{ count($transactions) + 1 }})
+                        </td>
+                        <td style="width: 40%; text-align: right;">
+                            Dicetak: {{ now()->translatedFormat('d F Y, H:i') }} WIB
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    @endif
 </body>
 </html>

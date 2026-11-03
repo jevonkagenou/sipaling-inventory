@@ -24,6 +24,7 @@ import {
   Clock3,
   XCircle,
   Workflow,
+  Coins,
 } from 'lucide-vue-next'
 
 interface ProductItem {
@@ -109,6 +110,10 @@ const props = defineProps<{
     outbound_transactions: number
     today_inbound_qty: number
     today_outbound_qty: number
+    today_inbound_count?: number
+    today_outbound_count?: number
+    pending_restock_count?: number
+    approved_restock_count?: number
     reorder_count: number
     aman_count: number
     total_inventory_value: number
@@ -610,36 +615,81 @@ function getEventBadge(event?: string) {
         </Link>
       </div>
 
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Card 1: Total Katalog Barang -->
+      <!-- C. KHUSUS STAF GUDANG: Fokus Pelaksanaan Fisik & Operasional Lapangan Harian -->
+      <div v-else-if="primaryRole === 'staf-gudang'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1: Barang Masuk Hari Ini -->
         <Link
-          :href="route('inventory.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
+          :href="route('transactions.index', { type: 'inbound' })"
+          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#10B981]/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
         >
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Katalog Master</span>
-            <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Boxes class="h-4 w-4" />
+            <span>Barang Masuk Hari Ini</span>
+            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <PackagePlus class="h-4 w-4" />
             </div>
           </div>
           <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.total_products }}
+            <span class="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
+              {{ stats.today_inbound_qty }}
             </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">item barang</span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">pcs fisik</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Terbagi dalam {{ stats.total_categories }} kategori master
+            {{ stats.today_inbound_count ?? 0 }} transaksi inbound hari ini
           </p>
         </Link>
 
-        <!-- Card 2: Total Mutasi Transaksi -->
+        <!-- Card 2: Barang Keluar Hari Ini -->
+        <Link
+          :href="route('transactions.index', { type: 'outbound' })"
+          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
+        >
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Barang Keluar Hari Ini</span>
+            <div class="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <PackageMinus class="h-4 w-4" />
+            </div>
+          </div>
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
+              {{ stats.today_outbound_qty }}
+            </span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">pcs fisik</span>
+          </div>
+          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            {{ stats.today_outbound_count ?? 0 }} transaksi outbound hari ini
+          </p>
+        </Link>
+
+        <!-- Card 3: Stok Kritis Gudang (Perlu Dilaporkan) -->
+        <Link
+          :href="route('inventory.index')"
+          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-rose-500/50 dark:hover:border-rose-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
+        >
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span class="text-rose-600 dark:text-rose-400 font-semibold">Stok Kritis Gudang</span>
+            <div class="h-8 w-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <AlertTriangle class="h-4 w-4" />
+            </div>
+          </div>
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400 tabular-nums">
+              {{ stats.reorder_count }}
+            </span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">SKU menipis</span>
+          </div>
+          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            Segera lapor ke Manajer Operasional
+          </p>
+        </Link>
+
+        <!-- Card 4: Total Mutasi Tercatat -->
         <Link
           :href="route('transactions.index')"
           class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#4F46E5]/50 dark:hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
         >
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Total Mutasi Stok</span>
+            <span>Total Mutasi Tercatat</span>
             <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <ArrowLeftRight class="h-4 w-4" />
             </div>
@@ -654,48 +704,94 @@ function getEventBadge(event?: string) {
             {{ stats.inbound_transactions }} Inbound &bull; {{ stats.outbound_transactions }} Outbound
           </p>
         </Link>
+      </div>
 
-        <!-- Card 3: Stok Aman -->
+      <!-- D. KHUSUS MANAJER OPERASIONAL: Perencanaan, Pengadaan Restock & Manajemen Aset -->
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1: Rekomendasi Restock Belanja -->
         <Link
-          :href="route('inventory.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
+          :href="route('analytics.index')"
+          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
         >
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Stok Fisik Aman</span>
-            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <CheckCircle2 class="h-4 w-4" />
+            <span>Rekomendasi Restock</span>
+            <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <TrendingUp class="h-4 w-4" />
             </div>
           </div>
           <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
-              {{ stats.aman_count }}
+            <span class="text-2xl font-bold tracking-tight text-[#2563EB] dark:text-blue-400 tabular-nums">
+              {{ stats.reorder_count }}
             </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">SKU</span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">SKU perlu belanja</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Kuantitas di atas batas minimum stok
+            Siap diajukan ke meja Komisaris
           </p>
         </Link>
 
-        <!-- Card 4: Perlu Restock Segera (Amber Alert) -->
+        <!-- Card 2: Estimasi Anggaran Pengadaan / Nilai Inventaris -->
         <Link
-          :href="route('analytics.index', { section: 'rekomendasi' }) + '#ringkasan-rekomendasi'"
+          :href="route('inventory.index')"
+          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#4F46E5]/50 dark:hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
+        >
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Nilai Aset Inventaris</span>
+            <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <Coins class="h-4 w-4" />
+            </div>
+          </div>
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+              {{ formatRupiah(stats.total_inventory_value) }}
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            Total modal stok fisik tersimpan
+          </p>
+        </Link>
+
+        <!-- Card 3: Status Pengajuan di Komisaris -->
+        <Link
+          :href="route('restock.index')"
           class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
         >
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Perlu Pengadaan</span>
+            <span>Pengajuan di Komisaris</span>
             <div class="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <AlertTriangle class="h-4 w-4" />
+              <ClipboardCheck class="h-4 w-4" />
             </div>
           </div>
           <div class="mt-2.5 flex items-baseline gap-1.5">
             <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
-              {{ stats.reorder_count }}
+              {{ stats.pending_restock_count ?? 0 }}
             </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">SKU kritis</span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">berkas pending</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Mencapai batas safety stock &bull; Evaluasi Kebutuhan
+            {{ stats.approved_restock_count ?? 0 }} pengadaan telah disahkan
+          </p>
+        </Link>
+
+        <!-- Card 4: Total Master Katalog -->
+        <Link
+          :href="route('inventory.index')"
+          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
+        >
+          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Katalog Master</span>
+            <div class="h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <Boxes class="h-4 w-4" />
+            </div>
+          </div>
+          <div class="mt-2.5 flex items-baseline gap-1.5">
+            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+              {{ stats.total_products }}
+            </span>
+            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">item</span>
+          </div>
+          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
+            Terbagi dalam {{ stats.total_categories }} kategori master
           </p>
         </Link>
       </div>

@@ -130,4 +130,34 @@ class AuditLogTest extends TestCase
             ->where('logs.data.0.description', 'Log hari ini khusus rentang')
         );
     }
+
+    public function test_audit_log_cannot_be_updated_tamper_proof(): void
+    {
+        $log = ActivityLog::create([
+            'log_name' => 'security',
+            'description' => 'Aktivitas pengujian keamanan',
+            'event' => 'created',
+            'created_at' => now(),
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Jejak audit bersifat append-only permanen dan tidak dapat dimodifikasi.');
+
+        $log->update(['description' => 'Percobaan modifikasi data log']);
+    }
+
+    public function test_audit_log_cannot_be_deleted_tamper_proof(): void
+    {
+        $log = ActivityLog::create([
+            'log_name' => 'security',
+            'description' => 'Aktivitas pengujian keamanan',
+            'event' => 'created',
+            'created_at' => now(),
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Jejak audit bersifat append-only permanen dan tidak dapat dihapus.');
+
+        $log->delete();
+    }
 }

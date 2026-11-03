@@ -65,6 +65,12 @@ class ProductController extends Controller
             $statsProductQuery->where('category_id', $categoryId);
         }
 
+        $matchingProductIds = (clone $statsProductQuery)->pluck('id');
+        $filteredDetailsCount = StockTransactionDetail::whereIn('product_id', $matchingProductIds)->count();
+        $filteredTransactionsCount = StockTransaction::whereHas('details', function ($q) use ($matchingProductIds) {
+            $q->whereIn('product_id', $matchingProductIds);
+        })->count();
+
         return Inertia::render('Inventory/Index', [
             'products' => $products,
             'categories' => Category::withCount('products')->orderBy('name')->get(),
@@ -74,11 +80,12 @@ class ProductController extends Controller
             ],
             'stats' => [
                 'total_products' => (clone $statsProductQuery)->count(),
-                'total_categories' => Category::count(),
-                'total_transactions' => StockTransaction::count(),
-                'total_details' => StockTransactionDetail::count(),
+                'total_categories' => $categoryId && $categoryId !== 'all' ? 1 : Category::count(),
+                'total_transactions' => $filteredTransactionsCount,
+                'total_details' => $filteredDetailsCount,
                 'reorder_count' => (clone $statsProductQuery)->whereColumn('current_stock', '<=', 'minimum_stock')->count(),
                 'aman_count' => (clone $statsProductQuery)->whereColumn('current_stock', '>', 'minimum_stock')->count(),
+                'is_filtered' => !empty($search) || ($categoryId && $categoryId !== 'all'),
             ],
         ]);
     }

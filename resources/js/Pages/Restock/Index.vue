@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { Head, Link, usePage, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { ClipboardCheck, Clock, CheckCircle2, XCircle, Eye, Search, X, TrendingUp, FileText, Boxes, ShieldCheck, PackagePlus, AlertTriangle,
+import { ClipboardCheck, Clock, CheckCircle2, XCircle, Eye, Search, X, TrendingUp, FileText, Boxes, ShieldCheck, PackagePlus, AlertTriangle, Plus,
 } from 'lucide-vue-next'
 
 export interface RestockProduct {
@@ -158,7 +158,7 @@ function handleApprove(req: RestockRequest) {
   router.post(
     route('restock.approve', req.id),
     {
-      review_notes: reviewNotesInput.value.trim() || 'Disetujui penuh oleh Komisaris sesuai rekomendasi peramalan Holt DES.',
+      review_notes: reviewNotesInput.value.trim() || 'Disetujui penuh oleh Komisaris sesuai rekomendasi pengadaan sistem.',
     },
     {
       preserveScroll: true,
@@ -311,7 +311,7 @@ function formatDate(dateStr: string) {
             Monitoring Pengajuan Restock
           </h2>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Tabel berkas pengadaan multi-item berbasis rekomendasi peramalan Holt DES dan riwayat persetujuan Komisaris.
+            Daftar pengajuan pengadaan multi-item berbasis rekomendasi sistem dan persetujuan eksekutif Komisaris.
           </p>
         </div>
 
@@ -320,10 +320,10 @@ function formatDate(dateStr: string) {
             v-if="isManager"
             :href="route('analytics.index', { section: 'rekomendasi' }) + '#ringkasan-rekomendasi'"
             class="h-9 px-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
-            title="Pilih produk dari analitik DES untuk mengajukan restock"
+            title="Pilih produk dari rekomendasi cerdas sistem untuk mengajukan restock"
           >
-            <Boxes class="w-3.5 h-3.5" />
-            <span>Ajukan via Analitik DES</span>
+            <Plus class="w-4 h-4" />
+            <span>Ajukan Pengadaan Baru</span>
           </Link>
 
           <span
@@ -339,7 +339,7 @@ function formatDate(dateStr: string) {
             class="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold shadow-2xs transition-all inline-flex items-center gap-1.5"
           >
             <TrendingUp class="w-3.5 h-3.5 text-[#2563EB]" />
-            <span>Tinjau Prediksi DES</span>
+            <span>Tinjau Prediksi Kebutuhan</span>
           </Link>
         </div>
       </div>
@@ -833,7 +833,7 @@ function formatDate(dateStr: string) {
                     <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Rincian Barang Yang Diajukan ({{ selectedRequest.details?.length || 0 }} SKU)
                     </h4>
-                    <span class="text-[11px] text-slate-400">Rekomendasi Holt DES</span>
+                    <span class="text-[11px] text-slate-400">Rekomendasi Cerdas Sistem</span>
                   </div>
 
                   <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto">
@@ -842,7 +842,7 @@ function formatDate(dateStr: string) {
                         <tr>
                           <th class="px-3 py-2.5 whitespace-nowrap">Produk</th>
                           <th class="px-3 py-2.5 text-right whitespace-nowrap">Stok / Safety</th>
-                          <th class="px-3 py-2.5 text-right whitespace-nowrap">Saran DES</th>
+                          <th class="px-3 py-2.5 text-right whitespace-nowrap">Saran Sistem</th>
                           <th class="px-3 py-2.5 text-right whitespace-nowrap">Diminta</th>
                           <th class="px-3 py-2.5 text-right whitespace-nowrap">Disetujui</th>
                           <th class="px-3 py-2.5 text-right whitespace-nowrap">Harga Satuan</th>

@@ -134,6 +134,34 @@ function clearDateFilter() {
   endDate.value = ''
 }
 
+function applyDateShortcut(preset: 'today' | '7days' | '30days' | 'this_month' | 'all') {
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const toDateStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+  if (preset === 'all') {
+    startDate.value = ''
+    endDate.value = ''
+  } else if (preset === 'today') {
+    const todayStr = toDateStr(now)
+    startDate.value = todayStr
+    endDate.value = todayStr
+  } else if (preset === '7days') {
+    const past = new Date(now)
+    past.setDate(past.getDate() - 6)
+    startDate.value = toDateStr(past)
+    endDate.value = toDateStr(now)
+  } else if (preset === '30days') {
+    const past = new Date(now)
+    past.setDate(past.getDate() - 29)
+    startDate.value = toDateStr(past)
+    endDate.value = toDateStr(now)
+  } else if (preset === 'this_month') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+    startDate.value = toDateStr(firstDay)
+    endDate.value = toDateStr(now)
+  }
+}
 
 function resetAllFilters() {
   search.value = ''
@@ -167,6 +195,7 @@ function applyFilter() {
 
 // Fitur Cetak Masal / Batch Print PDF
 const selectedIds = ref<string[]>([])
+const isBatchPrintModalOpen = ref(false)
 
 const isAllSelected = computed(() => {
   if (!props.transactions.data || props.transactions.data.length === 0) return false
@@ -197,6 +226,26 @@ function printBatchReceipts() {
   const params = new URLSearchParams()
   selectedIds.value.forEach((id) => params.append('ids[]', id))
   window.open(`${route('transactions.batch-receipt')}?${params.toString()}`, '_blank')
+}
+
+function handleBatchPrintClick() {
+  if (selectedIds.value.length > 0) {
+    printBatchReceipts()
+  } else {
+    isBatchPrintModalOpen.value = true
+  }
+}
+
+function printAllCurrentPage() {
+  if (!props.transactions.data || props.transactions.data.length === 0) return
+  const currentIds = props.transactions.data.map((tx) => tx.id)
+  selectedIds.value = currentIds
+  isBatchPrintModalOpen.value = false
+  printBatchReceipts()
+}
+
+function selectManualFromTable() {
+  isBatchPrintModalOpen.value = false
 }
 
 // Modal Detail View
@@ -323,23 +372,41 @@ const visiblePages = computed(() => {
           </p>
         </div>
 
-        <!-- Quick Action Buttons (Khusus Staf Gudang & Manajer) -->
-        <div v-if="props.can_create !== false" class="flex items-center gap-2.5">
-          <Link
-            :href="route('transactions.inbound.create')"
-            class="h-9 px-3.5 rounded-xl bg-[#10B981] hover:bg-emerald-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+        <!-- Action Buttons (Batch Print & Mutasi Baru) -->
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            @click="handleBatchPrintClick"
+            :class="[
+              'h-9 px-3.5 rounded-xl text-xs font-semibold shadow-2xs transition-all inline-flex items-center gap-1.5 cursor-pointer',
+              selectedIds.length > 0
+                ? 'bg-[#2563EB] text-white hover:bg-blue-700'
+                : 'border border-blue-200 dark:border-blue-900/60 bg-blue-50/70 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60'
+            ]"
+            title="Cetak Berita Acara Rekapitulasi Kolektif (Hanya 1x tanda tangan di akhir berkas)"
           >
-            <PackagePlus class="h-4 w-4" />
-            Catat Masuk (Inbound)
-          </Link>
+            <Printer class="h-4 w-4" />
+            <span>{{ selectedIds.length > 0 ? `Cetak Berita Acara (${selectedIds.length} Dipilih)` : 'Cetak Berita Acara Kolektif' }}</span>
+          </button>
 
-          <Link
-            :href="route('transactions.outbound.create')"
-            class="h-9 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
-          >
-            <PackageMinus class="h-4 w-4" />
-            Catat Keluar (Outbound)
-          </Link>
+          <!-- Quick Action Buttons (Khusus Staf Gudang & Manajer) -->
+          <template v-if="props.can_create !== false">
+            <Link
+              :href="route('transactions.inbound.create')"
+              class="h-9 px-3.5 rounded-xl bg-[#10B981] hover:bg-emerald-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <PackagePlus class="h-4 w-4" />
+              Catat Masuk (Inbound)
+            </Link>
+
+            <Link
+              :href="route('transactions.outbound.create')"
+              class="h-9 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <PackageMinus class="h-4 w-4" />
+              Catat Keluar (Outbound)
+            </Link>
+          </template>
         </div>
       </div>
 
@@ -424,157 +491,204 @@ const visiblePages = computed(() => {
 
       <!-- Main Data Table Card -->
       <div class="rounded-2xl border border-slate-200/80 bg-white shadow-2xs dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md overflow-hidden">
-        <!-- Toolbar & Filter Tabs -->
-        <div class="p-4 sm:p-5 border-b border-slate-200/80 dark:border-slate-800/80 flex flex-col gap-3.5 xl:flex-row xl:items-center xl:justify-between">
-          <!-- Type Filter Tabs -->
-          <div class="flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800 w-full sm:w-fit overflow-x-auto">
-            <button
-              type="button"
-              @click="setTypeFilter('')"
-              :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0',
-                !currentType
-                  ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-900 dark:text-white'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
-              ]"
-            >
-              Semua Mutasi
-            </button>
-            <button
-              type="button"
-              @click="setTypeFilter('inbound')"
-              :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0',
-                currentType === 'inbound'
-                  ? 'bg-[#10B981] text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
-              ]"
-            >
-              <PackagePlus class="h-3.5 w-3.5" />
-              Barang Masuk
-            </button>
-            <button
-              type="button"
-              @click="setTypeFilter('outbound')"
-              :class="[
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0',
-                currentType === 'outbound'
-                  ? 'bg-amber-600 text-white shadow-2xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
-              ]"
-            >
-              <PackageMinus class="h-3.5 w-3.5" />
-              Barang Keluar
-            </button>
-          </div>
-
-          <!-- Filters: Date Range & Search Input -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap xl:flex-nowrap">
-            <!-- Date Range Filter -->
-            <div class="h-9 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/15 select-none">
-              <!-- Tanggal Mulai -->
-              <div
-                class="relative flex items-center gap-1.5 cursor-pointer group py-1"
-                @click="openStartDatePicker"
-                title="Dari Tanggal (Klik untuk memilih kalender)"
-              >
-                <Calendar class="h-3.5 w-3.5 text-slate-400 group-hover:text-[#2563EB] dark:group-hover:text-blue-400 transition-colors shrink-0" />
-                <span
-                  class="text-[11px] sm:text-xs font-medium tabular-nums transition-colors"
-                  :class="startDate ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-400 dark:text-slate-500'"
-                >
-                  {{ startDate ? formatDisplayDate(startDate) : 'dd/mm/yyyy' }}
-                </span>
-                <input
-                  ref="startDateInput"
-                  v-model="startDate"
-                  type="date"
-                  :max="endDate || undefined"
-                  aria-label="Filter Tanggal Mulai"
-                  class="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
-                  tabindex="-1"
-                />
-              </div>
-
-              <span class="text-[11px] text-slate-400 font-semibold select-none px-0.5">s.d.</span>
-
-              <!-- Tanggal Akhir -->
-              <div
-                class="relative flex items-center gap-1.5 cursor-pointer group py-1"
-                @click="openEndDatePicker"
-                title="Sampai Tanggal (Klik untuk memilih kalender)"
-              >
-                <Calendar class="h-3.5 w-3.5 text-slate-400 group-hover:text-[#2563EB] dark:group-hover:text-blue-400 transition-colors shrink-0" />
-                <span
-                  class="text-[11px] sm:text-xs font-medium tabular-nums transition-colors"
-                  :class="endDate ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-400 dark:text-slate-500'"
-                >
-                  {{ endDate ? formatDisplayDate(endDate) : 'dd/mm/yyyy' }}
-                </span>
-                <input
-                  ref="endDateInput"
-                  v-model="endDate"
-                  type="date"
-                  :min="startDate || undefined"
-                  aria-label="Filter Tanggal Akhir"
-                  class="absolute inset-0 opacity-0 pointer-events-none w-full h-full"
-                  tabindex="-1"
-                />
-              </div>
-
-              <button
-                v-if="startDate || endDate"
-                type="button"
-                @click.stop="clearDateFilter"
-                class="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer ml-0.5"
-                title="Hapus filter tanggal"
-              >
-                <X class="h-3.5 w-3.5" />
-              </button>
-            </div>
-
+        <!-- Toolbar & Filter Bar (2 Baris Rapi, Lega & Konsisten Seperti Katalog Inventaris) -->
+        <div class="p-4 sm:p-5 border-b border-slate-200/80 dark:border-slate-800/80 space-y-3.5">
+          <!-- Baris 1: Pencarian & Tombol Aksi Cetak / Reset -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <!-- Search Input -->
-            <div class="relative w-full sm:w-60 xl:w-64">
+            <div class="relative w-full sm:w-80 lg:w-96">
+              <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
               <input
                 v-model="search"
                 type="text"
-                placeholder="Cari No Ref, Pihak, SKU..."
-                class="h-9 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-8 py-1.5 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-900 dark:text-white shadow-2xs"
+                placeholder="Cari No. Referensi, Pemasok/Penerima, SKU..."
+                class="h-9 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-8 text-xs sm:text-sm font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-900 dark:text-white shadow-2xs"
               />
-              <Search class="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
               <button
                 v-if="search"
                 type="button"
                 @click="search = ''; applyFilter()"
-                class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                 title="Hapus pencarian"
               >
                 <X class="h-4 w-4" />
               </button>
             </div>
 
-            <!-- Reset All Filters Button -->
-            <button
-              v-if="hasActiveFilters"
-              type="button"
-              @click="resetAllFilters"
-              class="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-900/50 text-xs font-semibold shadow-2xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-              title="Reset seluruh filter"
-            >
-              <X class="h-3.5 w-3.5" />
-              <span>Reset Filter</span>
-            </button>
+            <!-- Sisi Kanan: Cetak Berita Acara & Reset Filter -->
+            <div class="flex items-center gap-2 self-end sm:self-auto shrink-0">
+              <button
+                v-if="hasActiveFilters"
+                type="button"
+                @click="resetAllFilters"
+                class="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-900/50 text-xs font-semibold shadow-2xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                title="Reset seluruh filter"
+              >
+                <X class="h-3.5 w-3.5" />
+                <span>Reset Filter</span>
+              </button>
 
-            <!-- Tombol Cetak PDF Terpilih -->
+              <button
+                type="button"
+                @click="handleBatchPrintClick"
+                :class="[
+                  'h-9 px-3.5 rounded-xl text-xs font-semibold shadow-2xs transition-all inline-flex items-center gap-1.5 cursor-pointer',
+                  selectedIds.length > 0
+                    ? 'bg-[#2563EB] hover:bg-blue-700 text-white'
+                    : 'border border-blue-200 dark:border-blue-900/60 bg-blue-50/70 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60'
+                ]"
+                title="Cetak Berita Acara Rekapitulasi (Cukup 1x tanda tangan kolektif di akhir berkas)"
+              >
+                <Printer class="h-3.5 w-3.5" />
+                <span>{{ selectedIds.length > 0 ? `Cetak Berita Acara (${selectedIds.length})` : 'Cetak Berita Acara' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Baris 2: Segmented Control Tipe Mutasi & Filter Kalender -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+            <!-- Sisi Kiri: Segmented Tabs Tipe Mutasi (Matching InventoryToolbar Style!) -->
+            <div class="inline-flex items-center p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 text-xs w-fit">
+              <button
+                type="button"
+                @click="setTypeFilter('')"
+                :class="!currentType
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <span>Semua Mutasi</span>
+                <span
+                  :class="!currentType
+                    ? 'bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 font-semibold'
+                    : 'bg-slate-200/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-400'"
+                  class="px-1.5 py-0.2 rounded-md text-[10px]"
+                >{{ stats.total_inbound + stats.total_outbound }}</span>
+              </button>
+
+              <button
+                type="button"
+                @click="setTypeFilter('inbound')"
+                :class="currentType === 'inbound'
+                  ? 'bg-[#10B981] text-white font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <span
+                  class="w-1.5 h-1.5 rounded-full"
+                  :class="currentType === 'inbound' ? 'bg-white' : 'bg-[#10B981]'"
+                ></span>
+                <span>Barang Masuk</span>
+                <span
+                  :class="currentType === 'inbound'
+                    ? 'bg-white/20 text-white font-semibold'
+                    : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'"
+                  class="px-1.5 py-0.2 rounded-md text-[10px]"
+                >{{ stats.total_inbound }}</span>
+              </button>
+
+              <button
+                type="button"
+                @click="setTypeFilter('outbound')"
+                :class="currentType === 'outbound'
+                  ? 'bg-amber-600 text-white font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 font-medium'"
+                class="px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <span
+                  class="w-1.5 h-1.5 rounded-full"
+                  :class="currentType === 'outbound' ? 'bg-white' : 'bg-amber-500'"
+                ></span>
+                <span>Barang Keluar</span>
+                <span
+                  :class="currentType === 'outbound'
+                    ? 'bg-white/20 text-white font-semibold'
+                    : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'"
+                  class="px-1.5 py-0.2 rounded-md text-[10px]"
+                >{{ stats.total_outbound }}</span>
+              </button>
+            </div>
+
+            <!-- Sisi Kanan: Shortcut Waktu & Custom Date Range -->
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- Shortcuts -->
+              <div class="inline-flex items-center gap-0.5 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 text-[11px]">
+                <button
+                  type="button"
+                  @click="applyDateShortcut('all')"
+                  :class="[!startDate && !endDate ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold shadow-2xs' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white', 'px-2 py-1 rounded-lg transition-all cursor-pointer']"
+                >Semua</button>
+                <button
+                  type="button"
+                  @click="applyDateShortcut('today')"
+                  class="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all cursor-pointer"
+                >Hari Ini</button>
+                <button
+                  type="button"
+                  @click="applyDateShortcut('7days')"
+                  class="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all cursor-pointer"
+                >7 Hari</button>
+                <button
+                  type="button"
+                  @click="applyDateShortcut('30days')"
+                  class="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all cursor-pointer"
+                >30 Hari</button>
+                <button
+                  type="button"
+                  @click="applyDateShortcut('this_month')"
+                  class="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all cursor-pointer"
+                >Bulan Ini</button>
+              </div>
+
+              <!-- Date Picker -->
+              <div class="h-9 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/15 select-none shrink-0">
+                <div class="relative flex items-center gap-1.5 cursor-pointer group py-1" @click="openStartDatePicker">
+                  <Calendar class="h-3.5 w-3.5 text-slate-400 group-hover:text-[#2563EB] dark:group-hover:text-blue-400 transition-colors shrink-0" />
+                  <span class="text-[11px] sm:text-xs font-medium tabular-nums" :class="startDate ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                    {{ startDate ? formatDisplayDate(startDate) : 'dd/mm/yyyy' }}
+                  </span>
+                  <input ref="startDateInput" v-model="startDate" type="date" :max="endDate || undefined" class="absolute inset-0 opacity-0 pointer-events-none w-full h-full" tabindex="-1" />
+                </div>
+                <span class="text-[11px] text-slate-400 font-semibold select-none px-0.5">s.d.</span>
+                <div class="relative flex items-center gap-1.5 cursor-pointer group py-1" @click="openEndDatePicker">
+                  <Calendar class="h-3.5 w-3.5 text-slate-400 group-hover:text-[#2563EB] dark:group-hover:text-blue-400 transition-colors shrink-0" />
+                  <span class="text-[11px] sm:text-xs font-medium tabular-nums" :class="endDate ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                    {{ endDate ? formatDisplayDate(endDate) : 'dd/mm/yyyy' }}
+                  </span>
+                  <input ref="endDateInput" v-model="endDate" type="date" :min="startDate || undefined" class="absolute inset-0 opacity-0 pointer-events-none w-full h-full" tabindex="-1" />
+                </div>
+                <button v-if="startDate || endDate" type="button" @click.stop="clearDateFilter" class="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer ml-0.5" title="Hapus filter tanggal">
+                  <X class="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Banner Panduan Jelas: Fitur Berita Acara Rekapitulasi Kolektif -->
+        <div class="px-4 sm:px-5 py-2.5 bg-blue-50/50 dark:bg-blue-950/25 border-b border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+          <div class="flex items-center gap-2 min-w-0">
+            <Printer class="h-3.5 w-3.5 text-[#2563EB] shrink-0" />
+            <span class="truncate">
+              <strong>Pengesahan Kolektif:</strong> Centang beberapa baris mutasi untuk disatukan dalam 1 berkas Berita Acara (Cukup 1 tanda tangan bersama di akhir dokumen).
+            </span>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <button
+              v-if="!isAllSelected && transactions.data.length > 0"
+              type="button"
+              @click="toggleSelectAll"
+              class="text-[#2563EB] dark:text-blue-400 hover:underline font-semibold cursor-pointer"
+            >
+              Pilih Semua ({{ transactions.data.length }})
+            </button>
             <button
               v-if="selectedIds.length > 0"
               type="button"
-              @click="printBatchReceipts"
-              class="h-9 px-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-              title="Cetak bukti transaksi terpilih dalam 1 berkas PDF"
+              @click="selectedIds = []"
+              class="text-rose-600 dark:text-rose-400 hover:underline font-semibold cursor-pointer"
             >
-              <Printer class="h-3.5 w-3.5" />
-              <span>Cetak Terpilih ({{ selectedIds.length }})</span>
+              Batal Pilihan ({{ selectedIds.length }})
             </button>
           </div>
         </div>
@@ -584,14 +698,17 @@ const visiblePages = computed(() => {
           <table class="w-full text-left text-xs">
             <thead class="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
               <tr class="h-10">
-                <th class="w-10 px-3 py-2.5 text-center">
-                  <input
-                    type="checkbox"
-                    :checked="isAllSelected"
-                    @change="toggleSelectAll"
-                    class="rounded border-slate-300 dark:border-slate-700 text-[#2563EB] focus:ring-[#2563EB]/20 h-4 w-4 cursor-pointer"
-                    title="Pilih Semua di Halaman Ini"
-                  />
+                <th class="w-16 px-3 py-2.5 text-center">
+                  <div class="flex items-center justify-center gap-1.5" title="Centang untuk memilih transaksi yang disatukan dalam Berita Acara">
+                    <input
+                      type="checkbox"
+                      :checked="isAllSelected"
+                      @change="toggleSelectAll"
+                      class="rounded border-slate-300 dark:border-slate-700 text-[#2563EB] focus:ring-[#2563EB]/20 h-4 w-4 cursor-pointer"
+                      title="Pilih Semua di Halaman Ini"
+                    />
+                    <span class="text-[11px] font-semibold text-slate-500 hidden sm:inline">Pilih</span>
+                  </div>
                 </th>
                 <th class="px-3 py-2.5 whitespace-nowrap">No. Referensi</th>
                 <th class="px-3 py-2.5 whitespace-nowrap">Tipe Mutasi</th>
@@ -933,7 +1050,7 @@ const visiblePages = computed(() => {
       </div>
     </Teleport>
 
-    <!-- Floating Action Pill untuk Cetak Masal Terpilih -->
+    <!-- Floating Action Pill untuk Cetak Berita Acara Rekapitulasi Kolektif -->
     <Transition
       enter-active-class="transition duration-200 ease-out"
       enter-from-class="transform translate-y-6 opacity-0"
@@ -944,16 +1061,16 @@ const visiblePages = computed(() => {
     >
       <div
         v-if="selectedIds.length > 0"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 text-white dark:bg-slate-800/95 dark:text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md border border-slate-700/80 flex items-center gap-4"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 text-white dark:bg-slate-800/95 dark:text-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md border border-slate-700/80 flex items-center gap-4 max-w-[90vw]"
       >
         <div class="flex items-center gap-2 text-xs font-semibold">
           <span class="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white font-bold">
             {{ selectedIds.length }}
           </span>
-          <span>Transaksi Terpilih</span>
+          <span class="truncate">Faktur dipilih untuk Berita Acara Kolektif (1x TTD)</span>
         </div>
-        <div class="h-4 w-px bg-slate-700"></div>
-        <div class="flex items-center gap-2">
+        <div class="h-4 w-px bg-slate-700 hidden sm:block"></div>
+        <div class="flex items-center gap-2 shrink-0">
           <button
             type="button"
             @click="selectedIds = []"
@@ -967,11 +1084,78 @@ const visiblePages = computed(() => {
             class="h-8 px-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white text-xs font-bold shadow-md inline-flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Printer class="h-3.5 w-3.5" />
-            Cetak {{ selectedIds.length }} PDF Sekaligus
+            <span>Cetak Berita Acara ({{ selectedIds.length }})</span>
           </button>
         </div>
       </div>
     </Transition>
+
+    <!-- Modal Dialog: Panduan & Opsi Cetak Berita Acara Kolektif -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="isBatchPrintModalOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+          @click.self="isBatchPrintModalOpen = false"
+        >
+          <div class="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] flex items-center justify-center shrink-0">
+                  <Printer class="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">Cetak Berita Acara Rekapitulasi</h3>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">Pengesahan kolektif dokumen mutasi stok</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                @click="isBatchPrintModalOpen = false"
+                class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <X class="h-4 w-4" />
+              </button>
+            </div>
+
+            <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-blue-50/50 dark:bg-blue-950/20 p-3.5 rounded-xl border border-blue-100 dark:border-blue-900/50 space-y-1">
+              <p class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <CheckCircle2 class="h-4 w-4 text-[#10B981]" />
+                Solusi Praktis: Cukup 1x Tanda Tangan
+              </p>
+              <p>
+                Untuk meringankan beban administrasi, sistem menggabungkan seluruh mutasi terpilih ke dalam 1 berkas Berita Acara Rekapitulasi resmi dengan <strong>pengesahan 1 kali bersama</strong> di akhir lembar dokumen (Petugas Pelaksana, Manajer, &amp; Komisaris).
+              </p>
+            </div>
+
+            <div class="space-y-2 pt-1">
+              <button
+                type="button"
+                @click="printAllCurrentPage"
+                class="w-full h-10 px-4 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
+              >
+                <Printer class="h-4 w-4" />
+                <span>Cetak Semua di Halaman Ini ({{ transactions.data.length }} Dokumen)</span>
+              </button>
+              <button
+                type="button"
+                @click="selectManualFromTable"
+                class="w-full h-9 px-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>Pilih Tertentu Lewat Centang Tabel</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
     </div>
   </AuthenticatedLayout>
 </template>
