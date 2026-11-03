@@ -54,6 +54,17 @@ class ProductController extends Controller
             ]);
         }
 
+        $statsProductQuery = Product::query();
+        if ($search) {
+            $statsProductQuery->where(function ($q) use ($search) {
+                $q->where('sku', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%");
+            });
+        }
+        if ($categoryId && $categoryId !== 'all') {
+            $statsProductQuery->where('category_id', $categoryId);
+        }
+
         return Inertia::render('Inventory/Index', [
             'products' => $products,
             'categories' => Category::withCount('products')->orderBy('name')->get(),
@@ -62,12 +73,12 @@ class ProductController extends Controller
                 'category_id' => $categoryId ?? 'all',
             ],
             'stats' => [
-                'total_products' => Product::count(),
+                'total_products' => (clone $statsProductQuery)->count(),
                 'total_categories' => Category::count(),
                 'total_transactions' => StockTransaction::count(),
                 'total_details' => StockTransactionDetail::count(),
-                'reorder_count' => Product::whereColumn('current_stock', '<=', 'minimum_stock')->count(),
-                'aman_count' => Product::whereColumn('current_stock', '>', 'minimum_stock')->count(),
+                'reorder_count' => (clone $statsProductQuery)->whereColumn('current_stock', '<=', 'minimum_stock')->count(),
+                'aman_count' => (clone $statsProductQuery)->whereColumn('current_stock', '>', 'minimum_stock')->count(),
             ],
         ]);
     }

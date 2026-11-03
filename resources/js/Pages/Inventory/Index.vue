@@ -502,7 +502,7 @@ function onCategoryFilterChange(catId: string) {
       preserveState: true,
       preserveScroll: true,
       replace: true,
-      only: ['products', 'filters'],
+      only: ['products', 'filters', 'stats'],
     }
   )
 }

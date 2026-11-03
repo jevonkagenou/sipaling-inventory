@@ -67,18 +67,92 @@ class StockTransactionController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        $todayStart = Carbon::today()->startOfDay();
-        $todayEnd = Carbon::today()->endOfDay();
+        $baseStatsQuery = StockTransaction::query();
+        if ($startDate && $endDate) {
+            $baseStatsQuery->whereBetween('transaction_date', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay(),
+            ]);
+        } elseif ($startDate) {
+            $baseStatsQuery->where('transaction_date', '>=', Carbon::parse($startDate)->startOfDay());
+        } elseif ($endDate) {
+            $baseStatsQuery->where('transaction_date', '<=', Carbon::parse($endDate)->endOfDay());
+        }
+
+        if ($search) {
+            $baseStatsQuery->where(function ($q) use ($search) {
+                $q->where('reference_no', 'like', "%{$search}%")
+                    ->orWhere('party_name', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%")
+                    ->orWhereHas('details.product', function ($pq) use ($search) {
+                        $pq->where('sku', 'like', "%{$search}%")
+                            ->orWhere('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $isDateFiltered = !empty($startDate) || !empty($endDate);
+
+        if ($isDateFiltered) {
+            $inboundQty = StockTransactionDetail::whereHas('transaction', function ($q) use ($startDate, $endDate, $search) {
+                $q->where('type', 'inbound');
+                if ($startDate && $endDate) {
+                    $q->whereBetween('transaction_date', [
+                        Carbon::parse($startDate)->startOfDay(),
+                        Carbon::parse($endDate)->endOfDay(),
+                    ]);
+                } elseif ($startDate) {
+                    $q->where('transaction_date', '>=', Carbon::parse($startDate)->startOfDay());
+                } elseif ($endDate) {
+                    $q->where('transaction_date', '<=', Carbon::parse($endDate)->endOfDay());
+                }
+                if ($search) {
+                    $q->where(function ($sq) use ($search) {
+                        $sq->where('reference_no', 'like', "%{$search}%")
+                            ->orWhere('party_name', 'like', "%{$search}%");
+                    });
+                }
+            })->sum('quantity');
+
+            $outboundQty = StockTransactionDetail::whereHas('transaction', function ($q) use ($startDate, $endDate, $search) {
+                $q->where('type', 'outbound');
+                if ($startDate && $endDate) {
+                    $q->whereBetween('transaction_date', [
+                        Carbon::parse($startDate)->startOfDay(),
+                        Carbon::parse($endDate)->endOfDay(),
+                    ]);
+                } elseif ($startDate) {
+                    $q->where('transaction_date', '>=', Carbon::parse($startDate)->startOfDay());
+                } elseif ($endDate) {
+                    $q->where('transaction_date', '<=', Carbon::parse($endDate)->endOfDay());
+                }
+                if ($search) {
+                    $q->where(function ($sq) use ($search) {
+                        $sq->where('reference_no', 'like', "%{$search}%")
+                            ->orWhere('party_name', 'like', "%{$search}%");
+                    });
+                }
+            })->sum('quantity');
+        } else {
+            $todayStart = Carbon::today()->startOfDay();
+            $todayEnd = Carbon::today()->endOfDay();
+
+            $inboundQty = StockTransactionDetail::whereHas('transaction', function ($q) use ($todayStart, $todayEnd) {
+                $q->where('type', 'inbound')->whereBetween('transaction_date', [$todayStart, $todayEnd]);
+            })->sum('quantity');
+
+            $outboundQty = StockTransactionDetail::whereHas('transaction', function ($q) use ($todayStart, $todayEnd) {
+                $q->where('type', 'outbound')->whereBetween('transaction_date', [$todayStart, $todayEnd]);
+            })->sum('quantity');
+        }
 
         $stats = [
-            'total_inbound' => StockTransaction::where('type', 'inbound')->count(),
-            'total_outbound' => StockTransaction::where('type', 'outbound')->count(),
-            'today_inbound_qty' => StockTransactionDetail::whereHas('transaction', function ($q) use ($todayStart, $todayEnd) {
-                $q->where('type', 'inbound')->whereBetween('transaction_date', [$todayStart, $todayEnd]);
-            })->sum('quantity'),
-            'today_outbound_qty' => StockTransactionDetail::whereHas('transaction', function ($q) use ($todayStart, $todayEnd) {
-                $q->where('type', 'outbound')->whereBetween('transaction_date', [$todayStart, $todayEnd]);
-            })->sum('quantity'),
+            'total_inbound' => (clone $baseStatsQuery)->where('type', 'inbound')->count(),
+            'total_outbound' => (clone $baseStatsQuery)->where('type', 'outbound')->count(),
+            'today_inbound_qty' => (int) $inboundQty,
+            'today_outbound_qty' => (int) $outboundQty,
+            'is_date_filtered' => $isDateFiltered,
+            'is_filtered' => $isDateFiltered || !empty($search) || !empty($type),
         ];
 
         return Inertia::render('Transactions/Index', [

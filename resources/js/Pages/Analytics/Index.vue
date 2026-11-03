@@ -22,6 +22,10 @@ import {
   FileSpreadsheet,
   FileText,
   ChevronDown,
+  Coins,
+  Search,
+  X,
+  Filter,
 } from 'lucide-vue-next'
 import {
   DropdownMenu,
@@ -39,6 +43,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  categories: {
+    type: Array,
+    default: () => [],
+  },
   selectedProductId: {
     type: String,
     default: '',
@@ -50,6 +58,18 @@ const props = defineProps({
   restockAlerts: {
     type: Array,
     default: () => [],
+  },
+  executiveSummary: {
+    type: Object,
+    default: () => ({
+      total_skus: 0,
+      urgent_skus: 0,
+      warning_skus: 0,
+      safe_skus: 0,
+      total_budget: 0,
+      average_accuracy: 0,
+      average_mape: 0,
+    }),
   },
   filters: {
     type: Object,
@@ -293,18 +313,85 @@ const roles = computed(() => {
 })
 const canRequestRestock = computed(() => roles.value.includes('manajer-operasional'))
 
+function formatRupiah(val) {
+  const num = typeof val === 'string' ? parseFloat(val) : val
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(num || 0)
+}
+
+// Filter Tabel Rekomendasi Restock
+const tableCategoryFilter = ref('all')
+const tableStatusFilter = ref('all')
+const tableSearch = ref('')
+
+const filteredRestockAlerts = computed(() => {
+  return props.restockAlerts.filter((item) => {
+    // Filter Kategori
+    if (tableCategoryFilter.value !== 'all' && item.category_id !== tableCategoryFilter.value) {
+      return false
+    }
+    // Filter Status
+    if (tableStatusFilter.value === 'urgent' && item.status !== 'RESTOCK_URGENT') {
+      return false
+    }
+    if (tableStatusFilter.value === 'safe' && item.suggested_quantity > 0) {
+      return false
+    }
+    // Filter Search
+    if (tableSearch.value) {
+      const q = tableSearch.value.toLowerCase().trim()
+      const matchSku = item.sku?.toLowerCase().includes(q)
+      const matchName = item.name?.toLowerCase().includes(q)
+      if (!matchSku && !matchName) return false
+    }
+    return true
+  })
+})
+
+const filteredEstimatedBudget = computed(() => {
+  return filteredRestockAlerts.value.reduce((acc, item) => {
+    return acc + (item.suggested_quantity > 0 ? (item.suggested_quantity * item.unit_price) : 0)
+  }, 0)
+})
+
 const selectedIds = ref([])
 const isRestockDialogOpen = ref(false)
 
-const allSelected = computed(
-  () => props.restockAlerts.length > 0 && selectedIds.value.length === props.restockAlerts.length,
-)
-const someSelected = computed(() => selectedIds.value.length > 0 && !allSelected.value)
+const allSelected = computed(() => {
+  if (filteredRestockAlerts.value.length === 0) return false
+  return filteredRestockAlerts.value.every((i) => selectedIds.value.includes(i.id))
+})
+const someSelected = computed(() => {
+  const count = filteredRestockAlerts.value.filter((i) => selectedIds.value.includes(i.id)).length
+  return count > 0 && count < filteredRestockAlerts.value.length
+})
 const selectedItems = computed(() => props.restockAlerts.filter((i) => selectedIds.value.includes(i.id)))
 
 function toggleAll() {
-  selectedIds.value = allSelected.value ? [] : props.restockAlerts.map((i) => i.id)
+  if (allSelected.value) {
+    const curIds = new Set(filteredRestockAlerts.value.map((i) => i.id))
+    selectedIds.value = selectedIds.value.filter((id) => !curIds.has(id))
+  } else {
+    const newSet = new Set([...selectedIds.value, ...filteredRestockAlerts.value.map((i) => i.id)])
+    selectedIds.value = Array.from(newSet)
+  }
 }
+
+function selectAllUrgentItems() {
+  const urgentIds = props.restockAlerts
+    .filter((i) => i.status === 'RESTOCK_URGENT' || i.suggested_quantity > 0)
+    .map((i) => i.id)
+  selectedIds.value = urgentIds
+  if (canRequestRestock.value) {
+    isRestockDialogOpen.value = true
+  } else {
+    scrollToRecommendations()
+  }
+}
+
 function onRestockSubmitted() {
   selectedIds.value = []
 }
@@ -382,6 +469,146 @@ watch(
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Estimasi volume restock cerdas berbasis tren penjualan bulanan (Didukung Algoritma Double Exponential Smoothing).
           </p>
+        </div>
+      </div>
+
+      <!-- Executive Helicopter View Header & Macro KPIs -->
+      <div class="space-y-4">
+        <!-- 4 Global Macro KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Card 1: Total SKU Terdaftar & Dipantau -->
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+            <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span>Status Katalog Inventaris</span>
+              <div class="h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
+                <Boxes class="h-4 w-4" />
+              </div>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-1.5">
+              <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                {{ executiveSummary.total_skus }}
+              </span>
+              <span class="text-xs font-normal text-slate-500 dark:text-slate-400">SKU dipantau</span>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+              {{ executiveSummary.safe_skus }} SKU aman di atas batas minimum
+            </p>
+          </div>
+
+          <!-- Card 2: SKU Kritis Butuh Restock Segera -->
+          <div
+            @click="tableStatusFilter = 'urgent'; scrollToRecommendations()"
+            class="rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-2xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
+            :class="executiveSummary.urgent_skus > 0
+              ? 'border-rose-300/80 dark:border-rose-900/60 ring-2 ring-rose-500/10'
+              : 'border-slate-200 dark:border-slate-800'"
+            title="Klik untuk menyaring barang kritis pada tabel"
+          >
+            <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span :class="executiveSummary.urgent_skus > 0 ? 'text-rose-600 dark:text-rose-400 font-semibold' : ''">
+                Kritis (Perlu Restock Segera)
+              </span>
+              <div
+                class="h-8 w-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
+                :class="executiveSummary.urgent_skus > 0
+                  ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500'"
+              >
+                <AlertCircle class="h-4 w-4" />
+              </div>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-1.5">
+              <span
+                class="text-2xl font-bold tracking-tight tabular-nums"
+                :class="executiveSummary.urgent_skus > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'"
+              >
+                {{ executiveSummary.urgent_skus }}
+              </span>
+              <span class="text-xs font-normal text-slate-500 dark:text-slate-400">SKU mendesak</span>
+            </div>
+            <p class="text-[11px] text-rose-600/90 dark:text-rose-400/90 mt-1 truncate">
+              {{ executiveSummary.urgent_skus > 0 ? 'Defisit stok & risiko kehabisan barang' : 'Seluruh barang dalam batas aman' }}
+            </p>
+          </div>
+
+          <!-- Card 3: Total Estimasi Anggaran Restock -->
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+            <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span>Estimasi Anggaran Restock</span>
+              <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center">
+                <Coins class="h-4 w-4" />
+              </div>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-1.5">
+              <span class="text-xl sm:text-2xl font-bold tracking-tight text-[#2563EB] dark:text-blue-400 tabular-nums">
+                {{ formatRupiah(executiveSummary.total_budget) }}
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+              Total biaya pengadaan barang kritis
+            </p>
+          </div>
+
+          <!-- Card 4: Rata-rata Akurasi Prediksi Sistem -->
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+            <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span>Akurasi Model Global</span>
+              <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center">
+                <ShieldCheck class="h-4 w-4" />
+              </div>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-1.5">
+              <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
+                {{ executiveSummary.average_accuracy }}%
+              </span>
+              <span class="text-xs font-normal text-slate-500 dark:text-slate-400">confidence</span>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+              Tingkat keyakinan agregat Holt DES
+            </p>
+          </div>
+        </div>
+
+        <!-- Executive Strategic Action Callout Banner -->
+        <div class="rounded-2xl border border-[#2563EB]/25 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-white dark:from-blue-950/40 dark:via-slate-900 dark:to-slate-900 p-4 sm:p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-start gap-3.5 max-w-3xl">
+            <div class="p-2.5 rounded-xl bg-[#2563EB]/10 text-[#2563EB] dark:bg-blue-950 dark:text-blue-400 shrink-0 mt-0.5">
+              <Sparkles class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                Rekomendasi Tindakan Eksekutif (Executive Guidance)
+              </h3>
+              <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                <template v-if="executiveSummary.urgent_skus > 0">
+                  Sistem mendeteksi <strong>{{ executiveSummary.urgent_skus }} SKU produk</strong> memerlukan tindakan pemesanan stok segera dengan estimasi nilai belanja sebesar <strong>{{ formatRupiah(executiveSummary.total_budget) }}</strong>. Disarankan untuk segera menyusun draf usulan pengadaan restock agar tidak mengganggu kelancaran operasional penjualan.
+                </template>
+                <template v-else>
+                  Kondisi persediaan barang saat ini dalam keadaan aman dan berada di atas batas safety stock minimum. Rata-rata tingkat keyakinan proyeksi stabil di angka <strong>{{ executiveSummary.average_accuracy }}%</strong>.
+                </template>
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
+            <button
+              v-if="canRequestRestock && executiveSummary.urgent_skus > 0"
+              type="button"
+              @click="selectAllUrgentItems"
+              class="h-9 px-4 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5 active:scale-[0.98]"
+            >
+              <Send class="w-3.5 h-3.5" />
+              <span>Ajukan Restock Kritis</span>
+            </button>
+            <button
+              type="button"
+              @click="scrollToRecommendations"
+              class="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <ArrowRight class="w-3.5 h-3.5 text-slate-400" />
+              <span>Tinjau Matriks SKU</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -688,7 +915,8 @@ watch(
         class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden scroll-mt-20 transition-all duration-700"
         :class="{ 'ring-2 ring-[#2563EB] shadow-lg border-blue-400 dark:border-blue-500': isSectionHighlighted }"
       >
-        <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <!-- Header Toolbar & Title -->
+        <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3.5 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Boxes class="w-4 h-4 text-[#2563EB]" />
@@ -699,7 +927,7 @@ watch(
             </p>
           </div>
 
-          <div class="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          <div class="flex items-center gap-2.5 shrink-0 self-start xl:self-auto flex-wrap sm:flex-nowrap">
             <!-- Tombol Ajukan Restock -->
             <button
               v-if="canRequestRestock"
@@ -767,10 +995,86 @@ watch(
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+        </div>
 
-            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-              {{ restockAlerts.length }} Produk
-            </span>
+        <!-- Filter Sub-Toolbar (Kategori, Status Tab, & Pencarian Cepat) -->
+        <div class="p-4 sm:p-5 bg-slate-50/50 dark:bg-slate-950/30 border-b border-slate-200/80 dark:border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <!-- Filter Status Tabs -->
+            <div class="flex items-center rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              <button
+                type="button"
+                @click="tableStatusFilter = 'all'"
+                :class="[
+                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                  tableStatusFilter === 'all'
+                    ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-900 dark:text-white'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
+                ]"
+              >
+                Semua ({{ restockAlerts.length }})
+              </button>
+              <button
+                type="button"
+                @click="tableStatusFilter = 'urgent'"
+                :class="[
+                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
+                  tableStatusFilter === 'urgent'
+                    ? 'bg-rose-600 text-white shadow-2xs'
+                    : 'text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400',
+                ]"
+              >
+                <AlertCircle class="h-3.5 w-3.5" />
+                Perlu Restock ({{ executiveSummary.urgent_skus }})
+              </button>
+              <button
+                type="button"
+                @click="tableStatusFilter = 'safe'"
+                :class="[
+                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5',
+                  tableStatusFilter === 'safe'
+                    ? 'bg-[#10B981] text-white shadow-2xs'
+                    : 'text-slate-500 hover:text-[#10B981] dark:text-slate-400 dark:hover:text-emerald-400',
+                ]"
+              >
+                <CheckCircle2 class="h-3.5 w-3.5" />
+                Aman ({{ executiveSummary.safe_skus }})
+              </button>
+            </div>
+
+            <!-- Dropdown Filter Kategori -->
+            <select
+              v-if="props.categories && props.categories.length > 0"
+              v-model="tableCategoryFilter"
+              aria-label="Filter Kategori Produk"
+              class="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 cursor-pointer outline-none shrink-0"
+            >
+              <option value="all">Semua Kategori</option>
+              <option v-for="cat in props.categories" :key="cat.id" :value="cat.id">
+                {{ cat.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Pencarian SKU / Nama Produk -->
+          <div class="relative w-full md:w-64">
+            <input
+              v-model="tableSearch"
+              type="text"
+              placeholder="Cari SKU atau nama..."
+              class="h-9 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-8 py-1.5 text-xs font-medium text-slate-900 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 dark:border-slate-800 dark:bg-slate-900 dark:text-white shadow-2xs"
+            />
+            <Search class="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+            <button
+              v-if="tableSearch"
+              type="button"
+              @click="tableSearch = ''"
+              class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              title="Hapus pencarian"
+            >
+              <X class="h-4 w-4" />
+            </button>
           </div>
         </div>
 
@@ -800,7 +1104,7 @@ watch(
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
               <tr
-                v-for="item in restockAlerts"
+                v-for="item in filteredRestockAlerts"
                 :key="item.id"
                 class="group hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
                 :class="item.id === selectedProductId ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''"
@@ -857,14 +1161,22 @@ watch(
                   </button>
                 </td>
               </tr>
+              <tr v-if="filteredRestockAlerts.length === 0">
+                <td :colspan="canRequestRestock ? 9 : 8" class="px-4 py-8 text-center text-xs text-slate-400 dark:text-slate-500">
+                  Tidak ada produk yang memenuhi kriteria filter aktif.
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
 
         <!-- Table Total Counter (Konsisten Standar SIPALING) -->
-        <div class="flex items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 text-xs">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 text-xs">
           <div class="text-xs text-slate-500 dark:text-slate-400">
-            Menampilkan <span class="font-semibold text-slate-700 dark:text-slate-300">{{ restockAlerts.length }}</span> produk yang memerlukan perhatian stok
+            Menampilkan <span class="font-semibold text-slate-700 dark:text-slate-300">{{ filteredRestockAlerts.length }}</span> dari <span class="font-semibold text-slate-700 dark:text-slate-300">{{ restockAlerts.length }}</span> produk
+            <template v-if="filteredEstimatedBudget > 0">
+              &bull; Subtotal Anggaran: <span class="font-bold text-[#2563EB] dark:text-blue-400 tabular-nums">{{ formatRupiah(filteredEstimatedBudget) }}</span>
+            </template>
           </div>
           <div class="text-[11px] text-slate-400">
             Didukung Algoritma: Double Exponential Smoothing (Holt)

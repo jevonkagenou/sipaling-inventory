@@ -56,6 +56,7 @@ class AnalyticsController extends Controller
 
             return [
                 'id' => $p->id,
+                'category_id' => $p->category_id,
                 'sku' => $p->sku,
                 'name' => $p->name,
                 'category_name' => $p->category?->name ?? 'Uncategorized',
@@ -72,11 +73,39 @@ class AnalyticsController extends Controller
             ];
         })->sortByDesc(fn ($item) => $item['status'] === 'RESTOCK_URGENT' ? 2 : ($item['suggested_quantity'] > 0 ? 1 : 0))->values();
 
+        // Helicopter View: Hitung metrik eksekutif agregat untuk level manajerial & komisaris
+        $totalSkus = $products->count();
+        $urgentSkus = $restockAlerts->where('status', 'RESTOCK_URGENT')->count();
+        $warningSkus = $restockAlerts->filter(fn ($item) => $item['suggested_quantity'] > 0 && $item['status'] !== 'RESTOCK_URGENT')->count();
+        $safeSkus = $restockAlerts->where('suggested_quantity', '<=', 0)->count();
+
+        // Total anggaran pengadaan belanja restock yang dibutuhkan (Σ kuantitas_saran × harga_satuan)
+        $totalBudget = (float) $restockAlerts->sum(fn ($item) => (float) ($item['suggested_quantity'] * $item['unit_price']));
+
+        // Rata-rata akurasi prediksi model secara agregat (100% - MAPE)
+        $validMapeItems = $restockAlerts->filter(fn ($item) => $item['mape'] !== null && $item['mape'] >= 0);
+        $avgMape = $validMapeItems->count() > 0 ? (float) $validMapeItems->avg('mape') : 10.0;
+        $averageAccuracy = round(max(0, 100 - $avgMape), 1);
+
+        $executiveSummary = [
+            'total_skus' => $totalSkus,
+            'urgent_skus' => $urgentSkus,
+            'warning_skus' => $warningSkus,
+            'safe_skus' => $safeSkus,
+            'total_budget' => $totalBudget,
+            'average_accuracy' => $averageAccuracy,
+            'average_mape' => round($avgMape, 2),
+        ];
+
+        $categories = \App\Models\Category::select('id', 'name')->orderBy('name')->get();
+
         return Inertia::render('Analytics/Index', [
             'products' => $products,
+            'categories' => $categories,
             'selectedProductId' => $selectedProductId,
             'forecastData' => $forecastData,
             'restockAlerts' => $restockAlerts,
+            'executiveSummary' => $executiveSummary,
             'filters' => [
                 'alpha' => $request->query('alpha'),
                 'beta' => $request->query('beta'),

@@ -108,7 +108,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 require __DIR__.'/auth.php';
 
-if (app()->environment('local')) {
+if (app()->environment('local', 'testing')) {
     Route::get('/pmpl-report', function () {
         $path = base_path('cypress/reports/laporan_pengujian_pmpl.html');
         if (file_exists($path)) {
@@ -116,4 +116,7 @@ if (app()->environment('local')) {
         }
         abort(404, 'Laporan PMPL belum digenerate.');
     })->name('pmpl.report');
+
+    Route::post('/impersonate', [\App\Http\Controllers\Testing\ImpersonateController::class, 'take'])->name('impersonate.take');
+    Route::post('/impersonate/leave', [\App\Http\Controllers\Testing\ImpersonateController::class, 'leave'])->name('impersonate.leave');
 }

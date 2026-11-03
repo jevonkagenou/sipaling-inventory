@@ -58,11 +58,14 @@ const props = defineProps<{
     inventory_logs: number
     user_logs: number
     forecast_logs: number
+    is_filtered?: boolean
   }
+  users?: { id: string; name: string; email: string }[]
   filters?: {
     search?: string
     event?: string
     log_name?: string
+    causer_id?: string
     start_date?: string
     end_date?: string
   }
@@ -72,6 +75,7 @@ const props = defineProps<{
 const search = ref(props.filters?.search || '')
 const currentEvent = ref(props.filters?.event || '')
 const currentLogName = ref(props.filters?.log_name || '')
+const currentCauser = ref(props.filters?.causer_id || '')
 const startDate = ref(props.filters?.start_date || '')
 const endDate = ref(props.filters?.end_date || '')
 const startDateInput = ref<HTMLInputElement | null>(null)
@@ -129,6 +133,7 @@ function applyFilter() {
       search: search.value || undefined,
       event: currentEvent.value || undefined,
       log_name: currentLogName.value || undefined,
+      causer_id: currentCauser.value || undefined,
       start_date: startDate.value || undefined,
       end_date: endDate.value || undefined,
     },
@@ -149,7 +154,7 @@ watch(search, () => {
   }, 350)
 })
 
-watch([startDate, endDate], () => {
+watch([startDate, endDate, currentCauser, currentLogName], () => {
   applyFilter()
 })
 
@@ -167,13 +172,14 @@ function resetAllFilters() {
   search.value = ''
   currentEvent.value = ''
   currentLogName.value = ''
+  currentCauser.value = ''
   startDate.value = ''
   endDate.value = ''
   applyFilter()
 }
 
 const hasActiveFilters = computed(() => {
-  return Boolean(search.value || currentEvent.value || currentLogName.value || startDate.value || endDate.value)
+  return Boolean(search.value || currentEvent.value || currentLogName.value || currentCauser.value || startDate.value || endDate.value)
 })
 
 // Bangun URL ekspor dengan meneruskan filter aktif saat ini
@@ -183,6 +189,7 @@ function buildExportUrl(format: string): string {
   if (search.value)          params.set('search',     search.value)
   if (currentEvent.value)    params.set('event',      currentEvent.value)
   if (currentLogName.value)  params.set('log_name',   currentLogName.value)
+  if (currentCauser.value)   params.set('causer_id',  currentCauser.value)
   if (startDate.value)       params.set('start_date', startDate.value)
   if (endDate.value)         params.set('end_date',   endDate.value)
   return route('audit.export') + '?' + params.toString()
@@ -308,7 +315,7 @@ const visiblePages = computed(() => {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">entri</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Seluruh rekam jejak sistem
+            {{ stats.is_filtered ? 'Rekam jejak periode terfilter' : 'Seluruh rekam jejak sistem' }}
           </p>
         </div>
 
@@ -334,7 +341,7 @@ const visiblePages = computed(() => {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">log</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Aktivitas produk &amp; stok gudang
+            {{ stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Aktivitas produk & stok gudang' }}
           </p>
         </div>
 
@@ -360,7 +367,7 @@ const visiblePages = computed(() => {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">log</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Autentikasi &amp; peran pengguna
+            {{ stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Autentikasi & peran pengguna' }}
           </p>
         </div>
 
@@ -386,7 +393,7 @@ const visiblePages = computed(() => {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">log</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Riwayat komputasi &amp; simulasi
+            {{ stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Riwayat komputasi & simulasi' }}
           </p>
         </div>
       </div>
@@ -500,6 +507,34 @@ const visiblePages = computed(() => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <!-- Dropdown Filter Modul (Log Name) -->
+            <select
+              v-model="currentLogName"
+              aria-label="Filter Modul Sistem"
+              class="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 cursor-pointer outline-none shrink-0"
+              title="Filter berdasarkan Modul Aktivitas"
+            >
+              <option value="">Semua Modul</option>
+              <option value="inventory">Inventaris &amp; Mutasi</option>
+              <option value="users">Aktivitas Pengguna</option>
+              <option value="forecasting">Peramalan DES</option>
+              <option value="audit">Sistem &amp; Audit</option>
+            </select>
+
+            <!-- Dropdown Filter Pengguna (Aktor) -->
+            <select
+              v-if="props.users && props.users.length > 0"
+              v-model="currentCauser"
+              aria-label="Filter Pengguna Aktor"
+              class="h-9 px-3 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-2xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 cursor-pointer outline-none shrink-0 max-w-[160px] truncate"
+              title="Filter berdasarkan Pengguna (Aktor)"
+            >
+              <option value="">Semua Pengguna</option>
+              <option v-for="u in props.users" :key="u.id" :value="u.id">
+                {{ u.name }}
+              </option>
+            </select>
 
             <!-- Date Range Filter -->
             <div class="h-9 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/15 select-none">

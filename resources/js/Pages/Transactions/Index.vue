@@ -70,6 +70,8 @@ const props = defineProps<{
     total_outbound: number
     today_inbound_qty: number
     today_outbound_qty: number
+    is_date_filtered?: boolean
+    is_filtered?: boolean
   }
   can_create?: boolean
 }>()
@@ -346,7 +348,7 @@ const visiblePages = computed(() => {
         <!-- Inbound Total -->
         <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Transaksi Inbound</span>
+            <span>{{ stats.is_filtered ? 'Inbound (Terfilter)' : 'Transaksi Inbound' }}</span>
             <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <PackagePlus class="h-4 w-4" />
             </div>
@@ -358,14 +360,14 @@ const visiblePages = computed(() => {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">faktur</span>
           </div>
           <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 truncate">
-            Dokumen Inbound Terdaftar
+            {{ stats.is_filtered ? 'Faktur sesuai filter pencarian' : 'Total Dokumen Inbound' }}
           </p>
         </div>
 
         <!-- Outbound Total -->
         <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Transaksi Outbound</span>
+            <span>{{ stats.is_filtered ? 'Outbound (Terfilter)' : 'Transaksi Outbound' }}</span>
             <div class="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <PackageMinus class="h-4 w-4" />
             </div>
@@ -377,14 +379,14 @@ const visiblePages = computed(() => {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">faktur</span>
           </div>
           <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-1 truncate">
-            Dokumen Outbound Terdaftar
+            {{ stats.is_filtered ? 'Faktur sesuai filter pencarian' : 'Total Dokumen Outbound' }}
           </p>
         </div>
 
-        <!-- Inbound Hari Ini -->
+        <!-- Inbound Hari Ini / Periode Terfilter -->
         <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Masuk Hari Ini</span>
+            <span>{{ stats.is_date_filtered ? 'Masuk (Periode Dipilih)' : 'Masuk Hari Ini' }}</span>
             <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <Calendar class="h-4 w-4" />
             </div>
@@ -396,14 +398,14 @@ const visiblePages = computed(() => {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">unit</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Kuantitas Fisik Diterima
+            {{ stats.is_date_filtered ? 'Total kuantitas rentang terpilih' : 'Kuantitas Fisik Diterima Hari Ini' }}
           </p>
         </div>
 
-        <!-- Outbound Hari Ini -->
+        <!-- Outbound Hari Ini / Periode Terfilter -->
         <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#4F46E5]/50 dark:hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Keluar Hari Ini</span>
+            <span>{{ stats.is_date_filtered ? 'Keluar (Periode Dipilih)' : 'Keluar Hari Ini' }}</span>
             <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <Clock class="h-4 w-4" />
             </div>
@@ -415,7 +417,7 @@ const visiblePages = computed(() => {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">unit</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Kuantitas Fisik Dikeluarkan
+            {{ stats.is_date_filtered ? 'Total kuantitas rentang terpilih' : 'Kuantitas Fisik Dikeluarkan Hari Ini' }}
           </p>
         </div>
       </div>

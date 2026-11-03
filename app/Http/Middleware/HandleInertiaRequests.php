@@ -43,6 +43,13 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'impersonation' => [
+                'can_impersonate' => app()->environment('local', 'testing'),
+                'is_impersonating' => $request->session()->has('original_user_id'),
+                'original_user' => fn () => $request->session()->has('original_user_id')
+                    ? \App\Models\User::find($request->session()->get('original_user_id'), ['id', 'name', 'email'])
+                    : null,
+            ],
         ];
     }
 }

@@ -42,6 +42,10 @@ class AuditLogController extends Controller
             $query->where('log_name', $request->input('log_name'));
         }
 
+        if ($request->filled('causer_id') && $request->input('causer_id') !== 'all') {
+            $query->where('causer_id', $request->input('causer_id'));
+        }
+
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('created_at', [
                 Carbon::parse($request->input('start_date'))->startOfDay(),
@@ -65,20 +69,68 @@ class AuditLogController extends Controller
 
         $logs = $query->latest()->paginate(15)->withQueryString();
 
+        $baseStatsQuery = ActivityLog::query();
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $baseStatsQuery->whereBetween('created_at', [
+                Carbon::parse($request->input('start_date'))->startOfDay(),
+                Carbon::parse($request->input('end_date'))->endOfDay(),
+            ]);
+        } elseif ($request->filled('start_date')) {
+            $baseStatsQuery->where('created_at', '>=', Carbon::parse($request->input('start_date'))->startOfDay());
+        } elseif ($request->filled('end_date')) {
+            $baseStatsQuery->where('created_at', '<=', Carbon::parse($request->input('end_date'))->endOfDay());
+        }
+
+        if ($request->filled('causer_id') && $request->input('causer_id') !== 'all') {
+            $baseStatsQuery->where('causer_id', $request->input('causer_id'));
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+            $baseStatsQuery->where(function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                    ->orWhere('event', 'like', "%{$search}%")
+                    ->orWhere('log_name', 'like', "%{$search}%")
+                    ->orWhereHas('causer', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $forecastLogQuery = ForecastingLog::query();
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $forecastLogQuery->whereBetween('created_at', [
+                Carbon::parse($request->input('start_date'))->startOfDay(),
+                Carbon::parse($request->input('end_date'))->endOfDay(),
+            ]);
+        } elseif ($request->filled('start_date')) {
+            $forecastLogQuery->where('created_at', '>=', Carbon::parse($request->input('start_date'))->startOfDay());
+        } elseif ($request->filled('end_date')) {
+            $forecastLogQuery->where('created_at', '<=', Carbon::parse($request->input('end_date'))->endOfDay());
+        }
+
+        $isFiltered = $request->filled('start_date') || $request->filled('end_date') || ($request->filled('causer_id') && $request->input('causer_id') !== 'all') || $request->filled('search');
+
         $stats = [
-            'total_logs' => ActivityLog::count(),
-            'inventory_logs' => ActivityLog::where('log_name', 'inventory')->count(),
-            'user_logs' => ActivityLog::where('log_name', 'users')->count(),
-            'forecast_logs' => ForecastingLog::count(),
+            'total_logs' => (clone $baseStatsQuery)->count(),
+            'inventory_logs' => (clone $baseStatsQuery)->where('log_name', 'inventory')->count(),
+            'user_logs' => (clone $baseStatsQuery)->where('log_name', 'users')->count(),
+            'forecast_logs' => $forecastLogQuery->count(),
+            'is_filtered' => $isFiltered,
         ];
+
+        $users = \App\Models\User::select('id', 'name', 'email')->orderBy('name')->get();
 
         return Inertia::render('Audit/Index', [
             'logs' => $logs,
             'stats' => $stats,
+            'users' => $users,
             'filters' => [
                 'search' => $request->input('search', ''),
                 'event' => $request->input('event', ''),
                 'log_name' => $request->input('log_name', ''),
+                'causer_id' => $request->input('causer_id', ''),
                 'start_date' => $request->input('start_date', ''),
                 'end_date' => $request->input('end_date', ''),
             ],
@@ -111,6 +163,7 @@ class AuditLogController extends Controller
                     'search'     => $request->input('search'),
                     'event'      => $request->input('event'),
                     'log_name'   => $request->input('log_name'),
+                    'causer_id'  => $request->input('causer_id'),
                     'start_date' => $request->input('start_date'),
                     'end_date'   => $request->input('end_date'),
                 ],
@@ -196,6 +249,10 @@ class AuditLogController extends Controller
         }
         if ($request->filled('log_name') && $request->input('log_name') !== 'all') {
             $parts[] = 'Kategori: ' . $request->input('log_name');
+        }
+        if ($request->filled('causer_id') && $request->input('causer_id') !== 'all') {
+            $user = \App\Models\User::find($request->input('causer_id'));
+            $parts[] = 'Pengguna: ' . ($user?->name ?? $request->input('causer_id'));
         }
         if ($request->filled('start_date')) {
             $parts[] = 'Dari: ' . $request->input('start_date');

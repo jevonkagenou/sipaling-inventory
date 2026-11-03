@@ -17,7 +17,8 @@ use Inertia\Response;
 class PasswordResetLinkController extends Controller
 {
     public function __construct(
-        protected TwoFactorResetService $otpService
+        protected TwoFactorResetService $otpService,
+        protected \App\Services\SafeMailService $safeMailService
     ) {}
 
     /**
@@ -53,12 +54,8 @@ class PasswordResetLinkController extends Controller
         // 1. Buat OTP (Otomatis ditangani rate-limit & cooldown dari Service)
         $otp = $this->otpService->createOtp($user, $request->ip(), $request->userAgent());
 
-        // 2. Kirim Email Resmi SIPALING
-        try {
-            Mail::to($user->email)->send(new ResetPasswordOtpMail($otp, $user, $request->ip()));
-        } catch (\Throwable $e) {
-            Log::error("Gagal mengirim email OTP ke {$user->email}: ".$e->getMessage());
-        }
+        // 2. Kirim Email Resmi SIPALING (Dilindungi Proteksi Kuota Harian SafeMailService)
+        $this->safeMailService->sendSafe($user->email, new ResetPasswordOtpMail($otp, $user, $request->ip()));
 
         // Catat di log untuk kemudahan pengujian lokal
         Log::info("OTP 2FA Lupa Password untuk {$user->email}: {$otp}");

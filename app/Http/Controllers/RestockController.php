@@ -58,10 +58,29 @@ class RestockController extends Controller
 
         $requests = $query->orderByDesc('created_at')->get();
 
+        $baseStatsQuery = RestockRequest::query();
+        if ($search) {
+            $baseStatsQuery->where(function ($q) use ($search) {
+                $q->where('request_no', 'like', "%{$search}%")
+                    ->orWhere('general_notes', 'like', "%{$search}%")
+                    ->orWhere('review_notes', 'like', "%{$search}%")
+                    ->orWhereHas('requester', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('reviewer', function ($rq) use ($search) {
+                        $rq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('details.product', function ($pq) use ($search) {
+                        $pq->where('name', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         $stats = [
-            'pending' => RestockRequest::where('status', 'pending')->count(),
-            'approved' => RestockRequest::where('status', 'approved')->count(),
-            'rejected' => RestockRequest::where('status', 'rejected')->count(),
+            'pending' => (clone $baseStatsQuery)->where('status', 'pending')->count(),
+            'approved' => (clone $baseStatsQuery)->where('status', 'approved')->count(),
+            'rejected' => (clone $baseStatsQuery)->where('status', 'rejected')->count(),
         ];
 
         return Inertia::render('Restock/Index', [

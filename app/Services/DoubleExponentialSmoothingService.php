@@ -17,6 +17,7 @@ class DoubleExponentialSmoothingService
      * @param  float  $alpha  Parameter pemulusan level (0 < alpha < 1)
      * @param  float  $beta  Parameter pemulusan tren (0 < beta < 1)
      * @param  int  $horizon  Jumlah periode ke depan yang diproyeksikan (default: 1)
+     * @param  bool  $normalizeOutliers  Deteksi & normalisasi anomali transaksi (IQR Winsorization)
      * @return array{
      *     levels: float[],
      *     trends: float[],
@@ -26,10 +27,14 @@ class DoubleExponentialSmoothingService
      *     rmse: float|null,
      *     mae: float|null,
      *     alpha: float,
-     *     beta: float
+     *     beta: float,
+     *     raw_series: float[],
+     *     cleaned_series: float[],
+     *     outliers_count: int,
+     *     outlier_bounds: array{lower: float, upper: float}
      * }
      */
-    public function compute(array $series, float $alpha = 0.2, float $beta = 0.1, int $horizon = 1): array
+    public function compute(array $series, float $alpha = 0.2, float $beta = 0.1, int $horizon = 1, bool $normalizeOutliers = true): array
     {
         $n = count($series);
 
@@ -44,11 +49,27 @@ class DoubleExponentialSmoothingService
                 'mae' => null,
                 'alpha' => $alpha,
                 'beta' => $beta,
+                'raw_series' => [],
+                'cleaned_series' => [],
+                'outliers_count' => 0,
+                'outlier_bounds' => ['lower' => 0.0, 'upper' => 0.0],
             ];
         }
 
-        // Re-index array dari 0 sampai n-1
-        $y = array_values($series);
+        // Normalisasi data mining: Tangani outlier agar model tren tidak rusak
+        $rawSeries = array_map('floatval', array_values($series));
+        $outlierResult = $normalizeOutliers
+            ? $this->handleOutliersIqr($rawSeries)
+            : [
+                'cleaned' => $rawSeries,
+                'outliers_count' => 0,
+                'outliers_indices' => [],
+                'lower_bound' => 0.0,
+                'upper_bound' => 0.0,
+            ];
+
+        // Gunakan deret data yang telah ternormalisasi
+        $y = $outlierResult['cleaned'];
 
         $levels = array_fill(0, $n, 0.0);
         $trends = array_fill(0, $n, 0.0);
@@ -96,7 +117,102 @@ class DoubleExponentialSmoothingService
             'mae' => $errorMetrics['mae'],
             'alpha' => round($alpha, 3),
             'beta' => round($beta, 3),
+            'raw_series' => $rawSeries,
+            'cleaned_series' => $y,
+            'outliers_count' => $outlierResult['outliers_count'],
+            'outlier_bounds' => [
+                'lower' => $outlierResult['lower_bound'],
+                'upper' => $outlierResult['upper_bound'],
+            ],
         ];
+    }
+
+    /**
+     * Normalisasi time-series data mining: Deteksi dan penanganan outlier
+     * menggunakan metode Interquartile Range (IQR) Winsorization.
+     *
+     * @param  array<float|int>  $series
+     * @return array{
+     *     cleaned: float[],
+     *     outliers_count: int,
+     *     outliers_indices: int[],
+     *     lower_bound: float,
+     *     upper_bound: float
+     * }
+     */
+    public function handleOutliersIqr(array $series): array
+    {
+        $n = count($series);
+        if ($n < 4) {
+            // Data terlalu sedikit untuk kalkulasi kuartil IQR yang reliabel
+            return [
+                'cleaned' => array_map('floatval', array_values($series)),
+                'outliers_count' => 0,
+                'outliers_indices' => [],
+                'lower_bound' => 0.0,
+                'upper_bound' => 0.0,
+            ];
+        }
+
+        $y = array_map('floatval', array_values($series));
+        $sorted = $y;
+        sort($sorted);
+
+        // Hitung Q1 (25th percentile) dan Q3 (75th percentile)
+        $q1 = $this->calculatePercentile($sorted, 25);
+        $q3 = $this->calculatePercentile($sorted, 75);
+        $iqr = $q3 - $q1;
+
+        // Batas wajar (Tukey's fences)
+        $lowerBound = max(0.0, $q1 - (1.5 * $iqr));
+        $upperBound = $q3 + (1.5 * $iqr);
+
+        $cleaned = [];
+        $outliersCount = 0;
+        $outliersIndices = [];
+
+        foreach ($y as $idx => $val) {
+            if ($val > $upperBound) {
+                $cleaned[] = round($upperBound, 2);
+                $outliersCount++;
+                $outliersIndices[] = $idx;
+            } elseif ($val < $lowerBound) {
+                $cleaned[] = round($lowerBound, 2);
+                $outliersCount++;
+                $outliersIndices[] = $idx;
+            } else {
+                $cleaned[] = $val;
+            }
+        }
+
+        return [
+            'cleaned' => $cleaned,
+            'outliers_count' => $outliersCount,
+            'outliers_indices' => $outliersIndices,
+            'lower_bound' => round($lowerBound, 2),
+            'upper_bound' => round($upperBound, 2),
+        ];
+    }
+
+    /**
+     * Menghitung nilai persentil dari dataset terurut.
+     */
+    protected function calculatePercentile(array $sorted, float $percentile): float
+    {
+        $count = count($sorted);
+        if ($count === 0) {
+            return 0.0;
+        }
+        if ($count === 1) {
+            return (float) $sorted[0];
+        }
+
+        $index = ($percentile / 100) * ($count - 1);
+        $lower = (int) floor($index);
+        $upper = (int) ceil($index);
+        $fraction = $index - $lower;
+
+        return $sorted[$lower] + ($fraction * ($sorted[$upper] - $sorted[$lower]));
     }
 
     /**

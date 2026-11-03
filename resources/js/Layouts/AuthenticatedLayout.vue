@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import AppSidebar from '@/Components/Layout/AppSidebar.vue'
 import LogoutConfirmDialog from '@/Components/Layout/LogoutConfirmDialog.vue'
+import ImpersonateSwitcher from '@/Components/Testing/ImpersonateSwitcher.vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -98,6 +99,23 @@ onMounted(() => {
 
     <!-- Main Content Shell -->
     <div class="flex-1 flex flex-col min-w-0">
+      <!-- Active Impersonation Top Banner -->
+      <div
+        v-if="page.props.impersonation?.is_impersonating"
+        class="bg-amber-500 text-white text-xs px-4 py-1.5 flex items-center justify-between font-medium z-40 shadow-xs transition-colors"
+      >
+        <div class="flex items-center gap-2">
+          <span>🎭 <strong>Mode Pengujian:</strong> Sedang menyamar sebagai <strong>{{ user.name }}</strong> ({{ roleBadge.label }})</span>
+        </div>
+        <button
+          type="button"
+          @click="router.post(route('impersonate.leave'))"
+          class="text-amber-950 bg-white/90 hover:bg-white px-2 py-0.5 rounded font-semibold text-[11px] transition-colors cursor-pointer"
+        >
+          Kembali ke Akun Asli
+        </button>
+      </div>
+
       <!-- Clean Minimal Top Header Navbar (No Redundant Badges) -->
       <header class="sticky top-0 z-30 h-16 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-[#0F172A]/90 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-colors">
         <!-- Left: Mobile Trigger & Desktop Sidebar Trigger & Header Title -->
@@ -131,6 +149,9 @@ onMounted(() => {
 
         <!-- Right: Actions & User Avatar -->
         <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <!-- Impersonate Testing Switcher -->
+          <ImpersonateSwitcher />
+
           <!-- Quick Theme Toggle -->
           <button
             type="button"
