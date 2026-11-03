@@ -40,12 +40,15 @@ class StockTransactionController extends Controller
             $query->where('type', $type);
         }
 
-        if ($startDate) {
-            $query->whereDate('transaction_date', '>=', $startDate);
-        }
-
-        if ($endDate) {
-            $query->whereDate('transaction_date', '<=', $endDate);
+        if ($startDate && $endDate) {
+            $query->whereBetween('transaction_date', [
+                Carbon::parse($startDate)->startOfDay(),
+                Carbon::parse($endDate)->endOfDay(),
+            ]);
+        } elseif ($startDate) {
+            $query->where('transaction_date', '>=', Carbon::parse($startDate)->startOfDay());
+        } elseif ($endDate) {
+            $query->where('transaction_date', '<=', Carbon::parse($endDate)->endOfDay());
         }
 
         if ($search) {
@@ -64,14 +67,17 @@ class StockTransactionController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        $todayStart = Carbon::today()->startOfDay();
+        $todayEnd = Carbon::today()->endOfDay();
+
         $stats = [
             'total_inbound' => StockTransaction::where('type', 'inbound')->count(),
             'total_outbound' => StockTransaction::where('type', 'outbound')->count(),
-            'today_inbound_qty' => StockTransactionDetail::whereHas('transaction', function ($q) {
-                $q->where('type', 'inbound')->whereDate('transaction_date', Carbon::today());
+            'today_inbound_qty' => StockTransactionDetail::whereHas('transaction', function ($q) use ($todayStart, $todayEnd) {
+                $q->where('type', 'inbound')->whereBetween('transaction_date', [$todayStart, $todayEnd]);
             })->sum('quantity'),
-            'today_outbound_qty' => StockTransactionDetail::whereHas('transaction', function ($q) {
-                $q->where('type', 'outbound')->whereDate('transaction_date', Carbon::today());
+            'today_outbound_qty' => StockTransactionDetail::whereHas('transaction', function ($q) use ($todayStart, $todayEnd) {
+                $q->where('type', 'outbound')->whereBetween('transaction_date', [$todayStart, $todayEnd]);
             })->sum('quantity'),
         ];
 

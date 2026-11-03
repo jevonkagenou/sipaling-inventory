@@ -28,6 +28,8 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $today = Carbon::today();
+        $todayStart = $today->copy()->startOfDay();
+        $todayEnd = $today->copy()->endOfDay();
 
         // dasbor operasional 
         $stats = [
@@ -36,17 +38,17 @@ class DashboardController extends Controller
             'total_transactions' => StockTransaction::count(),
             'inbound_transactions' => StockTransaction::where('type', 'inbound')->count(),
             'outbound_transactions' => StockTransaction::where('type', 'outbound')->count(),
-            'today_inbound_qty' => (int) StockTransactionDetail::whereHas('transaction', function ($q) use ($today) {
-                $q->where('type', 'inbound')->whereDate('transaction_date', $today);
+            'today_inbound_qty' => (int) StockTransactionDetail::whereHas('transaction', function ($q) use ($todayStart, $todayEnd) {
+                $q->where('type', 'inbound')->whereBetween('transaction_date', [$todayStart, $todayEnd]);
             })->sum('quantity'),
-            'today_outbound_qty' => (int) StockTransactionDetail::whereHas('transaction', function ($q) use ($today) {
-                $q->where('type', 'outbound')->whereDate('transaction_date', $today);
+            'today_outbound_qty' => (int) StockTransactionDetail::whereHas('transaction', function ($q) use ($todayStart, $todayEnd) {
+                $q->where('type', 'outbound')->whereBetween('transaction_date', [$todayStart, $todayEnd]);
             })->sum('quantity'),
             'reorder_count' => Product::whereColumn('current_stock', '<=', 'minimum_stock')->count(),
             'aman_count' => Product::whereColumn('current_stock', '>', 'minimum_stock')->count(),
             'total_inventory_value' => (float) (Product::selectRaw('SUM(current_stock * unit_price) as total')->value('total') ?? 0),
             'total_audit_logs' => ActivityLog::count(),
-            'today_audit_logs' => ActivityLog::whereDate('created_at', $today)->count(),
+            'today_audit_logs' => ActivityLog::whereBetween('created_at', [$todayStart, $todayEnd])->count(),
             'sensitive_changes_count' => ActivityLog::whereIn('event', ['updated', 'deleted'])->count(),
         ];
 
