@@ -157,7 +157,7 @@ const filteredAuditLogs = computed(() => {
                     <div class="space-y-2 max-w-lg mx-auto">
                         <h3 class="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">Simulasi Alur Operasional Selesai</h3>
                         <p class="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed font-sans">
-                            Mulai dari peramalan kebutuhan stok proaktif (DES), perekaman mutasi ke audit trail ledger terenkripsi (SHA-256), hingga otorisasi persetujuan pengadaan telah berhasil diselesaikan.
+                            Mulai dari prediksi kebutuhan stok proaktif, perekaman mutasi ke audit trail ledger terenkripsi (SHA-256), hingga otorisasi persetujuan pengadaan telah berhasil diselesaikan.
                         </p>
                     </div>
                     <div class="pt-2">
@@ -173,7 +173,7 @@ const filteredAuditLogs = computed(() => {
                     ref="stepperRef"
                     :initial-step="1"
                     :is-dark="isDark"
-                    :step-labels="['Peramalan DES', 'Audit Trail', 'Otorisasi PO']"
+                    :step-labels="['Prediksi Kebutuhan', 'Audit Trail', 'Otorisasi PO']"
                     back-button-text="Tahap Sebelumnya"
                     next-button-text="Lanjut ke Tahap Berikutnya"
                     step-circle-container-class-name="border-0 shadow-none bg-transparent rounded-none"

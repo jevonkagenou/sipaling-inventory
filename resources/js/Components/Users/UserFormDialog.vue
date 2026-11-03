@@ -85,7 +85,7 @@ const roleOptionsWithMeta = [
   {
     name: 'manajer-operasional',
     label: 'Manajer Operasional',
-    desc: 'Manajemen master katalog, pengajuan restock, & analitik DES.',
+    desc: 'Manajemen katalog, proyeksi kebutuhan stok, koordinasi tim, & pengajuan restock.',
     icon: Briefcase,
     badgeCls: 'bg-blue-50 text-[#2563EB] border-blue-200 dark:bg-blue-950/70 dark:text-blue-300 dark:border-blue-800',
     dotCls: 'bg-[#2563EB]',

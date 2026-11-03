@@ -129,6 +129,19 @@ function resetToOptimal() {
   )
 }
 
+function applyPreset(type) {
+  if (type === 'stabil') {
+    alphaInput.value = 0.15
+    betaInput.value = 0.05
+  } else if (type === 'optimal') {
+    alphaInput.value = props.forecastData?.optimal_alpha ?? 0.2
+    betaInput.value = props.forecastData?.optimal_beta ?? 0.1
+  } else if (type === 'responsif') {
+    alphaInput.value = 0.45
+    betaInput.value = 0.25
+  }
+}
+
 // Chart SVG Calculation
 const chartWidth = 760
 const chartHeight = 240
@@ -345,7 +358,7 @@ watch(
 </script>
 
 <template>
-  <Head title="Analitik Peramalan DES - SIPALING" />
+  <Head title="Prediksi Kebutuhan Stok - SIPALING" />
 
   <AuthenticatedLayout>
     <!-- Header Slot (Navbar Breadcrumbs) -->
@@ -354,7 +367,7 @@ watch(
         <span class="text-xs font-semibold text-slate-400">Intelijen Bisnis</span>
         <span class="text-slate-300 dark:text-slate-700">/</span>
         <h1 class="text-sm font-bold text-slate-900 dark:text-white truncate">
-          Peramalan Holt DES
+          Prediksi Kebutuhan Stok
         </h1>
       </div>
     </template>
@@ -364,10 +377,10 @@ watch(
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h2 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Mesin Peramalan Double Exponential Smoothing
+            Proyeksi Kebutuhan &amp; Perencanaan Pengadaan
           </h2>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Proyeksi tren permintaan retail dengan metode Holt's Linear berdasar data penutupan transaksi bulanan.
+            Estimasi volume restock cerdas berbasis tren penjualan bulanan (Didukung Algoritma Double Exponential Smoothing).
           </p>
         </div>
       </div>
@@ -422,16 +435,16 @@ watch(
           </div>
         </div>
 
-        <!-- Kolom Tengah & Kanan: Pengatur Parameter Alpha & Beta -->
+        <!-- Kolom Tengah & Kanan: Pengatur Parameter Humanis & Preset Kategori -->
         <div class="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Sliders class="w-4 h-4 text-[#2563EB]" />
-                Simulasi Bobot Smoothing (Holt's Linear)
+                Sensitivitas &amp; Simulasi Prediksi
               </h2>
               <p class="text-[11px] text-slate-400 mt-0.5">
-                Ubah parameter level (&alpha;) dan tren (&beta;) untuk melihat dampaknya terhadap akurasi.
+                Pilih kategori respon kesiapan sistem atau atur bobot tren secara manual.
               </p>
             </div>
             <button
@@ -440,7 +453,33 @@ watch(
               class="h-9 px-3.5 rounded-xl border border-blue-200/80 dark:border-blue-800/60 bg-blue-50/70 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-[#2563EB] dark:text-blue-400 font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5 self-start sm:self-auto"
             >
               <Sparkles class="w-3.5 h-3.5" />
-              Gunakan Optimal Grid (&alpha;={{ forecastData?.optimal_alpha }}, &beta;={{ forecastData?.optimal_beta }})
+              Rekomendasi Cerdas Sistem
+            </button>
+          </div>
+
+          <!-- Pilihan Preset Kategori Cepat (Humanis & Non-Teknis) -->
+          <div class="flex items-center gap-2 flex-wrap pt-0.5">
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Level Siap Pakai:</span>
+            <button
+              type="button"
+              @click="applyPreset('stabil')"
+              class="px-2.5 py-1 rounded-lg text-xs font-medium border border-blue-200/80 bg-blue-50/50 text-[#2563EB] hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 transition-colors cursor-pointer"
+            >
+              🟢 Stabil (Konservatif)
+            </button>
+            <button
+              type="button"
+              @click="applyPreset('optimal')"
+              class="px-2.5 py-1 rounded-lg text-xs font-medium border border-emerald-200/80 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 transition-colors cursor-pointer"
+            >
+              🔵 Seimbang (Optimal)
+            </button>
+            <button
+              type="button"
+              @click="applyPreset('responsif')"
+              class="px-2.5 py-1 rounded-lg text-xs font-medium border border-amber-200/80 bg-amber-50/50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300 transition-colors cursor-pointer"
+            >
+              🟡 Responsif (Cepat Tanggap)
             </button>
           </div>
 
@@ -449,9 +488,9 @@ watch(
             <div class="space-y-2">
               <div class="flex justify-between items-center text-xs">
                 <label class="font-semibold text-slate-700 dark:text-slate-300">
-                  Bobot Level (&alpha;): <span class="text-[#2563EB] tabular-nums font-bold">{{ alphaInput }}</span>
+                  Bobot Tren Terkini (&alpha;): <span class="text-[#2563EB] tabular-nums font-bold">{{ alphaInput }}</span>
                 </label>
-                <span class="text-[10px] text-slate-400">Respons baseline</span>
+                <span class="text-[10px] text-slate-400">Respons penjualan terakhir</span>
               </div>
               <input
                 v-model.number="alphaInput"
@@ -467,9 +506,9 @@ watch(
             <div class="space-y-2">
               <div class="flex justify-between items-center text-xs">
                 <label class="font-semibold text-slate-700 dark:text-slate-300">
-                  Bobot Tren (&beta;): <span class="text-indigo-600 dark:text-indigo-400 tabular-nums font-bold">{{ betaInput }}</span>
+                  Bobot Arah Tren (&beta;): <span class="text-indigo-600 dark:text-indigo-400 tabular-nums font-bold">{{ betaInput }}</span>
                 </label>
-                <span class="text-[10px] text-slate-400">Adaptasi tren</span>
+                <span class="text-[10px] text-slate-400">Adaptasi laju naik/turun</span>
               </div>
               <input
                 v-model.number="betaInput"
@@ -489,7 +528,7 @@ watch(
               class="h-9 px-4 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
             >
               <RotateCcw class="w-3.5 h-3.5" />
-              Kalkulasi Ulang Simulasi
+              Terapkan Simulasi Kustom
             </button>
           </div>
         </div>
@@ -497,10 +536,10 @@ watch(
 
       <!-- Section: Kartu Hasil Akurasi & Rekomendasi Restock (Unified Interactive KPI Cards) -->
       <div v-if="forecastData" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- 1. Akurasi Model -->
+        <!-- 1. Tingkat Keyakinan Model -->
         <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Akurasi Model</span>
+            <span>Tingkat Keyakinan</span>
             <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <CheckCircle2 class="w-4 h-4" />
             </div>
@@ -511,14 +550,14 @@ watch(
             </span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            100% &minus; MAPE (Tingkat Ketepatan)
+            Keandalan Prediksi (100% &minus; MAPE)
           </p>
         </div>
 
-        <!-- 2. Galat MAPE & RMSE -->
+        <!-- 2. Toleransi Deviasi (MAPE & RMSE) -->
         <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#4F46E5]/50 dark:hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Metrik Galat (MAPE)</span>
+            <span>Toleransi Deviasi</span>
             <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <BarChart3 class="w-4 h-4" />
             </div>
@@ -529,14 +568,14 @@ watch(
             </span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            RMSE: {{ forecastData.rmse ? Math.round(forecastData.rmse) : '-' }} unit
+            Simpangan: {{ forecastData.rmse ? Math.round(forecastData.rmse) : '-' }} unit (RMSE)
           </p>
         </div>
 
-        <!-- 3. Proyeksi Periode Depan -->
+        <!-- 3. Estimasi Permintaan Bulan Depan -->
         <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Proyeksi Periode Depan</span>
+            <span>Estimasi Kebutuhan</span>
             <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
               <TrendingUp class="w-4 h-4" />
             </div>
@@ -558,7 +597,7 @@ watch(
           :class="forecastData.restock_recommendation?.status === 'RESTOCK_URGENT' ? 'hover:border-amber-500/50' : 'hover:border-emerald-500/50'"
         >
           <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Saran Restock</span>
+            <span>Saran Pengadaan</span>
             <div
               class="h-8 w-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
               :class="forecastData.restock_recommendation?.status === 'RESTOCK_URGENT'
@@ -596,13 +635,13 @@ watch(
         :optimal-beta="forecastData.optimal_beta"
         :is-optimal="isOptimalParams"
       />
-      <!-- Section: Visualisasi Kurva Tren DES -->
+      <!-- Section: Visualisasi Kurva Tren Prediksi -->
       <div v-if="forecastData && forecastData.has_sufficient_data" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Layers class="w-4 h-4 text-[#2563EB]" />
-              Kurva Permintaan Aktual vs Taksiran Model DES &amp; Proyeksi Masa Depan
+              Kurva Permintaan Riil vs Proyeksi Kebutuhan
             </h2>
             <p class="text-[11px] text-slate-400 mt-0.5">
               Data transaksi historis bulanan tertutup dan estimasi 3 periode ke depan.
@@ -753,8 +792,8 @@ watch(
                 <th class="px-3 py-2.5 text-left whitespace-nowrap">Nama Barang</th>
                 <th class="px-3 py-2.5 text-right whitespace-nowrap">Stok Aktual</th>
                 <th class="px-3 py-2.5 text-right whitespace-nowrap">Safety Stock</th>
-                <th class="px-3 py-2.5 text-right whitespace-nowrap">Prediksi DES</th>
-                <th class="px-3 py-2.5 text-right whitespace-nowrap">Saran Restock</th>
+                <th class="px-3 py-2.5 text-right whitespace-nowrap">Estimasi Kebutuhan</th>
+                <th class="px-3 py-2.5 text-right whitespace-nowrap">Saran Pengadaan</th>
                 <th class="px-3 py-2.5 text-center whitespace-nowrap">Status</th>
                 <th class="px-3 py-2.5 text-center whitespace-nowrap">Aksi</th>
               </tr>
@@ -828,7 +867,7 @@ watch(
             Menampilkan <span class="font-semibold text-slate-700 dark:text-slate-300">{{ restockAlerts.length }}</span> produk yang memerlukan perhatian stok
           </div>
           <div class="text-[11px] text-slate-400">
-            Algoritma: Double Exponential Smoothing (DES)
+            Didukung Algoritma: Double Exponential Smoothing (Holt)
           </div>
         </div>
       </div>

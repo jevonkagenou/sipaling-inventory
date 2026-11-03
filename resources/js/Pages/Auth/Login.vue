@@ -11,7 +11,12 @@ import {
     EyeOff,
     Sun,
     Moon,
-    CheckCircle2
+    CheckCircle2,
+    Shield,
+    Briefcase,
+    FileSearch,
+    Sparkles,
+    Check,
 } from 'lucide-vue-next';
 import AuthErrorToast from '@/Components/Auth/AuthErrorToast.vue';
 defineProps({
@@ -84,6 +89,53 @@ const submit = () => {
         onFinish: () => form.reset('password'),
     });
 };
+
+const selectedRoleName = ref('');
+
+const demoAccounts = [
+    {
+        role: 'komisaris',
+        name: 'Komisaris',
+        email: 'komisaris@sipaling.com',
+        password: 'password',
+        icon: Shield,
+        badgeCls: 'bg-indigo-50 text-indigo-700 border-indigo-200/80 dark:bg-indigo-950/70 dark:text-indigo-300 dark:border-indigo-800/60',
+    },
+    {
+        role: 'manajer-operasional',
+        name: 'Manajer Ops',
+        email: 'manajer@sipaling.com',
+        password: 'password',
+        icon: Briefcase,
+        badgeCls: 'bg-blue-50 text-[#2563EB] border-blue-200/80 dark:bg-blue-950/70 dark:text-blue-300 dark:border-blue-800/60',
+    },
+    {
+        role: 'staf-gudang',
+        name: 'Staf Gudang',
+        email: 'staf@sipaling.com',
+        password: 'password',
+        icon: Boxes,
+        badgeCls: 'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-800/60',
+    },
+    {
+        role: 'auditor-internal',
+        name: 'Auditor Internal',
+        email: 'sultansyarif630@gmail.com',
+        password: 'password',
+        icon: FileSearch,
+        badgeCls: 'bg-emerald-50 text-[#10B981] border-emerald-200/80 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800/60',
+    },
+];
+
+function fillDemoAccount(acc, autoSubmit = false) {
+    form.email = acc.email;
+    form.password = acc.password;
+    form.clearErrors();
+    selectedRoleName.value = acc.name;
+    if (autoSubmit) {
+        submit();
+    }
+}
 </script>
 
 <template>
@@ -92,7 +144,7 @@ const submit = () => {
     <div class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-zinc-50 dark:bg-[#0F172A] text-slate-900 dark:text-slate-100 transition-colors duration-200">
         
         <!-- Namecard Container -->
-        <div class="relative w-full max-w-[400px] pt-12">
+        <div class="relative w-full max-w-[430px] pt-12">
             
             <!-- Circular Medallion Logo at Top (Blends with Light/Dark Theme) -->
             <div class="absolute top-0 left-1/2 -translate-x-1/2 z-20">
@@ -217,6 +269,58 @@ const submit = () => {
                             </span>
                         </Button>
                     </form>
+
+                    <!-- Quick Demo / Seeder Accounts Panel -->
+                    <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <Sparkles class="w-3.5 h-3.5 text-[#2563EB]" />
+                                Akun Pengujian (Seeder)
+                            </span>
+                            <span v-if="selectedRoleName" class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                <Check class="w-3 h-3" /> {{ selectedRoleName }} Terisi
+                            </span>
+                            <span v-else class="text-[10px] text-slate-400">
+                                Klik untuk isi otomatis
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <button
+                                v-for="acc in demoAccounts"
+                                :key="acc.role"
+                                type="button"
+                                @click="fillDemoAccount(acc)"
+                                class="p-2 sm:p-2.5 rounded-xl border text-left transition-all cursor-pointer group hover:-translate-y-0.5 hover:shadow-2xs relative overflow-hidden"
+                                :class="form.email === acc.email
+                                    ? 'border-[#2563EB] bg-blue-50/60 dark:bg-blue-950/40 ring-1 ring-[#2563EB]/40'
+                                    : 'border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700'"
+                                :title="`Klik untuk isi otomatis akun ${acc.name}`"
+                            >
+                                <div class="flex items-center justify-between gap-1.5">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <div
+                                            class="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 border text-xs"
+                                            :class="acc.badgeCls"
+                                        >
+                                            <component :is="acc.icon" class="w-3.5 h-3.5" />
+                                        </div>
+                                        <div class="min-w-0">
+                                            <span class="font-bold text-xs text-slate-900 dark:text-white truncate block">
+                                                {{ acc.name }}
+                                            </span>
+                                            <span class="text-[10px] text-slate-400 dark:text-slate-500 truncate block font-mono">
+                                                {{ acc.email.split('@')[0] }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div v-if="form.email === acc.email" class="h-4 w-4 rounded-full bg-[#2563EB] text-white flex items-center justify-center shrink-0">
+                                        <Check class="w-2.5 h-2.5" />
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- Navigasi Bersih ke Beranda -->
                     <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
