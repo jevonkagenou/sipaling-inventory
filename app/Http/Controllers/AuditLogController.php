@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\ForecastingLog;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -41,12 +42,15 @@ class AuditLogController extends Controller
             $query->where('log_name', $request->input('log_name'));
         }
 
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->input('start_date'));
-        }
-
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->input('end_date'));
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request->input('start_date'))->startOfDay(),
+                Carbon::parse($request->input('end_date'))->endOfDay(),
+            ]);
+        } elseif ($request->filled('start_date')) {
+            $query->where('created_at', '>=', Carbon::parse($request->input('start_date'))->startOfDay());
+        } elseif ($request->filled('end_date')) {
+            $query->where('created_at', '<=', Carbon::parse($request->input('end_date'))->endOfDay());
         }
 
         return $query;
