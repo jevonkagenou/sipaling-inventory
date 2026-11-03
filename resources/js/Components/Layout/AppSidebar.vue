@@ -158,7 +158,7 @@ const navGroups = computed(() => [
     title: 'Intelijen & Tata Kelola',
     items: [
       {
-        name: 'Analitik DES',
+        name: 'Prediksi Kebutuhan',
         route: 'analytics.index',
         icon: LineChart,
         active: route().current('analytics.*'),
@@ -246,7 +246,7 @@ function closeSidebar() {
               SIPALING
             </span>
             <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider truncate -mt-0.5">
-              Inventaris &amp; DES
+              Inventaris &amp; Prediksi
             </p>
           </div>
         </Link>

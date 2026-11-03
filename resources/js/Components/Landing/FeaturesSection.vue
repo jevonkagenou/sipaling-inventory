@@ -38,9 +38,9 @@ import { TrendingUp, ShieldCheck, FileCheck } from "lucide-vue-next";
                                 Akurasi 93.18%
                             </span>
                         </div>
-                        <h3 class="text-base font-semibold text-zinc-900 dark:text-white tracking-tight">Peramalan Proaktif (DES)</h3>
+                        <h3 class="text-base font-semibold text-zinc-900 dark:text-white tracking-tight">Prediksi Kebutuhan Cerdas</h3>
                         <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                            Kalkulasi Double Exponential Smoothing otomatis mengestimasi volume restock optimal sebelum persediaan menyentuh batas kritis.
+                            Proyeksi kebutuhan stok otomatis mengestimasi volume restock optimal berbasis tren permintaan sebelum menyentuh batas kritis.
                         </p>
                         <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs text-zinc-500 dark:text-zinc-400">
                             Responsif terhadap fluktuasi histori permintaan

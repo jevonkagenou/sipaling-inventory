@@ -50,7 +50,7 @@ defineProps({
 
             <!-- Professional Subtitle -->
             <p class="mx-auto max-w-2xl text-sm sm:text-base text-zinc-600 dark:text-zinc-300 leading-relaxed font-sans">
-                Sistem sentralisasi persediaan berbasis peramalan DES otomatis dan rekam jejak audit mutasi permanen anti-manipulasi.
+                Sistem sentralisasi persediaan berbasis prediksi kebutuhan otomatis dan rekam jejak audit mutasi permanen anti-manipulasi.
             </p>
 
             <!-- Professional Action Buttons -->

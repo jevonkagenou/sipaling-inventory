@@ -45,6 +45,7 @@ import {
 
 // Modular User Management Components
 import UserStatsCards, { type StatusFilterKey } from '@/Components/Users/UserStatsCards.vue'
+import RoleHierarchyCard from '@/Components/Users/RoleHierarchyCard.vue'
 import UserToolbar, { type RoleOption } from '@/Components/Users/UserToolbar.vue'
 import UserFormDialog, { type UserItem } from '@/Components/Users/UserFormDialog.vue'
 import UserStatusDialog from '@/Components/Users/UserStatusDialog.vue'
@@ -599,7 +600,10 @@ function resetAllFilters() {
         @filter-role="handleRoleFilterChange"
       />
 
-      <!-- 2. Toolbar Component (Search, Role Filter, & Create Button) -->
+      <!-- 2. Hierarki Peran (Alpha & Beta) & Alur Pelaporan Tim -->
+      <RoleHierarchyCard />
+
+      <!-- 3. Toolbar Component (Search, Role Filter, & Create Button) -->
       <UserToolbar
         :search-query="searchQuery"
         :active-role-filter="activeRoleFilter"

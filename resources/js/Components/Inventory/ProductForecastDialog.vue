@@ -335,7 +335,7 @@ const restockBadge = computed(() => {
           </div>
         </div>
         <DialogDescription class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-normal pr-8">
-          Peramalan tren persediaan menggunakan metode <strong class="text-slate-700 dark:text-slate-200 font-semibold">Double Exponential Smoothing (Holt's Linear)</strong> berbasis data transaksi bulanan tertutup.
+          Estimasi kebutuhan restock diproyeksikan otomatis berbasis riwayat transaksi bulanan (Didukung Algoritma Double Exponential Smoothing Holt's Linear).
         </DialogDescription>
       </DialogHeader>
 
@@ -407,38 +407,38 @@ const restockBadge = computed(() => {
             <!-- Bobot Alpha -->
             <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/40 dark:bg-slate-950/40">
               <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
-                <span class="text-xs font-medium">Bobot Level (&alpha;)</span>
+                <span class="text-xs font-medium">Tren Terkini (&alpha;)</span>
                 <Cpu class="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
               </div>
               <div class="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1 tabular-nums">
                 {{ forecastData.optimal_alpha }}
               </div>
-              <span class="text-xs text-slate-400 block mt-0.5">Respons baseline aktual</span>
+              <span class="text-xs text-slate-400 block mt-0.5">Sensitivitas data terakhir</span>
             </div>
 
             <!-- Bobot Beta -->
             <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/40 dark:bg-slate-950/40">
               <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
-                <span class="text-xs font-medium">Bobot Tren (&beta;)</span>
+                <span class="text-xs font-medium">Arah Tren (&beta;)</span>
                 <TrendingUp class="w-4 h-4 text-[#4F46E5] dark:text-indigo-400" />
               </div>
               <div class="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1 tabular-nums">
                 {{ forecastData.optimal_beta }}
               </div>
-              <span class="text-xs text-slate-400 block mt-0.5">Adaptasi arah laju tren</span>
+              <span class="text-xs text-slate-400 block mt-0.5">Sensitivitas pola laju tren</span>
             </div>
 
             <!-- Akurasi Model -->
             <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/40 dark:bg-slate-950/40">
               <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
-                <span class="text-xs font-medium">Akurasi Model</span>
+                <span class="text-xs font-medium">Tingkat Keyakinan</span>
                 <Target class="w-4 h-4 text-[#10B981] dark:text-emerald-400" />
               </div>
               <div class="text-lg font-bold mt-1 tabular-nums" :class="accuracyBadge.valueColor">
                 {{ accuracyBadge.rateText }}
               </div>
               <span class="text-xs text-slate-400 block mt-0.5">
-                MAPE: {{ forecastData.mape !== null ? `${forecastData.mape}%` : '-' }}
+                Toleransi: {{ forecastData.mape !== null ? `${forecastData.mape}%` : '-' }}
               </span>
             </div>
 
@@ -489,13 +489,13 @@ const restockBadge = computed(() => {
             <div class="flex items-center justify-between mb-2.5">
               <span class="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                 <Cpu class="w-3.5 h-3.5 text-[#4F46E5]" />
-                Simulasi Sensitivitas Parameter Pemulusan
+                Simulasi Sensitivitas &amp; Respon Tren
               </span>
               <span v-if="isSimulating" class="text-xs bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.5 rounded font-medium">
-                Simulasi Manual Aktif
+                Simulasi Kustom Aktif
               </span>
               <span v-else class="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded font-medium">
-                Optimasi Otomatis (Grid Search)
+                Optimasi Otomatis Sistem
               </span>
             </div>
 
@@ -503,7 +503,7 @@ const restockBadge = computed(() => {
               <!-- Slider Alpha -->
               <div class="space-y-1">
                 <div class="flex justify-between text-xs">
-                  <label class="text-slate-600 dark:text-slate-400 font-medium">Parameter &alpha; (Level):</label>
+                  <label class="text-slate-600 dark:text-slate-400 font-medium">Sensitivitas Tren Terkini (&alpha;):</label>
                   <span class="font-semibold text-slate-800 dark:text-slate-200 tabular-nums">{{ simAlpha }}</span>
                 </div>
                 <input
@@ -519,7 +519,7 @@ const restockBadge = computed(() => {
               <!-- Slider Beta -->
               <div class="space-y-1">
                 <div class="flex justify-between text-xs">
-                  <label class="text-slate-600 dark:text-slate-400 font-medium">Parameter &beta; (Tren):</label>
+                  <label class="text-slate-600 dark:text-slate-400 font-medium">Sensitivitas Arah Tren (&beta;):</label>
                   <span class="font-semibold text-slate-800 dark:text-slate-200 tabular-nums">{{ simBeta }}</span>
                 </div>
                 <input

@@ -16,6 +16,8 @@ import {
   ArrowRight,
   BarChart3,
   Users,
+  Workflow,
+  ClipboardCheck,
 } from 'lucide-vue-next'
 
 interface ProductItem {
@@ -100,7 +102,7 @@ const roleBadge = computed(() => {
       return {
         label: 'Manajer Operasional',
         cls: 'bg-blue-50 text-[#2563EB] border-blue-200/80 dark:bg-blue-950/70 dark:text-blue-300 dark:border-blue-800/60',
-        desc: 'Pengelolaan katalog master data inventaris, evaluasi prediksi Holt DES, dan pengajuan restock.',
+        desc: 'Pengelolaan katalog master inventaris, evaluasi proyeksi kebutuhan stok, dan koordinasi tim.',
       }
     case 'staf-gudang':
       return {
@@ -200,7 +202,7 @@ function formatDate(dateStr: string) {
               class="h-9 px-3.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-medium text-xs shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
             >
               <TrendingUp class="w-3.5 h-3.5" />
-              Analisis DES & Restock
+              Prediksi Kebutuhan & Restock
             </Link>
           </template>
 
@@ -232,6 +234,94 @@ function formatDate(dateStr: string) {
               Portal Investigasi Log
             </Link>
           </template>
+        </div>
+      </div>
+
+      <!-- Role-Based Task Delegation & Structured Reporting Banner -->
+      <div
+        class="rounded-2xl border p-4 sm:p-5 shadow-2xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+        :class="{
+          'border-amber-200/80 bg-amber-50/30 dark:border-amber-900/40 dark:bg-amber-950/20': primaryRole === 'staf-gudang',
+          'border-blue-200/80 bg-blue-50/30 dark:border-blue-900/40 dark:bg-blue-950/20': primaryRole === 'manajer-operasional',
+          'border-indigo-200/80 bg-indigo-50/30 dark:border-indigo-900/40 dark:bg-indigo-950/20': primaryRole === 'komisaris',
+          'border-emerald-200/80 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-950/20': primaryRole === 'auditor-internal',
+        }"
+      >
+        <div class="flex items-start gap-3.5">
+          <div
+            class="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs mt-0.5"
+            :class="{
+              'bg-amber-100 text-amber-700 border-amber-300/80 dark:bg-amber-950 dark:text-amber-300': primaryRole === 'staf-gudang',
+              'bg-blue-100 text-[#2563EB] border-blue-300/80 dark:bg-blue-950 dark:text-blue-300': primaryRole === 'manajer-operasional',
+              'bg-indigo-100 text-indigo-700 border-indigo-300/80 dark:bg-indigo-950 dark:text-indigo-300': primaryRole === 'komisaris',
+              'bg-emerald-100 text-[#10B981] border-emerald-300/80 dark:bg-emerald-950 dark:text-emerald-300': primaryRole === 'auditor-internal',
+            }"
+          >
+            <Workflow class="h-5 w-5" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                <template v-if="primaryRole === 'staf-gudang'">Alur Tugas Pelaksana Lapangan &bull; Laporan ke Manajer Ops</template>
+                <template v-else-if="primaryRole === 'manajer-operasional'">Koordinasi Tim &bull; Supervisi Staf &amp; Pengajuan ke Komisaris</template>
+                <template v-else-if="primaryRole === 'komisaris'">Otoritas Eksekutif &bull; Persetujuan Pengadaan Restock</template>
+                <template v-else>Pengawasan Independen &bull; Verifikasi Jejak Audit SHA-256</template>
+              </h4>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white dark:bg-slate-900 border text-slate-700 dark:text-slate-300">
+                Hierarki Terstruktur
+              </span>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed max-w-3xl">
+              <template v-if="primaryRole === 'staf-gudang'">
+                Catat mutasi fisik harian barang masuk/keluar. Pantau stok yang mendekati batas minimum untuk otomatis dilaporkan ke Manajer Operasional agar segera diproses pengadaannya.
+              </template>
+              <template v-else-if="primaryRole === 'manajer-operasional'">
+                Supervisi pencatatan mutasi dari staf gudang, evaluasi proyeksi kebutuhan stok berbasis tren penjualan, dan susun tiket Restock Multi-Item untuk diajukan ke meja Komisaris.
+              </template>
+              <template v-else-if="primaryRole === 'komisaris'">
+                Evaluasi dan berikan otorisasi persetujuan tiket Restock Multi-Item yang diajukan oleh Manajer Operasional. Pasca-persetujuan Anda, sistem otomatis menerbitkan draf penerimaan barang untuk staf gudang.
+              </template>
+              <template v-else>
+                Pantau seluruh rekam jejak integritas mutasi persediaan secara permanen dan anti-manipulasi melalui audit trail ledger kriptografis.
+              </template>
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick Route Shortcut for Structured Flow -->
+        <div class="flex items-center gap-2 self-start md:self-center shrink-0">
+          <Link
+            v-if="primaryRole === 'staf-gudang'"
+            :href="route('inventory.index')"
+            class="h-8 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors"
+          >
+            <AlertTriangle class="h-3.5 w-3.5" />
+            <span>Cek Stok Kritis Tim</span>
+          </Link>
+          <Link
+            v-else-if="primaryRole === 'manajer-operasional'"
+            :href="route('restock.index')"
+            class="h-8 px-3 rounded-lg bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors"
+          >
+            <ClipboardCheck class="h-3.5 w-3.5" />
+            <span>Pantau Status Tiket Restock</span>
+          </Link>
+          <Link
+            v-else-if="primaryRole === 'komisaris'"
+            :href="route('restock.index')"
+            class="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors"
+          >
+            <ClipboardCheck class="h-3.5 w-3.5" />
+            <span>Antrean Persetujuan Restock</span>
+          </Link>
+          <Link
+            v-else
+            :href="route('audit.index')"
+            class="h-8 px-3 rounded-lg bg-[#10B981] hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-2xs transition-colors"
+          >
+            <ShieldCheck class="h-3.5 w-3.5" />
+            <span>Verifikasi Ledger Audit</span>
+          </Link>
         </div>
       </div>
 
@@ -321,7 +411,7 @@ function formatDate(dateStr: string) {
             <span class="text-xs font-normal text-slate-500 dark:text-slate-400">SKU kritis</span>
           </div>
           <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Mencapai batas safety stock &bull; Evaluasi DES
+            Mencapai batas safety stock &bull; Evaluasi Kebutuhan
           </p>
         </Link>
       </div>
@@ -418,7 +508,7 @@ function formatDate(dateStr: string) {
                 :href="route('analytics.index')"
                 class="text-xs font-semibold text-[#2563EB] dark:text-blue-400 hover:underline inline-flex items-center gap-1"
               >
-                Analisis DES <ArrowRight class="w-3.5 h-3.5" />
+                Prediksi Kebutuhan <ArrowRight class="w-3.5 h-3.5" />
               </Link>
             </div>
 

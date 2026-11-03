@@ -96,7 +96,7 @@ function submit() {
       <DialogHeader>
         <DialogTitle>Ajukan Restock ({{ form.items.length }} produk)</DialogTitle>
         <DialogDescription>
-          Jumlah diminta terisi otomatis dari rekomendasi DES dan dapat disesuaikan sebelum dikirim ke Komisaris.
+          Jumlah diminta terisi otomatis dari rekomendasi sistem (prediksi kebutuhan) dan dapat disesuaikan sebelum dikirim ke Komisaris.
         </DialogDescription>
       </DialogHeader>
 
@@ -107,7 +107,7 @@ function submit() {
               <th class="py-2.5 px-3 text-left">Produk</th>
               <th class="py-2.5 px-3 text-right">Stok</th>
               <th class="py-2.5 px-3 text-right">Safety</th>
-              <th class="py-2.5 px-3 text-right">Saran DES</th>
+              <th class="py-2.5 px-3 text-right">Saran Sistem</th>
               <th class="py-2.5 px-3 text-right w-28">Jumlah Diminta</th>
               <th class="py-2.5 px-3 text-right">Harga Satuan</th>
               <th class="py-2.5 px-3 text-right">Subtotal</th>

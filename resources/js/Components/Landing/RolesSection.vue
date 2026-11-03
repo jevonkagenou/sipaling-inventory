@@ -55,7 +55,7 @@ const roles = [
         icon: SlidersHorizontal,
         desc: "Menganalisis pergerakan persediaan, memantau peringatan stok kritis, dan merumuskan rencana pengadaan barang secara proaktif.",
         permissions: [
-            { name: "Analisis Prediksi Stok (DES)", allowed: true },
+            { name: "Analisis Prediksi Stok", allowed: true },
             { name: "Pengajuan Draf Tiket Restock", allowed: true },
             { name: "Monitoring Peringatan Titik Kritis", allowed: true },
             { name: "Persetujuan Anggaran Finansial", allowed: false },
