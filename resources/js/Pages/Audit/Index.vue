@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import AuditDiffDialog from '@/Components/Audit/AuditDiffDialog.vue'
 import {
   Search,
   Filter,
@@ -16,7 +17,18 @@ import {
   Calendar,
   X,
   Cpu,
+  Download,
+  FileSpreadsheet,
+  ChevronDown,
 } from 'lucide-vue-next'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/Components/ui/dropdown-menu'
 
 export interface LogItem {
   id: number
@@ -164,6 +176,18 @@ const hasActiveFilters = computed(() => {
   return Boolean(search.value || currentEvent.value || currentLogName.value || startDate.value || endDate.value)
 })
 
+// Bangun URL ekspor dengan meneruskan filter aktif saat ini
+function buildExportUrl(format: string): string {
+  const params = new URLSearchParams()
+  params.set('format', format)
+  if (search.value)          params.set('search',     search.value)
+  if (currentEvent.value)    params.set('event',      currentEvent.value)
+  if (currentLogName.value)  params.set('log_name',   currentLogName.value)
+  if (startDate.value)       params.set('start_date', startDate.value)
+  if (endDate.value)         params.set('end_date',   endDate.value)
+  return route('audit.export') + '?' + params.toString()
+}
+
 function getEventBadgeClass(event: string) {
   switch (event) {
     case 'created':
@@ -251,15 +275,13 @@ const visiblePages = computed(() => {
 
     <div class="mx-auto max-w-7xl space-y-6 pb-16">
       <!-- Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
-        <div>
-          <h2 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Jejak Rekam Audit (Audit Trail)
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Pencatatan terpusat dan bukti forensik digital atas setiap perubahan data inventaris, mutasi stok, dan manajemen akun.
-          </p>
-        </div>
+      <div class="pb-2 border-b border-slate-200 dark:border-slate-800">
+        <h2 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Jejak Rekam Audit (Audit Trail)
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Pencatatan terpusat dan bukti forensik digital atas setiap perubahan data inventaris, mutasi stok, dan manajemen akun.
+        </p>
       </div>
 
       <!-- KPI Summary Cards (Unified Interactive Cards) -->
@@ -428,8 +450,57 @@ const visiblePages = computed(() => {
             </button>
           </div>
 
-          <!-- Filters: Date Range & Search Input -->
+          <!-- Filters: Export, Date Range & Search Input -->
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap xl:flex-nowrap">
+            <!-- Tombol Ekspor Laporan (Sejajar Filter) -->
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <button
+                  type="button"
+                  class="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 font-semibold text-xs shadow-2xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer outline-none shrink-0"
+                  title="Unduh laporan rekam jejak audit (filter saat ini akan diteruskan)"
+                >
+                  <Download class="w-3.5 h-3.5 text-[#2563EB]" />
+                  <span>Unduh Laporan</span>
+                  <ChevronDown class="w-3 h-3 text-slate-400 ml-0.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" class="w-60 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-md p-1.5 rounded-xl z-50">
+                <DropdownMenuLabel class="text-[11px] text-slate-400 font-normal px-2 py-1">Pilih Format Unduhan</DropdownMenuLabel>
+                <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800 my-1" />
+                <DropdownMenuItem as-child>
+                  <a
+                    :href="buildExportUrl('csv')"
+                    class="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-[#2563EB] dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <FileText class="w-4 h-4 text-[#2563EB] shrink-0" />
+                    <div class="flex flex-col">
+                      <span class="font-semibold text-slate-900 dark:text-white">Teks CSV (.csv)</span>
+                      <span class="text-[10px] text-slate-400">Ringan, kompatibel UTF-8 BOM</span>
+                    </div>
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem as-child>
+                  <a
+                    :href="buildExportUrl('pdf')"
+                    class="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <FileSpreadsheet class="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                    <div class="flex flex-col">
+                      <span class="font-semibold text-slate-900 dark:text-white">Dokumen PDF (.pdf)</span>
+                      <span class="text-[10px] text-slate-400">Siap cetak, landscape A4</span>
+                    </div>
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator class="bg-slate-100 dark:bg-slate-800 my-1" />
+                <div class="px-2.5 py-1.5">
+                  <p class="text-[10px] text-slate-400 leading-relaxed">
+                    <span class="font-semibold text-slate-500">Filter aktif</span> ({{ hasActiveFilters ? 'diterapkan' : 'tidak ada' }}) akan diteruskan ke berkas unduhan.
+                  </p>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <!-- Date Range Filter -->
             <div class="h-9 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs shadow-2xs dark:border-slate-800 dark:bg-slate-900 transition-all hover:border-slate-300 dark:hover:border-slate-700 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/15 select-none">
               <!-- Tanggal Mulai -->
@@ -678,53 +749,10 @@ const visiblePages = computed(() => {
       </div>
     </div>
 
-    <!-- Modal Detail Diff / Properties -->
-    <div
-      v-if="isDetailModalOpen && selectedLog"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs"
-      @click.self="isDetailModalOpen = false"
-    >
-      <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-          <h3 class="text-base font-bold text-slate-900 dark:text-white">
-            Detail Forensik Rekam Audit
-          </h3>
-          <button @click="isDetailModalOpen = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
-            <X class="h-5 w-5" />
-          </button>
-        </div>
-
-        <div class="space-y-3 text-xs sm:text-sm">
-          <div>
-            <span class="text-xs font-semibold text-slate-400">Deskripsi:</span>
-            <p class="font-medium text-slate-800 dark:text-slate-200 mt-0.5">{{ selectedLog.description }}</p>
-          </div>
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span class="text-slate-400">Waktu:</span>
-              <p class="font-medium text-slate-700 dark:text-slate-300">{{ formatDate(selectedLog.created_at) }}</p>
-            </div>
-            <div>
-              <span class="text-slate-400">Aktor:</span>
-              <p class="font-medium text-slate-700 dark:text-slate-300">{{ selectedLog.causer?.name || 'Sistem' }}</p>
-            </div>
-          </div>
-
-          <div>
-            <span class="text-xs font-semibold text-slate-400">Payload Forensik / Diff (JSON):</span>
-            <pre class="mt-1 max-h-48 overflow-auto rounded-xl bg-slate-900 p-3 text-[11px] text-emerald-400 font-mono">{{ JSON.stringify(selectedLog.attribute_changes || selectedLog.properties, null, 2) }}</pre>
-          </div>
-        </div>
-
-        <div class="pt-2 text-right">
-          <button
-            @click="isDetailModalOpen = false"
-            class="h-9 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs transition-colors cursor-pointer"
-          >
-            Tutup
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- Dialog Perbandingan Perubahan Atribut -->
+    <AuditDiffDialog
+      v-model:open="isDetailModalOpen"
+      :log="selectedLog"
+    />
   </AuthenticatedLayout>
 </template>

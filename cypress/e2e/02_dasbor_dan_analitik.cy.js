@@ -62,4 +62,102 @@ describe('Modul 02: Dasbor Operasional, Analitik DES, & Profil Pengguna', () => 
     // Verifikasi penolakan dari Laravel
     cy.contains(/kata sandi saat ini|current password|tidak sesuai|salah/i).should('be.visible');
   });
+    // PIC NAJWA - TC_ANL_003
+  it('TC_ANL_003: Memverifikasi pemisahan data historis, fitted, dan proyeksi pada grafik DES', () => {
+    cy.visit('/analytics');
+
+    cy.contains('Data Historis (Aktual)').should('be.visible');
+    cy.contains('Taksiran Model (Fitted)').should('be.visible');
+    cy.contains('Proyeksi Peramalan').should('be.visible');
+
+    cy.contains('Batas Proyeksi').should('be.visible');
+
+    cy.get('svg')
+      .find('path.stroke-blue-600')
+      .should('exist');
+
+    cy.get('svg')
+  .find('path[class*="stroke-indigo-400/80"]')
+  .should('exist');
+
+    cy.get('svg')
+      .find('path.stroke-emerald-600')
+      .should('exist');
+
+    cy.get('svg')
+      .find('text.fill-emerald-700')
+      .should('exist');
+  });
+
+  // PIC NAJWA - TC_ANL_004
+  it('TC_ANL_004: Memverifikasi nilai Alpha, Beta, dan MAPE pada kartu performa algoritma', () => {
+    cy.visit('/analytics');
+
+    cy.contains('Ringkasan Performa Algoritma').should('be.visible');
+
+cy.contains('Nilai Alpha')
+  .parents('.group')
+  .first()
+  .find('.text-2xl')
+  .invoke('text')
+  .should('match', /^\s*\d+(\.\d+)?\s*$/);
+
+cy.contains('Nilai Beta')
+  .parents('.group')
+  .first()
+  .find('.text-2xl')
+  .invoke('text')
+  .should('match', /^\s*\d+(\.\d+)?\s*$/);
+
+cy.contains('Persentase MAPE')
+  .parents('.group')
+  .first()
+  .find('.text-2xl')
+  .invoke('text')
+  .should('match', /^\s*\d+(\.\d+)?%\s*$/);
+  });
+
+  // PIC NAJWA - TC_ANL_005
+  it('TC_ANL_005: Memverifikasi responsivitas grafik dan kartu performa pada mode terang dan gelap', () => {
+    cy.visit('/analytics');
+
+    // Mode terang - desktop
+    cy.viewport(1280, 800);
+
+    cy.contains('Ringkasan Performa Algoritma').should('be.visible');
+    cy.contains('Data Historis (Aktual)').should('be.visible');
+
+    // Beralih ke mode gelap
+    cy.get('button[title="Ganti Mode Tampilan"]').click();
+
+    cy.get('html').should('have.class', 'dark');
+
+    cy.contains('Ringkasan Performa Algoritma').should('be.visible');
+    cy.contains('Data Historis (Aktual)').should('be.visible');
+
+    // Beralih kembali ke mode terang
+    cy.get('button[title="Ganti Mode Tampilan"]').click();
+
+    cy.get('html').should('not.have.class', 'dark');
+
+    // Tampilan mobile
+    cy.viewport(375, 667);
+
+    cy.contains('Ringkasan Performa Algoritma').should('be.visible');
+
+    // Grafik tetap tersedia dan dapat digulir horizontal
+    cy.get('div.overflow-x-auto')
+      .filter(':has(svg)')
+      .should('exist')
+      .then(($container) => {
+        expect($container[0].scrollWidth)
+          .to.be.greaterThan($container[0].clientWidth);
+      });
+
+    // Mode gelap pada tampilan mobile
+    cy.get('button[title="Ganti Mode Tampilan"]').click();
+
+    cy.get('html').should('have.class', 'dark');
+    cy.contains('Ringkasan Performa Algoritma').should('be.visible');
+  });
 });

@@ -1,11 +1,11 @@
 describe('Modul 04: Transaksi Operasional Gudang (Mutasi Stok Masuk & Keluar)', () => {
-  beforeEach(() => {
-    cy.visit('/login');
-    cy.get('input#email').clear().type('staf@sipaling.com');
-    cy.get('input#password').clear().type('password');
-    cy.get('button[type="submit"]').click();
-    cy.url().should('include', '/dashboard');
-  });
+beforeEach(() => {
+  cy.visit('/login');
+  cy.get('input#email').clear().type('staf@sipaling.com');
+  cy.get('input#password').clear().type('password');
+  cy.get('button[type="submit"]').click();
+  cy.url().should('include', '/dashboard');
+});
 
   it('Navigasi Fisik Sidebar: Berpindah ke Mutasi Stok Gudang via klik menu aside', () => {
     cy.get('aside').contains(/mutasi stok/i).should('be.visible').click();
@@ -131,4 +131,101 @@ describe('Modul 04: Transaksi Operasional Gudang (Mutasi Stok Masuk & Keluar)', 
     cy.get('input[placeholder*="Cari"], input[type="search"]').first().clear().type('TRX');
     cy.get('table tbody tr').should('have.length.at.least', 1);
   });
+    /*
+  |--------------------------------------------------------------------------
+  | PENGUJIAN PIC NAJWA - M3-FE-04
+  | Tampilan & Unduh Cetak Bukti Serah Terima Barang (PDF)
+  |--------------------------------------------------------------------------
+  */
+
+  it('TC_TRX_001: Detail transaksi menampilkan informasi dan rincian barang dengan benar', () => {
+  cy.visit('/transactions?search=581585');
+
+  cy.contains('table tbody tr', '581585')
+    .first()
+    .within(() => {
+      cy.get('button[title="Lihat Rincian Bukti Transaksi"]').click();
+    });
+
+  cy.get('.receipt-modal-root').should('be.visible');
+  cy.contains('h3', 'Bukti Transaksi: 581585').should('be.visible');
+  cy.contains('Barang Keluar (Outbound)').should('be.visible');
+
+  cy.contains('Waktu Transaksi').should('be.visible');
+  cy.contains('Penerima').should('be.visible');
+  cy.contains('Petugas Pencatat').should('be.visible');
+
+  cy.get('.receipt-modal-root').within(() => {
+    cy.contains('ASSORTED COLOUR BIRD ORNAMENT').should('be.visible');
+    cy.contains('-16 pcs').should('be.visible');
+    cy.contains('RABBIT NIGHT LIGHT').should('be.visible');
+    cy.contains('-12 pcs').should('be.visible');
+    cy.contains('button', 'Tutup').should('be.visible');
+  });
 });
+
+  it('TC_TRX_002: Tautan cetak PDF menghasilkan dokumen bukti transaksi yang valid', () => {
+    cy.visit('/transactions?search=581585');
+
+cy.contains('table tbody tr', '581585')
+  .first()
+  .within(() => {
+    cy.get('a[title="Unduh / Cetak PDF"]')
+      .should('be.visible')
+      .and('have.attr', 'target', '_blank')
+      .and('have.attr', 'href')
+      .then((href) => {
+        cy.request({
+          url: href,
+          encoding: 'binary',
+        }).then((response) => {
+          expect(response.status).to.eq(200);
+          expect(response.headers['content-type']).to.include('application/pdf');
+          expect(response.body.substring(0, 5)).to.eq('%PDF-');
+          expect(response.headers['content-disposition'])
+            .to.include('Surat-Jalan-581585.pdf');
+        });
+      });
+  });
+  });
+
+  it('TC_TRX_003: Modal detail transaksi dengan 8 SKU dapat di-scroll dan ditutup', () => {
+   cy.visit('/transactions?search=581492');
+
+cy.contains('table tbody tr', '581492')
+  .first()
+  .within(() => {
+    cy.get('button[title="Lihat Rincian Bukti Transaksi"]').click();
+  });
+
+    // Verifikasi modal dan jumlah rincian barang
+    cy.get('.receipt-modal-root').should('be.visible');
+
+    cy.get('.receipt-modal-root .overflow-y-auto')
+      .should('have.css', 'overflow-y', 'auto')
+      .then(($modal) => {
+        expect($modal[0].scrollHeight).to.be.greaterThan(
+          $modal[0].clientHeight
+        );
+        cy.wrap($modal).scrollTo('bottom');
+      });
+
+    // Verifikasi seluruh 8 SKU ditampilkan
+    cy.get('.receipt-modal-root table tbody tr')
+      .should('have.length', 8);
+
+    // Verifikasi struktur dua kolom tanda tangan untuk tampilan cetak
+    cy.get('.signature-grid')
+      .should('have.class', 'grid-cols-2')
+      .and('have.class', 'gap-8');
+
+    // Verifikasi tombol tutup tetap dapat dijangkau
+    cy.get('.receipt-modal-root')
+      .contains('button', 'Tutup')
+      .should('be.visible')
+      .click();
+
+    cy.get('.receipt-modal-root').should('not.exist');
+  });
+});
+
