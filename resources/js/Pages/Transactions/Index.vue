@@ -2,6 +2,7 @@
 import { ref, watch, computed } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import StatCard from '@/Components/StatCard.vue'
 import {
   PackagePlus,
   PackageMinus,
@@ -410,83 +411,53 @@ const visiblePages = computed(() => {
         </div>
       </div>
 
-      <!-- Stat Cards (Matching Unified Interactive KPI Cards) -->
+      <!-- Stat Cards (Unified Interactive KPI Cards via Reusable StatCard) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Inbound Total -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>{{ stats.is_filtered ? 'Inbound (Terfilter)' : 'Transaksi Inbound' }}</span>
-            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <PackagePlus class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.total_inbound }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">faktur</span>
-          </div>
-          <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 truncate">
-            {{ stats.is_filtered ? 'Faktur sesuai filter pencarian' : 'Total Dokumen Inbound' }}
-          </p>
-        </div>
+        <StatCard
+          :title="stats.is_filtered ? 'Inbound (Terfilter)' : 'Transaksi Inbound'"
+          :value="stats.total_inbound"
+          unit="faktur"
+          :description="stats.is_filtered ? 'Faktur sesuai filter pencarian' : 'Total Dokumen Inbound'"
+          color="emerald"
+          :icon="PackagePlus"
+        />
 
         <!-- Outbound Total -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>{{ stats.is_filtered ? 'Outbound (Terfilter)' : 'Transaksi Outbound' }}</span>
-            <div class="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <PackageMinus class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.total_outbound }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">faktur</span>
-          </div>
-          <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-1 truncate">
-            {{ stats.is_filtered ? 'Faktur sesuai filter pencarian' : 'Total Dokumen Outbound' }}
-          </p>
-        </div>
+        <StatCard
+          :title="stats.is_filtered ? 'Outbound (Terfilter)' : 'Transaksi Outbound'"
+          :value="stats.total_outbound"
+          unit="faktur"
+          :description="stats.is_filtered ? 'Faktur sesuai filter pencarian' : 'Total Dokumen Outbound'"
+          color="amber"
+          :icon="PackageMinus"
+        />
 
         <!-- Inbound Hari Ini / Periode Terfilter -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>{{ stats.is_date_filtered ? 'Masuk (Periode Dipilih)' : 'Masuk Hari Ini' }}</span>
-            <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Calendar class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
-              + {{ stats.today_inbound_qty }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">unit</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.is_date_filtered ? 'Total kuantitas rentang terpilih' : 'Kuantitas Fisik Diterima Hari Ini' }}
-          </p>
-        </div>
+        <StatCard
+          :title="stats.is_date_filtered ? 'Masuk (Periode Dipilih)' : 'Masuk Hari Ini'"
+          :description="stats.is_date_filtered ? 'Total kuantitas rentang terpilih' : 'Kuantitas Fisik Diterima Hari Ini'"
+          color="blue"
+          :icon="Calendar"
+        >
+          <template #value>
+            <span class="text-[#10B981] dark:text-emerald-400">+ {{ stats.today_inbound_qty }}</span>
+          </template>
+          <template #unit>unit</template>
+        </StatCard>
 
         <!-- Outbound Hari Ini / Periode Terfilter -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#4F46E5]/50 dark:hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group">
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>{{ stats.is_date_filtered ? 'Keluar (Periode Dipilih)' : 'Keluar Hari Ini' }}</span>
-            <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Clock class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
-              - {{ stats.today_outbound_qty }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">unit</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.is_date_filtered ? 'Total kuantitas rentang terpilih' : 'Kuantitas Fisik Dikeluarkan Hari Ini' }}
-          </p>
-        </div>
+        <StatCard
+          :title="stats.is_date_filtered ? 'Keluar (Periode Dipilih)' : 'Keluar Hari Ini'"
+          :description="stats.is_date_filtered ? 'Total kuantitas rentang terpilih' : 'Kuantitas Fisik Dikeluarkan Hari Ini'"
+          color="indigo"
+          :icon="Clock"
+        >
+          <template #value>
+            <span class="text-amber-600 dark:text-amber-400">- {{ stats.today_outbound_qty }}</span>
+          </template>
+          <template #unit>unit</template>
+        </StatCard>
       </div>
 
       <!-- Main Data Table Card -->
