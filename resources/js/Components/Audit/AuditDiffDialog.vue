@@ -1,6 +1,6 @@
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onBeforeUnmount } from 'vue'
 
 interface AuditLog {
   id: number
@@ -26,12 +26,37 @@ const emit = defineEmits<{
 
 const showRawData = ref(false)
 
+// Kunci-kunci internal framework yang diabaikan dari diff visual
+const IGNORED_KEYS = new Set([
+  'id',
+  'created_at',
+  'updated_at',
+  'deleted_at',
+  'remember_token',
+])
+
 watch(
   () => props.open,
   (value) => {
-    if (value) showRawData.value = false
+    if (value) {
+      showRawData.value = false
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = 'hidden'
+      }
+    } else {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = ''
+      }
+    }
   },
+  { immediate: true },
 )
+
+onBeforeUnmount(() => {
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = ''
+  }
+})
 
 const properties = computed(() => {
   return props.log?.properties ?? {}
@@ -47,21 +72,76 @@ const newValues = computed<Record<string, any>>(() => {
 
 // Hanya atribut yang benar-benar tercatat berubah yang ditampilkan.
 const changes = computed(() => {
-  const oldData = oldValues.value
-  const newData = newValues.value
+  const oldData = oldValues.value || {}
+  const newData = newValues.value || {}
+  const event = props.log?.event?.toLowerCase()
 
-  const allKeys = new Set([
-    ...Object.keys(oldData),
-    ...Object.keys(newData),
-  ])
+  // 1. Kasus Event 'updated':
+  // Di Laravel/Spatie, newData (attributes) hanya berisi kolom yang dimodifikasi.
+  // Jika suatu kolom ada di oldData tapi TIDAK ada di newData, berarti kolom itu TIDAK diubah (bukan dihapus!).
+  if (event === 'updated') {
+    const dirtyKeys = Object.keys(newData).filter((k) => !IGNORED_KEYS.has(k))
 
+    if (dirtyKeys.length > 0) {
+      return dirtyKeys
+        .map((key) => {
+          const oldVal = oldData[key]
+          const newVal = newData[key]
+          const oldExists = Object.prototype.hasOwnProperty.call(oldData, key)
+
+          let status: 'changed' | 'added' = 'changed'
+          if (!oldExists || oldVal === undefined || oldVal === null) {
+            status = 'added'
+          }
+
+          return {
+            key,
+            oldValue: oldVal,
+            newValue: newVal,
+            status,
+          }
+        })
+        .filter((item) => {
+          return JSON.stringify(item.oldValue) !== JSON.stringify(item.newValue)
+        })
+    }
+
+    return []
+  }
+
+  // 2. Kasus Event 'deleted': seluruh atribut lama berstatus 'removed'
+  if (event === 'deleted') {
+    return Object.keys(oldData)
+      .filter((k) => !IGNORED_KEYS.has(k))
+      .map((key) => ({
+        key,
+        oldValue: oldData[key],
+        newValue: null,
+        status: 'removed' as const,
+      }))
+  }
+
+  // 3. Kasus Event 'created': seluruh atribut baru berstatus 'added'
+  if (event === 'created') {
+    return Object.keys(newData)
+      .filter((k) => !IGNORED_KEYS.has(k))
+      .map((key) => ({
+        key,
+        oldValue: null,
+        newValue: newData[key],
+        status: 'added' as const,
+      }))
+  }
+
+  // 4. Kasus Event umum lainnya: bandingkan key yang ada
+  const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)])
   return Array.from(allKeys)
+    .filter((k) => !IGNORED_KEYS.has(k))
     .map((key) => {
       const oldExists = Object.prototype.hasOwnProperty.call(oldData, key)
       const newExists = Object.prototype.hasOwnProperty.call(newData, key)
 
       let status: 'changed' | 'added' | 'removed'
-
       if (!oldExists && newExists) {
         status = 'added'
       } else if (oldExists && !newExists) {
@@ -78,10 +158,10 @@ const changes = computed(() => {
       }
     })
     .filter((item) => {
-      if (item.status !== 'changed') return true
-
-      return JSON.stringify(item.oldValue) !==
-        JSON.stringify(item.newValue)
+      if (item.status === 'changed') {
+        return JSON.stringify(item.oldValue) !== JSON.stringify(item.newValue)
+      }
+      return true
     })
 })
 
@@ -130,21 +210,21 @@ function closeDialog() {
   <Teleport to="body">
     <div
       v-if="open && log"
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 p-3 sm:p-6"
       @click.self="closeDialog"
       @keydown.esc="closeDialog"
     >
       <section
-        class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+        class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900"
         role="dialog"
         aria-modal="true"
         aria-labelledby="audit-dialog-title"
       >
         <!-- Header -->
-        <header class="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-700 sm:px-6">
+        <header class="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-800 sm:px-6">
           <div>
             <div class="mb-1 flex items-center gap-2">
-              <span class="rounded-md bg-violet-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+              <span class="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#2563EB] dark:bg-blue-950 dark:text-blue-300">
                 Audit Detail
               </span>
               <span class="text-xs text-slate-400">#{{ log.id }}</span>
@@ -165,7 +245,7 @@ function closeDialog() {
           <button
             type="button"
             aria-label="Tutup dialog"
-            class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+            class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white cursor-pointer"
             @click="closeDialog"
           >
             <span class="text-xl leading-none">&times;</span>
@@ -173,7 +253,7 @@ function closeDialog() {
         </header>
 
         <!-- Content -->
-        <div class="space-y-5 overflow-y-auto p-5 sm:p-6">
+        <div class="space-y-5 overflow-y-auto p-5 sm:p-6 overscroll-contain">
           <!-- Informasi aktivitas -->
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">

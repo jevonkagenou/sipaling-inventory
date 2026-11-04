@@ -145,6 +145,11 @@ class ProductController extends Controller
 
             $product->update($request->validated());
 
+            $changes = $product->getChanges();
+            unset($changes['updated_at']);
+
+            $oldFiltered = array_intersect_key($oldAttributes, $changes);
+
             ActivityLog::create([
                 'log_name' => 'inventory',
                 'description' => "Memperbarui data produk: {$product->name} (SKU: {$product->sku})",
@@ -154,8 +159,8 @@ class ProductController extends Controller
                 'causer_id' => Auth::id(),
                 'event' => 'updated',
                 'properties' => [
-                    'old' => $oldAttributes,
-                    'attributes' => $product->getChanges(),
+                    'old' => $oldFiltered,
+                    'attributes' => $changes,
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ],

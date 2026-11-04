@@ -28,6 +28,8 @@ import {
   SlidersHorizontal,
   ChevronUp,
   Info,
+  Clock,
+  Calculator,
 } from 'lucide-vue-next'
 import {
   DropdownMenu,
@@ -314,32 +316,108 @@ const trendInsight = computed(() => {
 
   const currentStock = currentProduct.value?.current_stock ?? 0
   const minStock = currentProduct.value?.minimum_stock ?? 0
+  const unit = currentProduct.value?.unit || 'pcs'
+  const suggestedQty = props.forecastData.restock_recommendation?.suggested_quantity ?? 0
+  const isUrgent = props.forecastData.restock_recommendation?.status === 'RESTOCK_URGENT' || currentStock <= minStock
 
-  if (currentStock <= minStock) {
-    return {
-      type: 'urgent',
-      title: 'Perhatian: Stok Berada di Bawah Batas Aman',
-      desc: `Sisa stok di gudang (${currentStock} ${currentProduct.value?.unit || 'pcs'}) sudah menipis. Diprediksi bulan depan laku ${nextForecast} ${currentProduct.value?.unit || 'pcs'}, segera ajukan pemesanan ulang agar pelanggan tidak kecewa.`,
+  // 1. Kondisi Stok Kritis (di bawah atau sama dengan batas aman minimum)
+  if (isUrgent) {
+    if (nextForecast > 0) {
+      return {
+        type: 'urgent',
+        title: 'Perhatian: Stok Kritis di Bawah Batas Aman',
+        desc: `Sisa stok di gudang (${currentStock} ${unit}) sudah menipis di bawah batas aman (${minStock} ${unit}), sedangkan kebutuhan bulan depan diproyeksikan mencapai ${nextForecast.toLocaleString('id-ID')} ${unit}. Segera ajukan pengadaan restock${suggestedQty > 0 ? ` sebanyak ${suggestedQty.toLocaleString('id-ID')} ${unit}` : ''} agar operasional tidak terhenti akibat kehabisan stok.`,
+      }
+    } else {
+      return {
+        type: 'urgent',
+        title: 'Perhatian: Stok Berada di Bawah Batas Cadangan',
+        desc: `Sisa stok di gudang (${currentStock} ${unit}) berada di bawah batas minimum (${minStock} ${unit}), namun tren proyeksi permintaan bulan depan tercatat nihil (0 ${unit}). Anda dapat menunda pemesanan baru atau hanya memesan jumlah minimal jika diperlukan untuk cadangan darurat.`,
+      }
     }
   }
 
+  // 2. Kondisi Permintaan Nihil / Belum Ada Kebutuhan (nextForecast <= 0)
+  if (nextForecast <= 0) {
+    if (currentStock > 0) {
+      return {
+        type: 'caution',
+        title: 'Belum Ada Proyeksi Kebutuhan (Nihil Permintaan)',
+        desc: `Berdasarkan pola transaksi historis, sistem memproyeksikan belum ada kebutuhan penjualan untuk bulan depan (0 ${unit}). Persediaan fisik saat ini (${currentStock} ${unit}) masih sangat memadai, sehingga Anda tidak perlu melakukan restock agar kas operasional tidak tertahan dalam bentuk stok mati (dead stock).`,
+      }
+    } else {
+      return {
+        type: 'caution',
+        title: 'Stok Kosong & Tren Permintaan Nihil',
+        desc: `Stok saat ini kosong (0 ${unit}) dan tren permintaan bulan depan tercatat nihil. Pantau pergerakan pasar atau permintaan riil pelanggan terlebih dahulu sebelum memutuskan pengadaan baru.`,
+      }
+    }
+  }
+
+  // 3. Kondisi Tren Penjualan Meningkat Signifikan (> 8% dari transaksi terakhir)
   if (lastActual > 0 && nextForecast > lastActual * 1.08) {
     return {
       type: 'up',
-      title: 'Peluang: Penjualan Diperkirakan Meningkat',
-      desc: `Permintaan diperkirakan naik menjadi ${nextForecast} ${currentProduct.value?.unit || 'pcs'}. Siapkan stok barang secukupnya lebih awal agar penjualan berjalan lancar.`,
+      title: 'Peluang: Tren Penjualan Diperkirakan Meningkat',
+      desc: `Permintaan bulan depan diperkirakan naik menjadi ${nextForecast.toLocaleString('id-ID')} ${unit} (meningkat dari ${lastActual.toLocaleString('id-ID')} ${unit} pada periode lalu). ${suggestedQty > 0 ? `Disarankan menyiapkan pemesanan restock sebanyak ${suggestedQty.toLocaleString('id-ID')} ${unit} lebih awal agar siap memenuhi lonjakan pesanan pelanggan.` : `Persediaan stok saat ini (${currentStock} ${unit}) sudah mencukupi untuk memenuhi kenaikan tersebut.`}`,
     }
-  } else if (lastActual > 0 && nextForecast < lastActual * 0.92) {
+  }
+
+  // 4. Kondisi Tren Penjualan Menurun Signifikan (< 92% dari transaksi terakhir)
+  if (lastActual > 0 && nextForecast < lastActual * 0.92) {
     return {
       type: 'down',
-      title: 'Penjualan Diperkirakan Melambat',
-      desc: `Permintaan bulan depan diperkirakan sekitar ${nextForecast} ${currentProduct.value?.unit || 'pcs'}. Hindari memesan barang berlebihan agar uang modal tidak tertahan di gudang.`,
+      title: 'Tren Penjualan Mengalami Penurunan',
+      desc: `Permintaan bulan depan diproyeksikan melambat menjadi ${nextForecast.toLocaleString('id-ID')} ${unit} (turun dari ${lastActual.toLocaleString('id-ID')} ${unit} pada periode lalu). ${suggestedQty > 0 ? `Batasi pembelian restock baru secukupnya (disarankan ${suggestedQty.toLocaleString('id-ID')} ${unit})` : 'Tidak perlu menambah stok baru'} agar barang tidak menumpuk di gudang dan perputaran modal tetap sehat.`,
+    }
+  }
+
+  // 5. Kondisi Penjualan Stabil
+  return {
+    type: 'stable',
+    title: 'Pola Penjualan Cenderung Stabil',
+    desc: `Aktivitas pembelian pelanggan relatif teratur di kisaran ${nextForecast.toLocaleString('id-ID')} ${unit} per bulan. ${suggestedQty > 0 ? `Lakukan pengadaan berkala sebanyak ${suggestedQty.toLocaleString('id-ID')} ${unit} sesuai rekomendasi sistem guna menjaga kelancaran stok.` : `Persediaan di gudang (${currentStock} ${unit}) dalam kondisi aman untuk memenuhi kebutuhan operasional.`}`,
+  }
+})
+
+// Estimasi Ketahanan Stok (Stock Runway dalam hitungan hari)
+const stockRunway = computed(() => {
+  const current = currentProduct.value?.current_stock ?? 0
+  const unit = currentProduct.value?.unit || 'pcs'
+  const forecast = Math.round(props.forecastData?.future_forecasts?.[0] || 0)
+
+  if (forecast <= 0) {
+    return {
+      status: 'safe',
+      label: 'Stok Sangat Aman (> 90 hari)',
+      desc: 'Tidak ada penurunan stok cepat karena permintaan bulan depan diproyeksikan nihil.',
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400',
+    }
+  }
+
+  const dailyRate = forecast / 30
+  const days = Math.round(current / dailyRate)
+
+  if (days <= 3) {
+    return {
+      status: 'critical',
+      label: days <= 1 ? 'Kritis: Habis dalam < 1 hari!' : `Kritis: Habis dalam ~${days} hari!`,
+      desc: `Laju laku sekitar ${dailyRate.toFixed(1)} ${unit}/hari. Persediaan fisik (${current} ${unit}) akan segera habis tanpa restock segera.`,
+      badgeClass: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-400',
+    }
+  } else if (days <= 14) {
+    return {
+      status: 'warning',
+      label: `Waspada: Cukup untuk ~${days} hari`,
+      desc: `Laju laku sekitar ${dailyRate.toFixed(1)} ${unit}/hari. Stok berisiko menipis sebelum pertengahan bulan.`,
+      badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400',
     }
   } else {
     return {
-      type: 'stable',
-      title: 'Kondisi Penjualan Stabil',
-      desc: `Pola belanja pelanggan teratur di kisaran ${nextForecast} ${currentProduct.value?.unit || 'pcs'}. Cukup pesan barang sesuai saran sistem untuk menjaga kelancaran usaha.`,
+      status: 'safe',
+      label: `Aman: Cukup untuk ~${days} hari`,
+      desc: `Laju laku sekitar ${dailyRate.toFixed(1)} ${unit}/hari. Stok saat ini mencukupi kebutuhan penjualan mendatang.`,
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-400',
     }
   }
 })
@@ -905,16 +983,74 @@ onMounted(() => {
                 </p>
               </div>
 
+              <!-- Panduan Cepat Membaca Grafik (Helicopter View) -->
+              <div v-if="forecastData && forecastData.has_sufficient_data" class="p-3 rounded-xl bg-slate-50/90 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <BarChart3 class="w-3.5 h-3.5 text-[#2563EB]" />
+                    Sekilas Membaca Grafik
+                  </span>
+                  <span class="text-[10px] text-slate-400">
+                    Alur 3 Zona Waktu
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5 text-xs">
+                  <!-- Zona 1: Penjualan Riil -->
+                  <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#2563EB] shrink-0 mt-0.5" />
+                    <div>
+                      <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">1. Data Riil (Lalu)</span>
+                      <span class="text-[10px] text-slate-500 dark:text-slate-400 leading-snug block mt-0.5">
+                        Garis biru: jumlah fisik barang yang benar-benar laku terjual di bulan lalu.
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Zona 2: Batas Waktu -->
+                  <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80">
+                    <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">2. Batas Saat Ini</span>
+                      <span class="text-[10px] text-slate-500 dark:text-slate-400 leading-snug block mt-0.5">
+                        Garis vertikal tengah: titik pemisah antara data masa lalu dan masa depan.
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Zona 3: Ramalan Kebutuhan -->
+                  <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] shrink-0 mt-0.5" />
+                    <div>
+                      <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">3. Proyeksi Kebutuhan</span>
+                      <span class="text-[10px] text-slate-500 dark:text-slate-400 leading-snug block mt-0.5">
+                        Garis hijau: perkiraan laku 3 bulan ke depan untuk acuan pesan restock.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Insight Praktis Bahasa Manusia di Dasar Card Kiri -->
               <div
                 v-if="trendInsight"
                 class="p-3.5 rounded-xl border text-xs"
                 :class="trendInsight.type === 'urgent'
                   ? 'bg-rose-50/60 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300'
-                  : 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900 text-slate-700 dark:text-slate-300'"
+                  : trendInsight.type === 'caution'
+                    ? 'bg-amber-50/60 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900 text-amber-900 dark:text-amber-200'
+                    : 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900 text-slate-700 dark:text-slate-300'"
               >
                 <div class="flex items-start gap-2">
-                  <Info class="w-4 h-4 shrink-0 mt-0.5" :class="trendInsight.type === 'urgent' ? 'text-rose-600' : 'text-[#2563EB]'" />
+                  <component
+                    :is="trendInsight.type === 'urgent' ? AlertTriangle : trendInsight.type === 'caution' ? AlertCircle : Info"
+                    class="w-4 h-4 shrink-0 mt-0.5"
+                    :class="trendInsight.type === 'urgent'
+                      ? 'text-rose-600'
+                      : trendInsight.type === 'caution'
+                        ? 'text-amber-600'
+                        : 'text-[#2563EB]'"
+                  />
                   <div>
                     <strong class="font-bold block">{{ trendInsight.title }}</strong>
                     <span class="text-[11px] leading-relaxed opacity-90">{{ trendInsight.desc }}</span>
@@ -926,7 +1062,7 @@ onMounted(() => {
 
           <!-- Kolom Kanan: Card Tunggal Keputusan Belanja & Opsi (Tinggi Sejajar Persis dengan Kiri) -->
           <div class="lg:col-span-5 flex flex-col">
-            <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs h-full flex flex-col justify-between space-y-4">
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs h-full flex flex-col justify-between gap-4">
               <!-- Bagian 1: Identitas & Status Barang -->
               <div class="space-y-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center justify-between">
@@ -934,7 +1070,7 @@ onMounted(() => {
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
                       {{ currentProduct?.sku }}
                     </span>
-                    <h4 class="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[220px]">
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[220px]" :title="currentProduct?.name">
                       {{ currentProduct?.name }}
                     </h4>
                   </div>
@@ -958,49 +1094,112 @@ onMounted(() => {
                   </span>
                 </div>
 
-                <!-- 2 Kotak Kondisi Fisik -->
-                <div class="grid grid-cols-2 gap-2.5">
-                  <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                    <span class="text-[11px] text-slate-500 block">Stok di Gudang:</span>
-                    <span class="text-xl font-bold text-slate-900 dark:text-white tabular-nums">
-                      {{ currentProduct?.current_stock || 0 }}
-                    </span>
-                    <span class="text-xs text-slate-400 ml-1">{{ currentProduct?.unit }}</span>
+                <!-- 2 Kotak Kondisi Fisik Besar & Jelas -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/70 dark:border-slate-800">
+                    <span class="text-[11px] font-medium text-slate-500 block">Stok Fisik di Gudang:</span>
+                    <div class="flex items-baseline gap-1 mt-1">
+                      <span class="text-2xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+                        {{ currentProduct?.current_stock || 0 }}
+                      </span>
+                      <span class="text-xs font-medium text-slate-400">{{ currentProduct?.unit }}</span>
+                    </div>
                   </div>
 
-                  <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                    <span class="text-[11px] text-slate-500 block">Batas Cadangan Aman:</span>
-                    <span class="text-xl font-bold text-slate-600 dark:text-slate-300 tabular-nums">
-                      {{ currentProduct?.minimum_stock || 0 }}
-                    </span>
-                    <span class="text-xs text-slate-400 ml-1">{{ currentProduct?.unit }}</span>
+                  <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/70 dark:border-slate-800">
+                    <span class="text-[11px] font-medium text-slate-500 block">Batas Cadangan Aman:</span>
+                    <div class="flex items-baseline gap-1 mt-1">
+                      <span class="text-2xl font-black text-slate-600 dark:text-slate-300 tabular-nums tracking-tight">
+                        {{ currentProduct?.minimum_stock || 0 }}
+                      </span>
+                      <span class="text-xs font-medium text-slate-400">{{ currentProduct?.unit }}</span>
+                    </div>
                   </div>
+                </div>
+
+                <!-- Widget Baru 1: Estimasi Daya Tahan Stok (Stock Runway) -->
+                <div
+                  v-if="stockRunway"
+                  class="p-3 rounded-xl border text-xs transition-all"
+                  :class="stockRunway.status === 'critical'
+                    ? 'bg-rose-50/70 border-rose-200 dark:bg-rose-950/30 dark:border-rose-900 text-rose-900 dark:text-rose-200'
+                    : stockRunway.status === 'warning'
+                      ? 'bg-amber-50/70 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900 text-amber-900 dark:text-amber-200'
+                      : 'bg-emerald-50/70 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900 text-emerald-900 dark:text-emerald-200'"
+                >
+                  <div class="flex items-center justify-between pb-1">
+                    <span class="font-bold flex items-center gap-1.5 text-[11px]">
+                      <Clock class="w-3.5 h-3.5" :class="stockRunway.status === 'critical' ? 'text-rose-600' : stockRunway.status === 'warning' ? 'text-amber-600' : 'text-[#10B981]'" />
+                      Ketahanan Stok Fisik
+                    </span>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border" :class="stockRunway.badgeClass">
+                      {{ stockRunway.label }}
+                    </span>
+                  </div>
+                  <p class="text-[11px] leading-relaxed opacity-90 mt-0.5">
+                    {{ stockRunway.desc }}
+                  </p>
                 </div>
               </div>
 
-              <!-- Bagian 2: Hasil Perhitungan yang Harus Anda Lakukan -->
+              <!-- Bagian 2: Hasil Proyeksi Cerdas & Rekomendasi Restock -->
               <div class="space-y-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div class="grid grid-cols-2 gap-2.5">
-                  <div class="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50">
-                    <span class="text-[11px] text-[#2563EB] dark:text-blue-400 block font-medium">Perkiraan Laku:</span>
-                    <span class="text-xl font-bold text-[#2563EB] dark:text-blue-400 tabular-nums">
-                      {{ Math.round(forecastData?.future_forecasts?.[0] || 0) }}
-                    </span>
-                    <span class="text-xs text-[#2563EB] ml-1">{{ currentProduct?.unit }}</span>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/60">
+                    <span class="text-[11px] text-[#2563EB] dark:text-blue-300 block font-semibold">Perkiraan Laku:</span>
+                    <div class="flex items-baseline gap-1 mt-1">
+                      <span class="text-2xl font-black text-[#2563EB] dark:text-blue-400 tabular-nums tracking-tight">
+                        {{ Math.round(forecastData?.future_forecasts?.[0] || 0) }}
+                      </span>
+                      <span class="text-xs font-semibold text-[#2563EB]">{{ currentProduct?.unit }}</span>
+                    </div>
                   </div>
 
-                  <div class="p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50">
-                    <span class="text-[11px] text-amber-700 dark:text-amber-400 block font-medium">Jumlah Harus Dipesan:</span>
-                    <span class="text-xl font-bold text-amber-700 dark:text-amber-400 tabular-nums">
-                      {{ forecastData?.restock_recommendation?.suggested_quantity || 0 }}
+                  <div class="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60">
+                    <span class="text-[11px] text-amber-800 dark:text-amber-300 block font-semibold">Harus Dipesan (Restock):</span>
+                    <div class="flex items-baseline gap-1 mt-1">
+                      <span class="text-2xl font-black text-amber-700 dark:text-amber-400 tabular-nums tracking-tight">
+                        {{ forecastData?.restock_recommendation?.suggested_quantity || 0 }}
+                      </span>
+                      <span class="text-xs font-semibold text-amber-700 ml-0.5">{{ currentProduct?.unit }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Widget Baru 2: Transparansi Rumus Rekomendasi Restock -->
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    <span class="flex items-center gap-1.5">
+                      <Calculator class="w-3.5 h-3.5 text-[#2563EB]" />
+                      Transparansi Rumus Rekomendasi
                     </span>
-                    <span class="text-xs text-amber-700 ml-1">{{ currentProduct?.unit }}</span>
+                    <span class="text-[10px] text-slate-400 font-mono">
+                      (Ramalan + Cadangan) &minus; Sisa
+                    </span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-1.5 text-center pt-0.5 text-[11px]">
+                    <div class="p-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900/60">
+                      <span class="text-[9px] text-slate-400 block font-sans">Ramalan</span>
+                      <span class="font-bold text-[#2563EB] font-mono">+{{ Math.round(forecastData?.future_forecasts?.[0] || 0) }}</span>
+                    </div>
+                    <div class="p-1.5 rounded-lg bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700">
+                      <span class="text-[9px] text-slate-400 block font-sans">Cadangan</span>
+                      <span class="font-bold text-slate-700 dark:text-slate-200 font-mono">+{{ currentProduct?.minimum_stock || 0 }}</span>
+                    </div>
+                    <div class="p-1.5 rounded-lg bg-rose-50/80 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-900/60">
+                      <span class="text-[9px] text-slate-400 block font-sans">Sisa Stok</span>
+                      <span class="font-bold text-rose-600 dark:text-rose-400 font-mono">&minus;{{ currentProduct?.current_stock || 0 }}</span>
+                    </div>
+                    <div class="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60">
+                      <span class="text-[9px] text-amber-700 dark:text-amber-400 block font-sans font-bold">Pesanan</span>
+                      <span class="font-bold text-amber-700 dark:text-amber-400 font-mono">= {{ forecastData?.restock_recommendation?.suggested_quantity || 0 }}</span>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Perkiraan Biaya & Tombol Pengajuan -->
-                <div class="flex items-center justify-between text-xs pt-1">
-                  <span class="text-slate-500">Perkiraan Total Biaya:</span>
+                <div class="flex items-center justify-between text-xs pt-0.5">
+                  <span class="text-slate-500 font-medium">Perkiraan Total Biaya Pengadaan:</span>
                   <span class="font-bold text-slate-900 dark:text-white tabular-nums text-sm">
                     {{ formatRupiah((forecastData?.restock_recommendation?.suggested_quantity || 0) * (currentProduct?.unit_price || 0)) }}
                   </span>
@@ -1009,10 +1208,15 @@ onMounted(() => {
                 <button
                   type="button"
                   @click="openRestockForCurrentProduct"
-                  class="w-full h-9 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                  class="w-full h-10 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
                 >
                   <Send class="w-3.5 h-3.5" />
-                  <span>Buat Draf Pemesanan ({{ forecastData?.restock_recommendation?.suggested_quantity || 0 }} {{ currentProduct?.unit }})</span>
+                  <span v-if="(forecastData?.restock_recommendation?.suggested_quantity || 0) > 0">
+                    Buat Draf Pemesanan ({{ forecastData?.restock_recommendation?.suggested_quantity }} {{ currentProduct?.unit }})
+                  </span>
+                  <span v-else>
+                    Ajukan Restock Manual (Stok Aman)
+                  </span>
                 </button>
               </div>
 
