@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
 import RestockRequestDialog from '@/Components/Restock/RestockRequestDialog.vue'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import StatCard from '@/Components/StatCard.vue'
 import DemandForecastChart from '@/Components/Inventory/DemandForecastChart.vue'
 import {
   TrendingUp,
@@ -522,99 +523,52 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 4 Ringkasan Angka Utama (Sangat Mudah Dipahami Siapapun) -->
+      <!-- 4 Ringkasan Angka Utama (Sangat Mudah Dipahami Siapapun via Reusable StatCard) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- 1. Total Produk Dipantau -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition-all">
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Total Produk Dipantau</span>
-            <div class="h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
-              <Boxes class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ executiveSummary.total_skus }}
-            </span>
-            <span class="text-xs font-normal text-slate-500">jenis barang</span>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-1 truncate">
-            {{ executiveSummary.safe_skus > 0 ? executiveSummary.safe_skus + ' barang kondisi aman' : (executiveSummary.urgent_skus + ' kritis, ' + executiveSummary.warning_skus + ' perlu restock') }}
-          </p>
-        </div>
+        <StatCard
+          title="Total Produk Dipantau"
+          :value="executiveSummary.total_skus"
+          unit="jenis barang"
+          :description="executiveSummary.safe_skus > 0 ? executiveSummary.safe_skus + ' barang kondisi aman' : (executiveSummary.urgent_skus + ' kritis, ' + executiveSummary.warning_skus + ' perlu restock')"
+          color="slate"
+          :icon="Boxes"
+          :clickable="false"
+        />
 
         <!-- 2. Barang Mau Habis (Kritis) -->
-        <div
+        <StatCard
+          title="Perlu Dibeli Segera"
+          :value="executiveSummary.urgent_skus"
+          unit="barang mau habis"
+          :description="executiveSummary.urgent_skus > 0 ? 'Stok di bawah batas minimal gudang' : 'Semua persediaan masih cukup'"
+          color="rose"
+          :icon="AlertTriangle"
+          :value-class="executiveSummary.urgent_skus > 0 ? 'text-rose-600 dark:text-rose-400' : ''"
           @click="activeTab = 'recommendations'; tableStatusFilter = 'urgent'"
-          class="rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all cursor-pointer group"
-          :class="executiveSummary.urgent_skus > 0
-            ? 'border-rose-200 dark:border-rose-900/60 hover:border-rose-400'
-            : 'border-slate-200 dark:border-slate-800'"
-          title="Klik untuk menyaring barang yang harus segera dibeli"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span :class="executiveSummary.urgent_skus > 0 ? 'text-rose-600 dark:text-rose-400 font-semibold' : ''">
-              Perlu Dibeli Segera
-            </span>
-            <div
-              class="h-8 w-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
-              :class="executiveSummary.urgent_skus > 0
-                ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-500'"
-            >
-              <AlertTriangle class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span
-              class="text-2xl font-bold tracking-tight tabular-nums"
-              :class="executiveSummary.urgent_skus > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'"
-            >
-              {{ executiveSummary.urgent_skus }}
-            </span>
-            <span class="text-xs font-normal text-slate-500">barang mau habis</span>
-          </div>
-          <p class="text-[11px] text-rose-600/90 dark:text-rose-400/90 mt-1 truncate font-medium">
-            {{ executiveSummary.urgent_skus > 0 ? 'Stok di bawah batas minimal gudang' : 'Semua persediaan masih cukup' }}
-          </p>
-        </div>
+        />
 
         <!-- 3. Perkiraan Total Biaya Belanja -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 transition-all">
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Perkiraan Total Belanja</span>
-            <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center">
-              <Coins class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-xl sm:text-2xl font-bold tracking-tight text-[#2563EB] dark:text-blue-400 tabular-nums">
-              {{ formatRupiah(executiveSummary.total_budget) }}
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-1 truncate">
-            Biaya untuk memesan seluruh barang kritis
-          </p>
-        </div>
+        <StatCard
+          title="Perkiraan Total Belanja"
+          :value="formatRupiah(executiveSummary.total_budget)"
+          description="Biaya untuk memesan seluruh barang kritis"
+          color="blue"
+          :icon="Coins"
+          value-class="text-xl sm:text-2xl"
+          :clickable="false"
+        />
 
         <!-- 4. Rata-rata Akurasi Prediksi -->
-        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-emerald-500/50 transition-all">
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Tingkat Kepastian Prediksi</span>
-            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center">
-              <ShieldCheck class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
-              {{ executiveSummary.average_accuracy }}%
-            </span>
-            <span class="text-xs font-normal text-slate-500">akurasi</span>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-1 truncate">
-            Tingkat keyakinan perhitungan sistem
-          </p>
-        </div>
+        <StatCard
+          title="Tingkat Kepastian Prediksi"
+          :value="`${executiveSummary.average_accuracy}%`"
+          unit="akurasi"
+          description="Tingkat keyakinan perhitungan sistem"
+          color="emerald"
+          :icon="ShieldCheck"
+          :clickable="false"
+        />
       </div>
 
       <!-- Navigation Tabs: Daftar Belanja vs Grafik Detail Produk -->

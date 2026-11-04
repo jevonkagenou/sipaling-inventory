@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import AuditDiffDialog from '@/Components/Audit/AuditDiffDialog.vue'
+import StatCard from '@/Components/StatCard.vue'
 import {
   Search,
   Filter,
@@ -291,111 +292,55 @@ const visiblePages = computed(() => {
         </p>
       </div>
 
-      <!-- KPI Summary Cards (Unified Interactive Cards) -->
+      <!-- KPI Summary Cards (Unified Interactive Cards via Reusable StatCard) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- 1. Total Rekam Jejak -->
-        <div
+        <StatCard
+          title="Total Rekam Jejak"
+          :value="stats.total_logs"
+          unit="entri"
+          :description="stats.is_filtered ? 'Rekam jejak periode terfilter' : 'Seluruh rekam jejak sistem'"
+          color="slate"
+          :icon="Activity"
+          :active="!currentLogName"
           @click="setLogNameFilter('')"
-          class="rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-2xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-          :class="!currentLogName
-            ? 'border-slate-400 ring-2 ring-slate-400/20 dark:border-slate-500'
-            : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'"
-          title="Tampilkan seluruh aktivitas sistem"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Total Rekam Jejak</span>
-            <div class="h-8 w-8 rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Activity class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.total_logs }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">entri</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.is_filtered ? 'Rekam jejak periode terfilter' : 'Seluruh rekam jejak sistem' }}
-          </p>
-        </div>
+        />
 
         <!-- 2. Mutasi & Inventaris -->
-        <div
+        <StatCard
+          title="Mutasi & Inventaris"
+          :value="stats.inventory_logs"
+          unit="log"
+          :description="stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Aktivitas produk & stok gudang'"
+          color="emerald"
+          :icon="Boxes"
+          :active="currentLogName === 'inventory'"
           @click="setLogNameFilter('inventory')"
-          class="rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-2xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-          :class="currentLogName === 'inventory'
-            ? 'border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-500'
-            : 'border-slate-200 dark:border-slate-800 hover:border-emerald-500/50'"
-          title="Klik untuk filter log mutasi & inventaris"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Mutasi &amp; Inventaris</span>
-            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Boxes class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.inventory_logs }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">log</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Aktivitas produk & stok gudang' }}
-          </p>
-        </div>
+        />
 
         <!-- 3. Aktivitas Pengguna -->
-        <div
+        <StatCard
+          title="Aktivitas Pengguna"
+          :value="stats.user_logs"
+          unit="log"
+          :description="stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Autentikasi & peran pengguna'"
+          color="blue"
+          :icon="Users"
+          :active="currentLogName === 'users'"
           @click="setLogNameFilter('users')"
-          class="rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-2xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-          :class="currentLogName === 'users'
-            ? 'border-[#2563EB] ring-2 ring-blue-500/20 dark:border-blue-500'
-            : 'border-slate-200 dark:border-slate-800 hover:border-[#2563EB]/50'"
-          title="Klik untuk filter aktivitas akun pengguna"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Aktivitas Pengguna</span>
-            <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Users class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.user_logs }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">log</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Autentikasi & peran pengguna' }}
-          </p>
-        </div>
+        />
 
         <!-- 4. Log Prediksi Kebutuhan -->
-        <div
+        <StatCard
+          title="Log Prediksi Kebutuhan"
+          :value="stats.forecast_logs"
+          unit="log"
+          :description="stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Riwayat kalkulasi prediksi sistem'"
+          color="indigo"
+          :icon="Cpu"
+          :active="currentLogName === 'forecasting'"
           @click="setLogNameFilter('forecasting')"
-          class="rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-2xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-          :class="currentLogName === 'forecasting'
-            ? 'border-[#4F46E5] ring-2 ring-indigo-500/20 dark:border-indigo-500'
-            : 'border-slate-200 dark:border-slate-800 hover:border-[#4F46E5]/50'"
-          title="Klik untuk filter log kalkulasi prediksi kebutuhan"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Log Prediksi Kebutuhan</span>
-            <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Cpu class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.forecast_logs }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">log</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.is_filtered ? 'Sesuai rentang filter aktif' : 'Riwayat kalkulasi prediksi sistem' }}
-          </p>
-        </div>
+        />
       </div>
 
       <!-- Logs Table Card -->

@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Head, Link, usePage, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import StatCard from '@/Components/StatCard.vue'
 import { ClipboardCheck, Clock, CheckCircle2, XCircle, Eye, Search, X, TrendingUp, FileText, Boxes, ShieldCheck, PackagePlus, AlertTriangle, Plus,
 } from 'lucide-vue-next'
 
@@ -344,76 +345,43 @@ function formatDate(dateStr: string) {
         </div>
       </div>
 
-      <!-- Metric KPI Cards (Interactive Filters) -->
+      <!-- Metric KPI Cards (Interactive Filters via Reusable StatCard) -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <!-- 1. Menunggu Persetujuan -->
-        <div
+        <StatCard
+          title="Menunggu Persetujuan"
+          :value="stats.pending"
+          unit="berkas"
+          description="Menunggu keputusan Komisaris"
+          color="amber"
+          :icon="Clock"
+          :active="selectedStatus === 'pending'"
           @click="selectedStatus = 'pending'"
-          class="rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-2xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-          :class="selectedStatus === 'pending'
-            ? 'border-amber-500 ring-2 ring-amber-500/20'
-            : 'border-slate-200 dark:border-slate-800 hover:border-amber-500/50'"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Menunggu Persetujuan</span>
-            <div class="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Clock class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
-              {{ stats.pending }}
-            </span>
-            <span class="text-xs text-slate-500">berkas</span>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-1 truncate">Menunggu keputusan Komisaris</p>
-        </div>
+        />
 
         <!-- 2. Disetujui -->
-        <div
+        <StatCard
+          title="Disetujui Komisaris"
+          :value="stats.approved"
+          unit="berkas"
+          description="Siap terbit Inbound gudang"
+          color="emerald"
+          :icon="CheckCircle2"
+          :active="selectedStatus === 'approved'"
           @click="selectedStatus = 'approved'"
-          class="rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-2xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-          :class="selectedStatus === 'approved'
-            ? 'border-emerald-500 ring-2 ring-emerald-500/20'
-            : 'border-slate-200 dark:border-slate-800 hover:border-emerald-500/50'"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Disetujui Komisaris</span>
-            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <CheckCircle2 class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
-              {{ stats.approved }}
-            </span>
-            <span class="text-xs text-slate-500">berkas</span>
-          </div>
-          <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 truncate">Siap terbit Inbound gudang</p>
-        </div>
+        />
 
         <!-- 3. Ditolak -->
-        <div
+        <StatCard
+          title="Ditolak / Perlu Revisi"
+          :value="stats.rejected"
+          unit="berkas"
+          description="Membutuhkan evaluasi / negosiasi"
+          color="rose"
+          :icon="XCircle"
+          :active="selectedStatus === 'rejected'"
           @click="selectedStatus = 'rejected'"
-          class="rounded-2xl border bg-white dark:bg-slate-900 p-5 shadow-2xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-          :class="selectedStatus === 'rejected'
-            ? 'border-rose-500 ring-2 ring-rose-500/20'
-            : 'border-slate-200 dark:border-slate-800 hover:border-rose-500/50'"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Ditolak / Perlu Revisi</span>
-            <div class="h-8 w-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <XCircle class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400 tabular-nums">
-              {{ stats.rejected }}
-            </span>
-            <span class="text-xs text-slate-500">berkas</span>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-1 truncate">Membutuhkan evaluasi / negosiasi</p>
-        </div>
+        />
       </div>
 
       <!-- Main Data Table Container -->

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import StatCard from '@/Components/StatCard.vue'
 import InboundOutboundChart, { type TrendItem } from '@/Components/Dashboard/InboundOutboundChart.vue'
 import AuditActivityChart, { type AuditActivityTrend } from '@/Components/Dashboard/AuditActivityChart.vue'
 import UserStatusDonutChart, { type UserStatsProps } from '@/Components/Dashboard/UserStatusDonutChart.vue'
@@ -460,340 +461,184 @@ function getEventBadge(event?: string) {
       <!-- A. KHUSUS AUDITOR INTERNAL: KPI Kepatuhan, Keamanan & Jejak Forensik -->
       <div v-if="primaryRole === 'auditor-internal'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Total Log Audit -->
-        <Link
+        <StatCard
+          title="Total Log Audit"
+          :value="stats.total_audit_logs"
+          unit="rekaman"
+          description="Jejak aktivitas forensik append-only"
+          color="emerald"
+          :icon="ShieldCheck"
           :href="route('audit.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#10B981]/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Total Log Audit</span>
-            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <ShieldCheck class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.total_audit_logs }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">rekaman</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Jejak aktivitas forensik append-only
-          </p>
-        </Link>
+        />
 
         <!-- Card 2: Aktivitas Sistem Hari Ini -->
-        <Link
+        <StatCard
+          title="Aktivitas Hari Ini"
+          :value="stats.today_audit_logs"
+          unit="kejadian"
+          description="Frekuensi aksi pengguna hari ini"
+          color="blue"
+          :icon="Activity"
           :href="route('audit.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Aktivitas Hari Ini</span>
-            <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Activity class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-[#2563EB] dark:text-blue-400 tabular-nums">
-              {{ stats.today_audit_logs }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">kejadian</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Frekuensi aksi pengguna hari ini
-          </p>
-        </Link>
+        />
 
         <!-- Card 3: Objek Verifikasi Mutasi -->
-        <Link
+        <StatCard
+          title="Objek Verifikasi Mutasi"
+          :value="stats.total_transactions"
+          unit="transaksi"
+          :description="`${stats.inbound_transactions} Inbound • ${stats.outbound_transactions} Outbound`"
+          color="indigo"
+          :icon="ArrowLeftRight"
           :href="route('transactions.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#4F46E5]/50 dark:hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Objek Verifikasi Mutasi</span>
-            <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <ArrowLeftRight class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.total_transactions }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">transaksi</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.inbound_transactions }} Inbound &bull; {{ stats.outbound_transactions }} Outbound
-          </p>
-        </Link>
+        />
 
         <!-- Card 4: Perubahan Data Sensitif -->
-        <Link
+        <StatCard
+          title="Perubahan Sensitif"
+          :value="stats.sensitive_changes_count ?? 0"
+          unit="rekaman"
+          description="Event modifikasi & penghapusan data"
+          color="amber"
+          :icon="FileEdit"
           :href="route('audit.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Perubahan Sensitif</span>
-            <div class="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <FileEdit class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
-              {{ stats.sensitive_changes_count ?? 0 }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">rekaman</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Event modifikasi & penghapusan data
-          </p>
-        </Link>
+        />
       </div>
 
-      <!-- B. ROLE STANDAR (Staf Gudang, Manajer Operasional, Komisaris): KPI Operasional & Stok -->
+      <!-- B. ROLE STANDAR: KOMISARIS -->
       <div v-else-if="primaryRole === 'komisaris'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link
+        <StatCard
+          title="Menunggu Persetujuan"
+          :value="commissionerDashboard?.pending_count ?? 0"
+          :description="pendingAge(commissionerDashboard?.oldest_pending_at ?? null)"
+          color="amber"
+          :icon="ClipboardCheck"
           :href="route('restock.approval')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Menunggu Persetujuan</span>
-            <div class="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <ClipboardCheck class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">
-            {{ commissionerDashboard?.pending_count ?? 0 }}
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-            {{ pendingAge(commissionerDashboard?.oldest_pending_at ?? null) }}
-          </p>
-        </Link>
+        />
 
-        <Link
+        <StatCard
+          title="Disetujui Bulan Ini"
+          :value="commissionerDashboard?.approved_this_month ?? 0"
+          description="Keputusan persetujuan restock"
+          color="emerald"
+          :icon="CheckCircle2"
           :href="route('restock.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Disetujui Bulan Ini</span>
-            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <CheckCircle2 class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 text-2xl font-bold text-[#10B981] dark:text-emerald-400 tabular-nums">
-            {{ commissionerDashboard?.approved_this_month ?? 0 }}
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Keputusan persetujuan restock</p>
-        </Link>
+        />
 
-        <Link
+        <StatCard
+          title="Ditolak Bulan Ini"
+          :value="commissionerDashboard?.rejected_this_month ?? 0"
+          description="Keputusan dengan catatan evaluasi"
+          color="rose"
+          :icon="XCircle"
           :href="route('restock.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-rose-500/50 dark:hover:border-rose-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Ditolak Bulan Ini</span>
-            <div class="h-8 w-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <XCircle class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 text-2xl font-bold text-rose-600 dark:text-rose-400 tabular-nums">
-            {{ commissionerDashboard?.rejected_this_month ?? 0 }}
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Keputusan dengan catatan evaluasi</p>
-        </Link>
+        />
 
-        <Link
+        <StatCard
+          title="Tata Kelola Pengguna"
+          description="Pengguna aktif dan hak akses sistem"
+          color="blue"
+          :icon="Users"
           :href="route('users.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
         >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Tata Kelola Pengguna</span>
-            <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Users class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 text-sm font-bold text-slate-900 dark:text-white">Kelola akun & akses</div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Pengguna aktif dan hak akses sistem</p>
-        </Link>
+          <template #value>
+            <span class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Kelola akun & akses</span>
+          </template>
+        </StatCard>
       </div>
 
       <!-- C. KHUSUS STAF GUDANG: Fokus Pelaksanaan Fisik & Operasional Lapangan Harian -->
       <div v-else-if="primaryRole === 'staf-gudang'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Barang Masuk Hari Ini -->
-        <Link
+        <StatCard
+          title="Barang Masuk Hari Ini"
+          :value="stats.today_inbound_qty"
+          unit="pcs fisik"
+          :description="`${stats.today_inbound_count ?? 0} transaksi inbound hari ini`"
+          color="emerald"
+          :icon="PackagePlus"
           :href="route('transactions.index', { type: 'inbound' })"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#10B981]/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Barang Masuk Hari Ini</span>
-            <div class="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#10B981] dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <PackagePlus class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
-              {{ stats.today_inbound_qty }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">pcs fisik</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.today_inbound_count ?? 0 }} transaksi inbound hari ini
-          </p>
-        </Link>
+        />
 
         <!-- Card 2: Barang Keluar Hari Ini -->
-        <Link
+        <StatCard
+          title="Barang Keluar Hari Ini"
+          :value="stats.today_outbound_qty"
+          unit="pcs fisik"
+          :description="`${stats.today_outbound_count ?? 0} transaksi outbound hari ini`"
+          color="amber"
+          :icon="PackageMinus"
           :href="route('transactions.index', { type: 'outbound' })"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Barang Keluar Hari Ini</span>
-            <div class="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <PackageMinus class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
-              {{ stats.today_outbound_qty }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">pcs fisik</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.today_outbound_count ?? 0 }} transaksi outbound hari ini
-          </p>
-        </Link>
+        />
 
-        <!-- Card 3: Stok Kritis Gudang (Perlu Dilaporkan) -->
-        <Link
+        <!-- Card 3: Stok Kritis Gudang -->
+        <StatCard
+          title="Stok Kritis Gudang"
+          :value="stats.reorder_count"
+          unit="SKU menipis"
+          description="Segera lapor ke Manajer Operasional"
+          color="rose"
+          :icon="AlertTriangle"
           :href="route('inventory.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-rose-500/50 dark:hover:border-rose-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span class="text-rose-600 dark:text-rose-400 font-semibold">Stok Kritis Gudang</span>
-            <div class="h-8 w-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <AlertTriangle class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400 tabular-nums">
-              {{ stats.reorder_count }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">SKU menipis</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Segera lapor ke Manajer Operasional
-          </p>
-        </Link>
+        />
 
         <!-- Card 4: Total Mutasi Tercatat -->
-        <Link
+        <StatCard
+          title="Total Mutasi Tercatat"
+          :value="stats.total_transactions"
+          unit="transaksi"
+          :description="`${stats.inbound_transactions} Inbound • ${stats.outbound_transactions} Outbound`"
+          color="indigo"
+          :icon="ArrowLeftRight"
           :href="route('transactions.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#4F46E5]/50 dark:hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Total Mutasi Tercatat</span>
-            <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <ArrowLeftRight class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.total_transactions }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">transaksi</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.inbound_transactions }} Inbound &bull; {{ stats.outbound_transactions }} Outbound
-          </p>
-        </Link>
+        />
       </div>
 
       <!-- D. KHUSUS MANAJER OPERASIONAL: Perencanaan, Pengadaan Restock & Manajemen Aset -->
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Rekomendasi Restock Belanja -->
-        <Link
+        <StatCard
+          title="Rekomendasi Restock"
+          :value="stats.reorder_count"
+          unit="SKU perlu belanja"
+          description="Siap diajukan ke meja Komisaris"
+          color="blue"
+          :icon="TrendingUp"
           :href="route('analytics.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Rekomendasi Restock</span>
-            <div class="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <TrendingUp class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-[#2563EB] dark:text-blue-400 tabular-nums">
-              {{ stats.reorder_count }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">SKU perlu belanja</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Siap diajukan ke meja Komisaris
-          </p>
-        </Link>
+        />
 
         <!-- Card 2: Estimasi Anggaran Pengadaan / Nilai Inventaris -->
-        <Link
+        <StatCard
+          title="Nilai Aset Inventaris"
+          :value="formatRupiah(stats.total_inventory_value)"
+          description="Total modal stok fisik tersimpan"
+          color="indigo"
+          :icon="Coins"
+          value-class="text-xl sm:text-2xl"
           :href="route('inventory.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#4F46E5]/50 dark:hover:border-indigo-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Nilai Aset Inventaris</span>
-            <div class="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4F46E5] dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Coins class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ formatRupiah(stats.total_inventory_value) }}
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Total modal stok fisik tersimpan
-          </p>
-        </Link>
+        />
 
         <!-- Card 3: Status Pengajuan di Komisaris -->
-        <Link
+        <StatCard
+          title="Pengajuan di Komisaris"
+          :value="stats.pending_restock_count ?? 0"
+          unit="berkas pending"
+          :description="`${stats.approved_restock_count ?? 0} pengadaan telah disahkan`"
+          color="amber"
+          :icon="ClipboardCheck"
           :href="route('restock.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-amber-500/50 dark:hover:border-amber-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Pengajuan di Komisaris</span>
-            <div class="h-8 w-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <ClipboardCheck class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
-              {{ stats.pending_restock_count ?? 0 }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">berkas pending</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            {{ stats.approved_restock_count ?? 0 }} pengadaan telah disahkan
-          </p>
-        </Link>
+        />
 
         <!-- Card 4: Total Master Katalog -->
-        <Link
+        <StatCard
+          title="Katalog Master"
+          :value="stats.total_products"
+          unit="item"
+          :description="`Terbagi dalam ${stats.total_categories} kategori master`"
+          color="slate"
+          :icon="Boxes"
           :href="route('inventory.index')"
-          class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:border-[#2563EB]/50 dark:hover:border-blue-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer group"
-        >
-          <div class="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Katalog Master</span>
-            <div class="h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <Boxes class="h-4 w-4" />
-            </div>
-          </div>
-          <div class="mt-2.5 flex items-baseline gap-1.5">
-            <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-              {{ stats.total_products }}
-            </span>
-            <span class="text-xs font-normal text-slate-500 dark:text-slate-400">item</span>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-            Terbagi dalam {{ stats.total_categories }} kategori master
-          </p>
-        </Link>
+        />
       </div>
 
       <div v-if="primaryRole === 'staf-gudang'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">

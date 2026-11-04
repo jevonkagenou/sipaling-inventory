@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card'
+import StatCard from '@/Components/StatCard.vue'
 import { Boxes, History, CheckCircle2, AlertTriangle } from 'lucide-vue-next'
 
 export type CardKey = 'total' | 'mutasi' | 'aman' | 'reorder'
@@ -75,163 +75,57 @@ watch(() => props.stats, () => {
 <template>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <!-- 1. Total Barang -->
-    <Card
-      role="button"
-      tabindex="0"
-      title="Klik untuk memfilter semua barang"
+    <StatCard
+      title="Total Barang"
+      :value="animated.total_products"
+      unit="item"
+      :description="stats.is_filtered ? `Terfilter dari ${stats.global_total_products ?? stats.total_products} total barang` : `Dari ${stats.total_categories} kategori barang`"
+      color="blue"
+      :icon="Boxes"
+      :active="activeCard === 'total'"
       @click="emit('select-card', 'total')"
-      @keydown.enter="emit('select-card', 'total')"
-      :class="activeCard === 'total'
-        ? 'ring-2 ring-[#2563EB] border-[#2563EB]'
-        : 'border-slate-200 dark:border-slate-800 hover:border-[#2563EB]/50'"
-      class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
-    >
-      <CardHeader class="pb-1.5">
-        <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Total Barang
-        </CardTitle>
-        <CardAction>
-          <div class="p-2 rounded-lg bg-[#2563EB]/10 text-[#2563EB] dark:text-blue-400 transition-transform duration-200 group-hover:scale-110">
-            <Boxes class="w-4 h-4" />
-          </div>
-        </CardAction>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div class="flex items-baseline gap-1.5">
-          <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {{ animated.total_products }}
-          </span>
-          <span class="text-xs text-slate-500">item</span>
-        </div>
-        <CardDescription class="mt-1 text-xs text-slate-400">
-          <span v-if="stats.is_filtered">
-            Terfilter dari {{ stats.global_total_products ?? stats.total_products }} total barang
-          </span>
-          <span v-else>
-            Dari {{ stats.total_categories }} kategori barang
-          </span>
-        </CardDescription>
-      </CardContent>
-    </Card>
+    />
 
     <!-- 2. Total Mutasi Transaksi -->
-    <Card
-      role="button"
-      tabindex="0"
-      title="Klik untuk mengurutkan mutasi terbanyak"
+    <StatCard
+      title="Total Mutasi"
+      :value="animated.total_details"
+      unit="mutasi"
+      :description="stats.is_filtered ? 'Akumulasi mutasi barang terfilter' : `${stats.total_transactions} kali transaksi`"
+      color="indigo"
+      :icon="History"
+      :active="activeCard === 'mutasi'"
       @click="emit('select-card', 'mutasi')"
-      @keydown.enter="emit('select-card', 'mutasi')"
-      :class="activeCard === 'mutasi'
-        ? 'ring-2 ring-[#4F46E5] border-[#4F46E5]'
-        : 'border-slate-200 dark:border-slate-800 hover:border-[#4F46E5]/50'"
-      class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]"
-    >
-      <CardHeader class="pb-1.5">
-        <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Total Mutasi
-        </CardTitle>
-        <CardAction>
-          <div class="p-2 rounded-lg bg-[#4F46E5]/10 text-[#4F46E5] dark:text-indigo-400 transition-transform duration-200 group-hover:scale-110">
-            <History class="w-4 h-4" />
-          </div>
-        </CardAction>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div class="flex items-baseline gap-1.5">
-          <span class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {{ animated.total_details }}
-          </span>
-          <span class="text-xs text-slate-500">mutasi</span>
-        </div>
-        <CardDescription class="mt-1 text-xs text-slate-400">
-          <span v-if="stats.is_filtered">
-            Akumulasi mutasi barang terfilter
-          </span>
-          <span v-else>
-            {{ stats.total_transactions }} kali transaksi
-          </span>
-        </CardDescription>
-      </CardContent>
-    </Card>
+    />
 
     <!-- 3. Stok Aman -->
-    <Card
-      role="button"
-      tabindex="0"
-      title="Klik untuk memfilter barang stok aman"
+    <StatCard
+      title="Stok Aman"
+      unit="barang"
+      :description="stats.is_filtered ? `${stats.aman_count} dari ${stats.total_products} barang terfilter` : 'Kuantitas di atas batas minimum'"
+      color="emerald"
+      :icon="CheckCircle2"
+      :active="activeCard === 'aman'"
       @click="emit('select-card', 'aman')"
-      @keydown.enter="emit('select-card', 'aman')"
-      :class="activeCard === 'aman'
-        ? 'ring-2 ring-[#10B981] border-[#10B981]'
-        : 'border-slate-200 dark:border-slate-800 hover:border-[#10B981]/50'"
-      class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10B981]"
     >
-      <CardHeader class="pb-1.5">
-        <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Stok Aman
-        </CardTitle>
-        <CardAction>
-          <div class="p-2 rounded-lg bg-[#10B981]/10 text-[#10B981] dark:text-emerald-400 transition-transform duration-200 group-hover:scale-110">
-            <CheckCircle2 class="w-4 h-4" />
-          </div>
-        </CardAction>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div class="flex items-baseline gap-1.5">
-          <span class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
-            {{ animated.aman_count }}
-          </span>
-          <span class="text-xs text-slate-500">barang</span>
-        </div>
-        <CardDescription class="mt-1 text-xs text-slate-400">
-          <span v-if="stats.is_filtered">
-            {{ stats.aman_count }} dari {{ stats.total_products }} barang terfilter
-          </span>
-          <span v-else>
-            Kuantitas di atas batas minimum
-          </span>
-        </CardDescription>
-      </CardContent>
-    </Card>
+      <template #value>
+        <span class="text-[#10B981] dark:text-emerald-400">{{ animated.aman_count }}</span>
+      </template>
+    </StatCard>
 
     <!-- 4. Perlu Pengadaan / Reorder -->
-    <Card
-      role="button"
-      tabindex="0"
-      title="Klik untuk memfilter barang yang perlu restock"
+    <StatCard
+      title="Perlu Pengadaan"
+      unit="barang"
+      :description="stats.is_filtered ? `${stats.reorder_count} dari ${stats.total_products} barang terfilter` : 'Mendekati atau di bawah batas minimum'"
+      color="amber"
+      :icon="AlertTriangle"
+      :active="activeCard === 'reorder'"
       @click="emit('select-card', 'reorder')"
-      @keydown.enter="emit('select-card', 'reorder')"
-      :class="activeCard === 'reorder'
-        ? 'ring-2 ring-amber-500 border-amber-500'
-        : 'border-slate-200 dark:border-slate-800 hover:border-amber-500/50'"
-      class="group cursor-pointer select-none rounded-xl border bg-white dark:bg-slate-900 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
     >
-      <CardHeader class="pb-1.5">
-        <CardTitle class="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Perlu Pengadaan
-        </CardTitle>
-        <CardAction>
-          <div class="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 transition-transform duration-200 group-hover:scale-110">
-            <AlertTriangle class="w-4 h-4" />
-          </div>
-        </CardAction>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div class="flex items-baseline gap-1.5">
-          <span class="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
-            {{ animated.reorder_count }}
-          </span>
-          <span class="text-xs text-slate-500">barang</span>
-        </div>
-        <CardDescription class="mt-1 text-xs text-slate-400">
-          <span v-if="stats.is_filtered">
-            {{ stats.reorder_count }} dari {{ stats.total_products }} barang terfilter
-          </span>
-          <span v-else>
-            Mendekati atau di bawah batas minimum
-          </span>
-        </CardDescription>
-      </CardContent>
-    </Card>
+      <template #value>
+        <span class="text-amber-600 dark:text-amber-400">{{ animated.reorder_count }}</span>
+      </template>
+    </StatCard>
   </div>
 </template>
