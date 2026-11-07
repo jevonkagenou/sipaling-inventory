@@ -14,7 +14,7 @@ Cypress.Commands.add('loginAs', (role = 'manajer') => {
     'manajer': { email: 'manajer@sipaling.com', password: 'password' },
     'staf': { email: 'staf@sipaling.com', password: 'password' },
     'komisaris': { email: 'komisaris@sipaling.com', password: 'password' },
-    'auditor': { email: 'luxoqwasery@gmail.com', password: 'password' },
+    'auditor': { email: 'sultansyarif630@gmail.com', password: 'password' },
   };
 
   const account = accounts[role] || accounts['manajer'];

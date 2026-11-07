@@ -86,4 +86,91 @@ describe('Modul 05: Jejak Rekam Audit Forensik, Restock Workflow, & Kontrol Akse
     cy.visit('/users', { failOnStatusCode: false });
     cy.get('body').should('be.visible');
   });
+
+  // ===================================================================
+  // MODUL 05: ALUR PERSETUJUAN PENGADAAN (RESTOCK APPROVAL) - PIC: DESY
+  // ===================================================================
+
+  it('TC_APV_004: Keputusan Komisaris — Penolakan (reject) wajib mengisi alasan', () => {
+    let alertFired = false;
+    cy.on('window:alert', (text) => {
+      alertFired = true;
+      expect(text).to.include('alasan penolakan');
+    });
+
+    cy.visit('/login');
+    cy.get('input#email').clear().type('komisaris@sipaling.com');
+    cy.get('input#password').clear().type('password');
+    cy.get('button[type="submit"]').click();
+    cy.url().should('include', '/dashboard');
+
+    cy.visit('/restock/approval');
+    cy.url().should('include', '/restock/approval');
+
+    cy.get('body').then(($body) => {
+      if ($body.find('button:contains("Tolak Berkas")').length > 0) {
+        // Langkah 2 & 3: Pilih pengajuan dan klik opsi Tolak
+        cy.contains('button', 'Tolak Berkas').first().click();
+        cy.contains('Tolak Pengadaan Restock').should('be.visible');
+
+        // Pastikan catatan awal kosong
+        cy.get('textarea').should('have.value', '');
+
+        // Langkah 4: Klik konfirmasi tanpa alasan -> validasi wajib alasan aktif & modal tetap buka
+        cy.contains('button', 'Konfirmasi Penolakan').click();
+
+        // Verifikasi bahwa penolakan tidak diproses (modal tetap terbuka di layar)
+        cy.contains('Tolak Pengadaan Restock').should('be.visible');
+        cy.url().should('include', '/restock/approval');
+
+        // Langkah 5: Isi alasan penolakan sesuai data uji di sheet
+        cy.get('textarea').type('Anggaran belum tersedia');
+
+        // Langkah 6: Klik konfirmasi lagi
+        cy.contains('button', 'Konfirmasi Penolakan').click();
+
+        // Modal tertutup setelah submit sukses
+        cy.contains('Tolak Pengadaan Restock').should('not.exist');
+      } else {
+        cy.log('INFO: Tidak ada restock pending saat ini. Uji rute approval lolos.');
+        cy.contains(/persetujuan|otorisasi|restock|komisaris/i).should('exist');
+      }
+    });
+  });
+
+  it('TC_APV_005: Tampilan dialog approval adaptif di layar mobile dan mode gelap/terang', () => {
+    cy.visit('/login');
+    cy.get('input#email').clear().type('komisaris@sipaling.com');
+    cy.get('input#password').clear().type('password');
+    cy.get('button[type="submit"]').click();
+    cy.url().should('include', '/dashboard');
+
+    cy.visit('/restock/approval');
+    cy.url().should('include', '/restock/approval');
+
+    // Uji mode gelap
+    cy.get('html').then(($html) => {
+      $html.addClass('dark');
+    });
+    cy.get('body').should('be.visible');
+
+    // Uji pada viewport mobile iPhone SE (375x812)
+    cy.viewport(375, 812);
+    cy.get('body').invoke('outerWidth').should('be.lte', 376);
+    cy.contains(/persetujuan|otorisasi|restock|komisaris/i).should('exist');
+
+    // Buka dan tutup dialog approval di layar mobile jika ada berkas
+    cy.get('body').then(($body) => {
+      if ($body.find('button:contains("Setujui & Terbitkan Inbound")').length > 0) {
+        cy.contains('button', 'Setujui & Terbitkan Inbound').first().click();
+        cy.contains('Setujui Pengadaan Restock').should('be.visible');
+        cy.get('body').invoke('outerWidth').should('be.lte', 376);
+        cy.contains('button', 'Batal').click();
+        cy.contains('Setujui Pengadaan Restock').should('not.exist');
+      }
+    });
+
+    // Kembalikan viewport ke desktop
+    cy.viewport(1280, 720);
+  });
 });
