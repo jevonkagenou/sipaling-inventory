@@ -11,13 +11,13 @@ RAILPACK_PHP_ROOT_DIR = "/app/public"
 [phases.setup]
 nixPkgs = [
   "...",
-  "php83",
-  "php83Extensions.pdo_mysql",
-  "php83Extensions.mbstring",
-  "php83Extensions.gd",
-  "php83Extensions.zip",
-  "php83Extensions.bcmath",
-  "php83Extensions.intl"
+  "php84",
+  "php84Extensions.pdo_mysql",
+  "php84Extensions.mbstring",
+  "php84Extensions.gd",
+  "php84Extensions.zip",
+  "php84Extensions.bcmath",
+  "php84Extensions.intl"
 ]
 
 [phases.install]
