@@ -1,0 +1,33 @@
+# Nixpacks deployment configuration for Laravel 12 + Inertia Vue 3 on Railway
+# PBL Kelompok 1 - SIPALING
+
+[variables]
+NIXPACKS_PHP_ROOT_DIR = "/app/public"
+NIXPACKS_PHP_FALLBACK_PATH = "/index.php"
+RAILPACK_PHP_ROOT_DIR = "/app/public"
+CYPRESS_INSTALL_BINARY = "0"
+
+[phases.setup]
+nixPkgs = [
+  "...",
+  "php83",
+  "php83Extensions.pdo_mysql",
+  "php83Extensions.mbstring",
+  "php83Extensions.gd",
+  "php83Extensions.zip",
+  "php83Extensions.bcmath",
+  "php83Extensions.intl",
+  "nodejs_22"
+]
+
+[phases.install]
+cmds = [
+  "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
+  "CYPRESS_INSTALL_BINARY=0 npm ci --no-audit"
+]
+
+[phases.build]
+cmds = [
+  "npm run build",
+  "php artisan storage:link || true"
+]
