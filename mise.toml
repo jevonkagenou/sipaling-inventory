@@ -1,0 +1,3 @@
+# Mise configuration for Railway Railpack
+[tools]
+php = "8.4"
