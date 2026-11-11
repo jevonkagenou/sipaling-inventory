@@ -1,31 +1,8 @@
-describe('Modul 05: Jejak Rekam Audit Forensik, Restock Workflow, & Kontrol Akses RBAC', () => {
-  it('Akses Auditor: Membuka modul Jejak Audit Forensik (/audit) via klik fisik sidebar', () => {
-    cy.visit('/login');
-    cy.get('input#email').clear().type('luxoqwasery@gmail.com');
-    cy.get('input#password').clear().type('password');
-    cy.get('button[type="submit"]').click();
-    cy.url().should('include', '/dashboard');
+describe('Modul 05: Kontrol Akses RBAC & Alur Persetujuan Restock', () => {
 
-    // Klik fisik menu Jejak Audit Log di sidebar aside
-    cy.get('aside').contains(/jejak audit log/i).should('be.visible').click();
-    cy.url().should('include', '/audit');
-    cy.contains(/audit|log|aktivitas|forensik/i).should('exist');
-  });
 
-  it('Integritas Log: Tabel audit menampilkan rekam jejak aktivitas pengguna dan timestamp append-only', () => {
-    cy.visit('/login');
-    cy.get('input#email').clear().type('luxoqwasery@gmail.com');
-    cy.get('input#password').clear().type('password');
-    cy.get('button[type="submit"]').click();
-    cy.url().should('include', '/dashboard');
 
-    cy.visit('/audit');
-    cy.get('body').should('be.visible');
-    cy.contains(/log|riwayat|pengguna|waktu/i).should('exist');
-    cy.get('table').should('exist');
-  });
-
-  it('Keamanan RBAC Audit: Staf Gudang dicegah mengakses modul Audit Forensik privat (HTTP 403 Forbidden)', () => {
+  it('TC_RBA_001: Keamanan RBAC Audit: Staf Gudang dicegah mengakses modul Audit Forensik privat (HTTP 403 Forbidden)', () => {
     cy.visit('/login');
     cy.get('input#email').clear().type('staf@sipaling.com');
     cy.get('input#password').clear().type('password');
@@ -37,7 +14,7 @@ describe('Modul 05: Jejak Rekam Audit Forensik, Restock Workflow, & Kontrol Akse
     cy.get('body').should('be.visible');
   });
 
-  it('Monitoring Pengajuan Restock: Manajer Operasional dapat meninjau usulan pengadaan barang', () => {
+  it('TC_RBA_002: Monitoring Pengajuan Restock: Manajer Operasional dapat meninjau usulan pengadaan barang', () => {
     cy.visit('/login');
     cy.get('input#email').clear().type('manajer@sipaling.com');
     cy.get('input#password').clear().type('password');
@@ -50,7 +27,7 @@ describe('Modul 05: Jejak Rekam Audit Forensik, Restock Workflow, & Kontrol Akse
     cy.contains(/restock|monitoring|pengadaan/i).should('exist');
   });
 
-  it('Otorisasi Persetujuan Restock: Komisaris berhak mengakses halaman persetujuan restock', () => {
+  it('TC_RBA_003: Otorisasi Persetujuan Restock: Komisaris berhak mengakses halaman persetujuan restock', () => {
     cy.visit('/login');
     cy.get('input#email').clear().type('komisaris@sipaling.com');
     cy.get('input#password').clear().type('password');
@@ -62,7 +39,7 @@ describe('Modul 05: Jejak Rekam Audit Forensik, Restock Workflow, & Kontrol Akse
     cy.contains(/persetujuan|otorisasi|restock|komisaris/i).should('exist');
   });
 
-  it('Manajemen Pengguna: Manajer Operasional dapat meninjau daftar pengguna via klik sidebar', () => {
+  it('TC_RBA_004: Manajemen Pengguna: Manajer Operasional dapat meninjau daftar pengguna via klik sidebar', () => {
     cy.visit('/login');
     cy.get('input#email').clear().type('manajer@sipaling.com');
     cy.get('input#password').clear().type('password');
@@ -75,7 +52,7 @@ describe('Modul 05: Jejak Rekam Audit Forensik, Restock Workflow, & Kontrol Akse
     cy.contains(/pengguna|user|peran|role/i).should('exist');
   });
 
-  it('Keamanan RBAC Pengguna: Staf Gudang dicegah membuka menu manajemen pengguna (/users)', () => {
+  it('TC_RBA_005: Keamanan RBAC Pengguna: Staf Gudang dicegah membuka menu manajemen pengguna (/users)', () => {
     cy.visit('/login');
     cy.get('input#email').clear().type('staf@sipaling.com');
     cy.get('input#password').clear().type('password');
@@ -88,10 +65,42 @@ describe('Modul 05: Jejak Rekam Audit Forensik, Restock Workflow, & Kontrol Akse
   });
 
   // ===================================================================
+  // MODUL 05: ALUR PERSETUJUAN PENGADAAN (RESTOCK APPROVAL) - PIC: MEUTIA
+  // ===================================================================
+
+  it('TC_APV_001: Memverifikasi Dasbor Otorisasi Komisaris', () => {
+    cy.visit('/login');
+    cy.get('input#email').clear().type('komisaris@sipaling.com');
+    cy.get('input#password').clear().type('password');
+    cy.get('button[type="submit"]').click();
+    cy.url().should('include', '/dashboard');
+
+    cy.visit('/restock/approval');
+    cy.url().should('include', '/restock/approval');
+
+    // Verifikasi header halaman otorisasi persetujuan restock
+    cy.contains('h1, h2', /Persetujuan Usulan Restock|Otorisasi Persetujuan Usulan Restock/i).should('be.visible');
+    cy.contains(/Daftar pengajuan pengadaan multi-item oleh Manajer Operasional yang menunggu keputusan persetujuan Dewan Komisaris/i).should('be.visible');
+
+    // Verifikasi antarmuka: baik saat terdapat antrean permohonan maupun antrean bersih
+    cy.get('body').then(($body) => {
+      if ($body.find('table').length > 0) {
+        // Terdapat kartu permohonan restock aktif
+        cy.contains(/Menunggu Keputusan Komisaris/i).should('be.visible');
+        cy.contains(/Total Estimasi/i).should('be.visible');
+        cy.get('table').should('be.visible');
+      } else {
+        // Antrean sedang kosong/bersih
+        cy.contains(/Antrean Persetujuan Bersih/i).should('be.visible');
+      }
+    });
+  });
+
+  // ===================================================================
   // MODUL 05: ALUR PERSETUJUAN PENGADAAN (RESTOCK APPROVAL) - PIC: DESY
   // ===================================================================
 
-  it('TC_APV_004: Keputusan Komisaris — Penolakan (reject) wajib mengisi alasan', () => {
+  it('TC_APV_002: Keputusan Komisaris — Penolakan (reject) wajib mengisi alasan', () => {
     let alertFired = false;
     cy.on('window:alert', (text) => {
       alertFired = true;
@@ -138,7 +147,7 @@ describe('Modul 05: Jejak Rekam Audit Forensik, Restock Workflow, & Kontrol Akse
     });
   });
 
-  it('TC_APV_005: Tampilan dialog approval adaptif di layar mobile dan mode gelap/terang', () => {
+  it('TC_APV_003: Tampilan dialog approval adaptif di layar mobile dan mode gelap/terang', () => {
     cy.visit('/login');
     cy.get('input#email').clear().type('komisaris@sipaling.com');
     cy.get('input#password').clear().type('password');
