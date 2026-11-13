@@ -101,7 +101,7 @@ describe('Modul 03: Katalog Master Inventaris, Kategori, & Operasi CRUD', () => 
     cy.get('table').contains('Produk Uji Cypress (Revisi Sukses)').should('be.visible');
   });
 
- it('TC_INV_008: CRUD Kategori Master: Menambah kategori baru secara riil melalui modal kelola kategori', () => {
+  it('TC_INV_008: CRUD Kategori Master: Menambah kategori baru secara riil melalui modal kelola kategori', () => {
     const categoryName = `Kategori Uji ${Date.now().toString().slice(-4)}`;
 
     cy.visit('/inventory');
@@ -118,105 +118,108 @@ describe('Modul 03: Katalog Master Inventaris, Kategori, & Operasi CRUD', () => 
         cy.contains('button', 'Tambah Kategori').click();
 
         // Memastikan kategori baru muncul di daftar kategori
-                cy.get('div.space-y-2')
+        cy.get('div.space-y-2')
           .contains('span', categoryName)
           .should('be.visible');
       });
   });
 
   it('TC_INV_009: Master Kategori: Membatalkan perubahan edit kategori tanpa menyimpan', () => {
-  const originalName = 'Gifts & Novelties';
-  const temporaryName = `Kategori Batal ${Date.now().toString().slice(-4)}`;
+    const originalName = 'Gifts & Novelties';
+    const temporaryName = `Kategori Batal ${Date.now().toString().slice(-4)}`;
 
-  cy.visit('/inventory');
-  cy.contains('button', /kelola kategori/i).click();
+    cy.visit('/inventory');
+    cy.contains('button', /kelola kategori/i).click();
 
-  cy.get('[role="dialog"]').should('be.visible');
+    cy.get('[role="dialog"]').should('be.visible');
 
-  // Buka form edit
-cy.get('[role="dialog"]').within(() => {
-  cy.contains('span', originalName)
-    .parents()
-    .filter((index, element) => {
-      return Cypress.$(element).find('button[title="Edit Kategori"]').length > 0;
-    })
-    .first()
-    .find('button[title="Edit Kategori"]')
-    .click();
-});
+    // Buka form edit
+    cy.get('[role="dialog"]').within(() => {
+      cy.contains('span', originalName)
+        .parents()
+        .filter((index, element) => {
+          return Cypress.$(element).find('button[title="Edit Kategori"]').length > 0;
+        })
+        .first()
+        .find('button[title="Edit Kategori"]')
+        .click();
+    });
 
-  // Ubah nama sementara
-  cy.get('input[placeholder="Contoh: Elektronik & IT"]')
-    .clear()
-    .type(temporaryName);
+    // Ubah nama sementara
+    cy.get('input[placeholder="Contoh: Elektronik & IT"]')
+      .clear()
+      .type(temporaryName);
 
-  // Batalkan perubahan
-  cy.get('[role="dialog"]').contains('button', 'Batal').click();
+    // Batalkan perubahan
+    cy.get('[role="dialog"]').contains('button', 'Batal').click();
 
-  // Pastikan form kembali ke mode tambah
-  cy.contains('Tambah Kategori Baru').should('be.visible');
+    // Pastikan form kembali ke mode tambah
+    cy.contains('Tambah Kategori Baru').should('be.visible');
 
-  // Pastikan nama kategori awal tetap ada
-  cy.contains('span', originalName).should('be.visible');
+    // Pastikan nama kategori awal tetap ada
+    cy.contains('span', originalName).should('be.visible');
 
-  // Pastikan nama sementara tidak tersimpan
-  cy.contains('span', temporaryName).should('not.exist');
-});
-it('TC_INV_010: Master Kategori: Mengedit nama kategori dan mengembalikan data awal', () => {
-  const originalName = 'Gifts & Novelties';
-  const updatedName = `Kategori Edit ${Date.now().toString().slice(-4)}`;
+    // Pastikan nama sementara tidak tersimpan
+    cy.contains('span', temporaryName).should('not.exist');
+  });
 
-  cy.visit('/inventory');
-  cy.contains('button', /kelola kategori/i).click();
+  it('TC_INV_010: Master Kategori: Mengedit nama kategori dan mengembalikan data awal', () => {
+    const originalName = 'Gifts & Novelties';
+    const updatedName = `Kategori Edit ${Date.now().toString().slice(-4)}`;
 
-  cy.get('[role="dialog"]').should('be.visible');
+    cy.visit('/inventory');
+    cy.contains('button', /kelola kategori/i).click();
 
-  // Buka form edit kategori
-cy.get('[role="dialog"]').within(() => {
-  cy.contains('span', originalName)
-    .parents()
-    .filter((index, element) => {
-      return Cypress.$(element).find('button[title="Edit Kategori"]').length > 0;
-    })
-    .first()
-    .find('button[title="Edit Kategori"]')
-    .click();
-});
+    cy.get('[role="dialog"]').should('be.visible');
 
-  // Pastikan data awal masuk ke form
-  cy.contains('Edit Kategori').should('be.visible');
-  cy.get('input[placeholder="Contoh: Elektronik & IT"]')
-    .should('have.value', originalName);
+    // Buka form edit kategori
+    cy.get('[role="dialog"]').within(() => {
+      cy.contains('span', originalName)
+        .parents()
+        .filter((index, element) => {
+          return Cypress.$(element).find('button[title="Edit Kategori"]').length > 0;
+        })
+        .first()
+        .find('button[title="Edit Kategori"]')
+        .click();
+    });
 
-  // Ubah nama kategori
-  cy.get('input[placeholder="Contoh: Elektronik & IT"]')
-    .clear()
-    .type(updatedName);
+    // Pastikan data awal masuk ke form
+    cy.contains('Edit Kategori').should('be.visible');
+    cy.get('input[placeholder="Contoh: Elektronik & IT"]')
+      .should('have.value', originalName);
 
-  cy.contains('button', 'Simpan Perubahan').click();
+    // Ubah nama kategori
+    cy.get('input[placeholder="Contoh: Elektronik & IT"]')
+      .clear()
+      .type(updatedName);
 
-  // Pastikan nama baru muncul
-  cy.contains('span', updatedName).should('be.visible');
+    cy.contains('button', 'Simpan Perubahan').click();
 
-  // Kembalikan nama kategori seperti semula
-cy.get('[role="dialog"]').within(() => {
-  cy.contains('span', updatedName)
-    .parents()
-    .filter((index, element) => {
-      return Cypress.$(element).find('button[title="Edit Kategori"]').length > 0;
-    })
-    .first()
-    .find('button[title="Edit Kategori"]')
-    .click();
-});
-  cy.get('input[placeholder="Contoh: Elektronik & IT"]')
-    .clear()
-    .type(originalName);
+    // Pastikan nama baru muncul
+    cy.contains('span', updatedName).should('be.visible');
 
-  cy.contains('button', 'Simpan Perubahan').click();
+    // Kembalikan nama kategori seperti semula
+    cy.get('[role="dialog"]').within(() => {
+      cy.contains('span', updatedName)
+        .parents()
+        .filter((index, element) => {
+          return Cypress.$(element).find('button[title="Edit Kategori"]').length > 0;
+        })
+        .first()
+        .find('button[title="Edit Kategori"]')
+        .click();
+    });
 
-  cy.contains('span', originalName).should('be.visible');
-});
+    cy.get('input[placeholder="Contoh: Elektronik & IT"]')
+      .clear()
+      .type(originalName);
+
+    cy.contains('button', 'Simpan Perubahan').click();
+
+    cy.contains('span', originalName).should('be.visible');
+  });
+
   /*
   |--------------------------------------------------------------------------
   | PENGUJIAN MODUL 2 - MASTER DATA INVENTARIS (NAJWA)
@@ -332,86 +335,87 @@ cy.get('[role="dialog"]').within(() => {
   });
 
   it('TC_INV_014: Memverifikasi tampilan modal Tambah Barang pada mode terang, gelap, dan layar mobile', () => {
-  cy.visit('/inventory');
+    cy.visit('/inventory');
 
-  // 1. Buka modal Tambah Barang pada mode terang
-  cy.contains('button', /tambah barang/i).click();
-  cy.get('[role="dialog"]').should('be.visible');
+    // 1. Buka modal Tambah Barang pada mode terang
+    cy.contains('button', /tambah barang/i).click();
+    cy.get('[role="dialog"]').should('be.visible');
 
-  // Memastikan komponen modal terlihat pada mode terang
-  cy.get('[role="dialog"]').within(() => {
-    cy.contains('Tambah Barang').should('be.visible');
-    cy.get('input#sku').should('be.visible');
-    cy.get('select#category_id').should('be.visible');
-    cy.get('input#name').should('be.visible');
-    cy.get('input#unit').should('be.visible');
-    cy.get('input#unit_price').should('be.visible');
-    cy.get('input#current_stock').should('be.visible');
-    cy.get('input#minimum_stock').should('be.visible');
-    cy.get('textarea#description').should('be.visible');
-    cy.contains('button', 'Batal').should('be.visible');
-    cy.contains('button', 'Simpan Barang').should('be.visible');
+    // Memastikan komponen modal terlihat pada mode terang
+    cy.get('[role="dialog"]').within(() => {
+      cy.contains('Tambah Barang').should('be.visible');
+      cy.get('input#sku').should('be.visible');
+      cy.get('select#category_id').should('be.visible');
+      cy.get('input#name').should('be.visible');
+      cy.get('input#unit').should('be.visible');
+      cy.get('input#unit_price').should('be.visible');
+      cy.get('input#current_stock').should('be.visible');
+      cy.get('input#minimum_stock').should('be.visible');
+      cy.get('textarea#description').should('be.visible');
+      cy.contains('button', 'Batal').should('be.visible');
+      cy.contains('button', 'Simpan Barang').should('be.visible');
+    });
+
+    // 2. Tutup modal sebelum mengganti mode tampilan
+    cy.get('[role="dialog"]').contains('button', 'Batal').click();
+    cy.get('[role="dialog"]').should('not.exist');
+
+    // 3. Aktifkan mode gelap
+    cy.get('html').then(($html) => {
+      if (!$html.hasClass('dark')) {
+        cy.get('button[title="Ganti Mode Tampilan"]').click();
+      }
+    });
+
+    cy.get('html').should('have.class', 'dark');
+
+    // 4. Buka kembali modal pada mode gelap
+    cy.contains('button', /tambah barang/i).click();
+    cy.get('[role="dialog"]').should('be.visible');
+
+    cy.get('[role="dialog"]').within(() => {
+      cy.contains('Tambah Barang').should('be.visible');
+      cy.get('input#sku').should('be.visible');
+      cy.get('input#name').should('be.visible');
+      cy.get('textarea#description').should('be.visible');
+    });
+
+    // 5. Ubah ukuran layar menjadi mobile
+    cy.viewport(375, 812);
+
+    cy.get('[role="dialog"]').should('be.visible');
+
+    cy.get('[role="dialog"]').within(() => {
+      cy.get('input#sku').should('be.visible');
+      cy.get('select#category_id').should('be.visible');
+      cy.get('input#name').should('be.visible');
+      cy.get('input#unit').should('be.visible');
+      cy.get('input#unit_price').should('be.visible');
+      cy.get('input#current_stock').should('be.visible');
+      cy.get('input#minimum_stock').should('be.visible');
+      cy.get('textarea#description').should('be.visible');
+      cy.contains('button', 'Batal').should('be.visible');
+      cy.contains('button', 'Simpan Barang').should('be.visible');
+    });
+
+    // Memastikan modal tidak keluar dari lebar layar mobile
+    cy.get('[role="dialog"]').then(($dialog) => {
+      const rect = $dialog[0].getBoundingClientRect();
+      expect(rect.left).to.be.at.least(-1);
+      expect(rect.right).to.be.at.most(376);
+    });
+
+    // 6. Tutup modal dan kembalikan mode terang
+    cy.get('[role="dialog"]').contains('button', 'Batal').click();
+    cy.get('[role="dialog"]').should('not.exist');
+
+    cy.get('button[title="Ganti Mode Tampilan"]').click();
+    cy.get('html').should('not.have.class', 'dark');
+
+    // Memastikan tidak ada data yang berubah
+    cy.get('table tbody tr').should('exist');
   });
 
-  // 2. Tutup modal sebelum mengganti mode tampilan
-  cy.get('[role="dialog"]').contains('button', 'Batal').click();
-  cy.get('[role="dialog"]').should('not.exist');
-
-  // 3. Aktifkan mode gelap
-  cy.get('html').then(($html) => {
-    if (!$html.hasClass('dark')) {
-      cy.get('button[title="Ganti Mode Tampilan"]').click();
-    }
-  });
-
-  cy.get('html').should('have.class', 'dark');
-
-  // 4. Buka kembali modal pada mode gelap
-  cy.contains('button', /tambah barang/i).click();
-  cy.get('[role="dialog"]').should('be.visible');
-
-  cy.get('[role="dialog"]').within(() => {
-    cy.contains('Tambah Barang').should('be.visible');
-    cy.get('input#sku').should('be.visible');
-    cy.get('input#name').should('be.visible');
-    cy.get('textarea#description').should('be.visible');
-  });
-
-  // 5. Ubah ukuran layar menjadi mobile
-  cy.viewport(375, 812);
-
-  cy.get('[role="dialog"]').should('be.visible');
-
-  cy.get('[role="dialog"]').within(() => {
-    cy.get('input#sku').should('be.visible');
-    cy.get('select#category_id').should('be.visible');
-    cy.get('input#name').should('be.visible');
-    cy.get('input#unit').should('be.visible');
-    cy.get('input#unit_price').should('be.visible');
-    cy.get('input#current_stock').should('be.visible');
-    cy.get('input#minimum_stock').should('be.visible');
-    cy.get('textarea#description').should('be.visible');
-    cy.contains('button', 'Batal').should('be.visible');
-    cy.contains('button', 'Simpan Barang').should('be.visible');
-  });
-
-  // Memastikan modal tidak keluar dari lebar layar mobile
-  cy.get('[role="dialog"]').then(($dialog) => {
-  const rect = $dialog[0].getBoundingClientRect();
-  expect(rect.left).to.be.at.least(-1);
-  expect(rect.right).to.be.at.most(376);
-});
-
-  // 6. Tutup modal dan kembalikan mode terang
-  cy.get('[role="dialog"]').contains('button', 'Batal').click();
-  cy.get('[role="dialog"]').should('not.exist');
-
-  cy.get('button[title="Ganti Mode Tampilan"]').click();
-  cy.get('html').should('not.have.class', 'dark');
-
-  // Memastikan tidak ada data yang berubah
-  cy.get('table tbody tr').should('exist');
-});
   /*
   |--------------------------------------------------------------------------
   | PENGUJIAN MODUL 2 - VALIDASI SKU & PROTEKSI RESTRICT DELETE (SULTAN)
