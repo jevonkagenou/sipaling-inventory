@@ -146,9 +146,12 @@ function applyFilter() {
   )
 }
 
-// Debounce Search
+// Debounce Search & Watchers
+let isResetting = false
 let searchTimeout: any = null
+
 watch(search, () => {
+  if (isResetting) return
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {
     applyFilter()
@@ -156,6 +159,7 @@ watch(search, () => {
 })
 
 watch([startDate, endDate, currentCauser, currentLogName], () => {
+  if (isResetting) return
   applyFilter()
 })
 
@@ -170,13 +174,27 @@ function setLogNameFilter(name: string) {
 }
 
 function resetAllFilters() {
+  clearTimeout(searchTimeout)
+  isResetting = true
   search.value = ''
   currentEvent.value = ''
   currentLogName.value = ''
   currentCauser.value = ''
   startDate.value = ''
   endDate.value = ''
-  applyFilter()
+
+  router.get(
+    route('audit.index'),
+    {},
+    {
+      preserveState: false,
+      preserveScroll: true,
+      replace: true,
+      onFinish: () => {
+        isResetting = false
+      },
+    }
+  )
 }
 
 const hasActiveFilters = computed(() => {

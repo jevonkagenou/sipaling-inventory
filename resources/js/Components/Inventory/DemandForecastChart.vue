@@ -203,19 +203,19 @@ const chartData = computed(() => {
         <!-- Legenda Historis -->
         <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium">
           <span class="w-3.5 h-1 rounded-full bg-blue-600 dark:bg-blue-500"></span>
-          <span>Penjualan Riil (Lalu)</span>
+          <span>Data Historis (Aktual)</span>
         </div>
 
         <!-- Legenda Fitted Model (Opsional) -->
         <div v-if="props.showFitted && chartData?.fittedPoints.length" class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
           <span class="w-3.5 h-0.5 rounded-full bg-indigo-500 dark:bg-indigo-400 stroke-dash"></span>
-          <span>Pola Model</span>
+          <span>Taksiran Model (Fitted)</span>
         </div>
 
         <!-- Legenda Proyeksi DES -->
         <div class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
           <span class="w-4 h-0.5 border-t-2 border-dashed border-emerald-600 dark:border-emerald-400"></span>
-          <span>Perkiraan Laku (Masa Depan)</span>
+          <span>Proyeksi Peramalan</span>
         </div>
       </div>
     </div>
@@ -295,7 +295,7 @@ const chartData = computed(() => {
             text-anchor="middle"
             class="text-[9px] font-bold fill-slate-600 dark:fill-slate-300 tracking-wider uppercase"
           >
-            Mulai Ramalan &rarr;
+            Batas Proyeksi &rarr;
           </text>
         </g>
 

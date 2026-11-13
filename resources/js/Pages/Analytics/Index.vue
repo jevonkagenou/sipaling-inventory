@@ -5,6 +5,7 @@ import RestockRequestDialog from '@/Components/Restock/RestockRequestDialog.vue'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import StatCard from '@/Components/StatCard.vue'
 import DemandForecastChart from '@/Components/Inventory/DemandForecastChart.vue'
+import AlgorithmPerformanceCard from '@/Components/Analytics/AlgorithmPerformanceCard.vue'
 import {
   TrendingUp,
   BarChart3,
@@ -916,9 +917,10 @@ onMounted(() => {
                 <DemandForecastChart
                   :historical-periods="forecastData.historical_periods"
                   :actual-series="forecastData.actual_series"
+                  :fitted-series="forecastData.fitted_series"
                   :future-periods="forecastData.future_periods"
                   :future-forecasts="forecastData.future_forecasts"
-                  :show-fitted="false"
+                  :show-fitted="true"
                   :unit="currentProduct?.unit || 'pcs'"
                   :height="300"
                 />
@@ -1322,6 +1324,19 @@ onMounted(() => {
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Kartu Ringkasan Performa Algoritma DES (Audit & Validasi Model) -->
+        <div class="mt-2">
+          <AlgorithmPerformanceCard
+            :alpha="Number(alphaInput)"
+            :beta="Number(betaInput)"
+            :mape="forecastData?.mape !== null && forecastData?.mape !== undefined ? Number(forecastData.mape) : 0"
+            :rmse="forecastData?.rmse !== null && forecastData?.rmse !== undefined ? Number(forecastData.rmse) : 0"
+            :optimal-alpha="forecastData?.optimal_alpha !== null && forecastData?.optimal_alpha !== undefined ? Number(forecastData.optimal_alpha) : 0.2"
+            :optimal-beta="forecastData?.optimal_beta !== null && forecastData?.optimal_beta !== undefined ? Number(forecastData.optimal_beta) : 0.1"
+            :is-optimal="isOptimalParams"
+          />
         </div>
       </div>
     </div>

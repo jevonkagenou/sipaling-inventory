@@ -117,14 +117,15 @@ const accuracyProgressWidth = computed(() => {
     class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-4"
   >
     <!-- Header Kartu & Status Mode Parameter -->
+    <!-- Header Ringkasan Performa Algoritma -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
       <div>
         <h2 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
           <BarChart3 class="w-4 h-4 text-[#2563EB]" />
-          Kualitas &amp; Karakter Prediksi Permintaan
+          Ringkasan Performa Algoritma
         </h2>
         <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-          Tingkat keandalan estimasi stok dan tingkat respons terhadap tren belanja pelanggan.
+          Tingkat keandalan estimasi stok dan parameter Double Exponential Smoothing (DES).
         </p>
       </div>
 
@@ -141,7 +142,7 @@ const accuracyProgressWidth = computed(() => {
       </div>
     </div>
 
-    <!-- Grid 3 Sub-Kartu Indikator Humanis -->
+    <!-- Grid 3 Sub-Kartu Indikator -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
       <!-- 1. Sensitivitas Tren Terkini (Alpha) -->
       <div
@@ -149,8 +150,8 @@ const accuracyProgressWidth = computed(() => {
       >
         <div class="flex items-center justify-between text-xs text-slate-400">
           <div>
-            <span class="font-semibold text-slate-700 dark:text-slate-300 block">Bobot Tren Terkini</span>
-            <span class="text-[10px] text-slate-400 font-mono">Sensitivitas Level (&alpha;)</span>
+            <span class="font-semibold text-slate-700 dark:text-slate-300 block">Nilai Alpha (&alpha;)</span>
+            <span class="text-[10px] text-slate-400 font-mono">Sensitivitas Level</span>
           </div>
           <div
             class="h-7 w-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
@@ -159,7 +160,7 @@ const accuracyProgressWidth = computed(() => {
           </div>
         </div>
         <div class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums pt-0.5">
-          {{ alpha !== null ? alpha : '-' }}
+          {{ alpha !== null ? alpha : '0' }}
         </div>
         <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
           Respons riwayat terkini &bull; Rekomendasi: <span class="font-semibold text-slate-700 dark:text-slate-300">{{ optimalAlpha ?? '-' }}</span>
@@ -172,8 +173,8 @@ const accuracyProgressWidth = computed(() => {
       >
         <div class="flex items-center justify-between text-xs text-slate-400">
           <div>
-            <span class="font-semibold text-slate-700 dark:text-slate-300 block">Bobot Arah Pertumbuhan</span>
-            <span class="text-[10px] text-slate-400 font-mono">Sensitivitas Tren (&beta;)</span>
+            <span class="font-semibold text-slate-700 dark:text-slate-300 block">Nilai Beta (&beta;)</span>
+            <span class="text-[10px] text-slate-400 font-mono">Sensitivitas Tren</span>
           </div>
           <div
             class="h-7 w-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
@@ -182,21 +183,21 @@ const accuracyProgressWidth = computed(() => {
           </div>
         </div>
         <div class="text-2xl font-bold tracking-tight text-[#4F46E5] dark:text-indigo-400 tabular-nums pt-0.5">
-          {{ beta !== null ? beta : '-' }}
+          {{ beta !== null ? beta : '0' }}
         </div>
         <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
           Adaptasi laju tren &bull; Rekomendasi: <span class="font-semibold text-slate-700 dark:text-slate-300">{{ optimalBeta ?? '-' }}</span>
         </p>
       </div>
 
-      <!-- 3. Tingkat Keyakinan Prediksi (Akurasi / Humanized MAPE) -->
+      <!-- 3. Tingkat Keyakinan Prediksi (Persentase MAPE) -->
       <div
         class="group p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-2"
       >
         <div class="flex items-center justify-between text-xs">
           <div>
-            <span class="font-semibold text-slate-700 dark:text-slate-300 block">Tingkat Keyakinan</span>
-            <span class="text-[10px] text-slate-400 font-mono">Akurasi Prediksi</span>
+            <span class="font-semibold text-slate-700 dark:text-slate-300 block">Persentase MAPE</span>
+            <span class="text-[10px] text-slate-400 font-mono">Tingkat Galat Estimasi</span>
           </div>
           <span
             v-if="accuracyBadge"
@@ -207,8 +208,8 @@ const accuracyProgressWidth = computed(() => {
           </span>
         </div>
 
-        <div class="text-2xl font-bold tracking-tight text-[#10B981] dark:text-emerald-400 tabular-nums">
-          {{ accuracyRate !== null ? accuracyRate + '%' : 'N/A' }}
+        <div class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+          {{ mape !== null ? mape + '%' : '0%' }}
         </div>
 
         <!-- Progress Bar Visualisasi Tingkat Keyakinan -->
@@ -220,7 +221,7 @@ const accuracyProgressWidth = computed(() => {
         </div>
 
         <p class="text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
-          Toleransi simpangan: {{ mape !== null ? mape + '%' : '-' }} &bull; Deviasi: {{ rmse !== null ? Math.round(rmse) : '-' }} unit
+          Akurasi: {{ accuracyRate !== null ? accuracyRate + '%' : '-' }} &bull; Deviasi: {{ rmse !== null ? Math.round(rmse) : '-' }} unit
         </p>
       </div>
     </div>
